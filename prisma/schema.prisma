@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String     @id @default(uuid())
+  firebaseUid String     @unique // ID từ Firebase Auth
+  email       String     @unique
+  displayName String
+  role        Role       @default(STUDENT)
+  classId     String?
+  class       Class?     @relation(fields: [classId], references: [id])
+  stats       UserStats?
+  xpLogs      XpLog[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model UserStats {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalXp       Int      @default(0)
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  lastStudyDate DateTime?
+  updatedAt     DateTime @updatedAt
+}
+
+model XpLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int      // Ví dụ: +50, -10
+  action      XpAction
+  referenceId String?  // ID của bài Quiz hoặc Arena match để truy vết
+  createdAt   DateTime @default(now())
+}
+
+model Class {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum XpAction {
+  CHAT_AI
+  COMPLETE_QUIZ
+  WIN_ARENA
+  DAILY_LOGIN
+  ADMIN_BONUS
+}
