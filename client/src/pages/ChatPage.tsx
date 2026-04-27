@@ -1,4 +1,4 @@
-import ChatInterface from "@/components/chat/ChatInterface";
+import ChatFeature from "@/features/chat/ChatFeature";
 
 interface ChatPageProps {
   studentName: string;
@@ -7,5 +7,5 @@ interface ChatPageProps {
 }
 
 export default function ChatPage({ studentName, addXP, userId }: ChatPageProps) {
-  return <ChatInterface studentName={studentName} addXP={addXP} userId={userId} />;
+  return <ChatFeature studentName={studentName} addXP={addXP} userId={userId} />;
 }

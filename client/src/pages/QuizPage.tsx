@@ -1,4 +1,4 @@
-import QuizSection from "@/components/assessment/QuizSection";
+import AssessmentFeature from "@/features/assessment/AssessmentFeature";
 
 interface QuizPageProps {
   studentName: string;
@@ -7,5 +7,5 @@ interface QuizPageProps {
 }
 
 export default function QuizPage({ studentName, addXP, userId }: QuizPageProps) {
-  return <QuizSection studentName={studentName} addXP={addXP} userId={userId} />;
+  return <AssessmentFeature studentName={studentName} addXP={addXP} userId={userId} />;
 }

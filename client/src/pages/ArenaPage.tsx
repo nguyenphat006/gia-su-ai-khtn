@@ -1,4 +1,4 @@
-import Arena from "@/components/arena/Arena";
+import ArenaFeature from "@/features/arena/ArenaFeature";
 
 interface ArenaPageProps {
   studentName: string;
@@ -7,5 +7,5 @@ interface ArenaPageProps {
 }
 
 export default function ArenaPage({ studentName, addXP, totalXP }: ArenaPageProps) {
-  return <Arena studentName={studentName} addXP={addXP} totalXP={totalXP} />;
+  return <ArenaFeature studentName={studentName} addXP={addXP} totalXP={totalXP} />;
 }

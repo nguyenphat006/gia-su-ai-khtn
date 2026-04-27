@@ -1,4 +1,4 @@
-import TeacherPanel from "@/components/teacher/TeacherPanel";
+import TeacherFeature from "@/features/teacher/TeacherFeature";
 
 interface TeacherPageProps {
   schoolLogo: string | null;
@@ -7,5 +7,5 @@ interface TeacherPageProps {
 }
 
 export default function TeacherPage({ schoolLogo, onLogoUpload, isUploadingLogo }: TeacherPageProps) {
-  return <TeacherPanel schoolLogo={schoolLogo} onLogoUpload={onLogoUpload} isUploadingLogo={isUploadingLogo} />;
+  return <TeacherFeature schoolLogo={schoolLogo} onLogoUpload={onLogoUpload} isUploadingLogo={isUploadingLogo} />;
 }

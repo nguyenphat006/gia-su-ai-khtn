@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Trophy, Flame, Target, CheckCircle2, Award, Sparkles, Zap } from 'lucide-react';
-import { StudentData } from '../../lib/firebase';
+import { StudentData } from '@/lib/firebase';
 
 interface Challenge {
   id: string;
@@ -24,7 +24,11 @@ const BADGE_LIST = [
   { id: 'master_atom', name: 'Bác học nguyên tử', icon: '⚛️', description: 'Hoàn thành mọi bài tập về Nguyên tử' },
 ];
 
-export function ChallengePanel({ studentData }: { studentData: StudentData | null }) {
+interface GamificationFeatureProps {
+  studentData: StudentData | null;
+}
+
+export default function GamificationFeature({ studentData }: GamificationFeatureProps) {
   const completedIds = studentData?.completedChallenges || [];
   const streak = studentData?.streak || 0;
 

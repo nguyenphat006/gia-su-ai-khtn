@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Trophy, Award, Target, Flame } from "lucide-react";
 import { cn, getRank, RANKS } from "@/lib/utils";
-import { ChallengePanel } from "@/components/gamification/ChallengePanel";
+import GamificationFeature from "@/features/gamification/GamificationFeature";
 
 interface SidebarProps {
   studentData: any;
@@ -117,7 +117,7 @@ export default function Sidebar({
                 exit={{ opacity: 0, x: 10 }}
                 className="h-full"
               >
-                <ChallengePanel studentData={studentData} />
+                <GamificationFeature studentData={studentData} />
               </motion.div>
             ) : (
               <motion.div
