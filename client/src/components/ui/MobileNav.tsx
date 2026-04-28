@@ -1,6 +1,7 @@
-import { MessageSquare, BookOpen, Trophy, Settings } from "lucide-react";
+import { MessageSquare, BookOpen, Swords, LayoutDashboard, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { motion } from "motion/react";
 
 interface MobileNavProps {
   isAdmin: boolean;
@@ -11,61 +12,48 @@ export default function MobileNav({ isAdmin }: MobileNavProps) {
   const navigate = useNavigate();
   const activeTab = location.pathname;
 
-  return (
-    <div className="md:hidden fixed bottom-6 left-6 right-6 bg-white shadow-2xl rounded-[1.5rem] border border-sky-100 p-2 z-[60] flex items-center justify-around">
-      <MobileNavItem
-        active={activeTab === "/" || activeTab === "/chat"}
-        onClick={() => navigate("/chat")}
-        icon={<MessageSquare size={20} />}
-        label="Trợ lý"
-      />
-      <MobileNavItem
-        active={activeTab === "/quiz"}
-        onClick={() => navigate("/quiz")}
-        icon={<BookOpen size={20} />}
-        label="Ôn tập"
-      />
-      <MobileNavItem
-        active={activeTab === "/arena"}
-        onClick={() => navigate("/arena")}
-        icon={<Trophy size={20} />}
-        label="Đấu trường"
-      />
-      {isAdmin && (
-        <MobileNavItem
-          active={activeTab === "/teacher"}
-          onClick={() => navigate("/teacher")}
-          icon={<Settings size={20} />}
-          label="Quản lý"
-        />
-      )}
-    </div>
-  );
-}
+  const navItems = [
+    { path: "/chat", label: "Trợ lý", icon: MessageSquare },
+    { path: "/quiz", label: "Ôn tập", icon: BookOpen },
+    { path: "/arena", label: "Thi đấu", icon: Swords },
+  ];
 
-function MobileNavItem({
-  active,
-  icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
+  if (isAdmin) {
+    navItems.push({ path: "/teacher", label: "Quản lý", icon: LayoutDashboard });
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex flex-col items-center gap-1 p-2 rounded-xl transition-all",
-        active ? "text-sky-600 bg-sky-50" : "text-black opacity-60"
-      )}
-    >
-      {icon}
-      <span className="text-[10px] font-black uppercase tracking-tighter">
-        {label}
-      </span>
-    </button>
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 px-6 py-3 pb-8 z-[60] flex items-center justify-around shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
+      {navItems.map((item) => {
+        const isActive = activeTab === item.path || (item.path === "/chat" && activeTab === "/");
+        return (
+          <button
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            className="relative flex flex-col items-center gap-1 min-w-[64px]"
+          >
+            {isActive && (
+              <motion.div
+                layoutId="active-pill"
+                className="absolute -top-3 w-8 h-1 bg-sky-500 rounded-full"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
+            <div className={cn(
+              "p-2 rounded-xl transition-all duration-300",
+              isActive ? "text-sky-600 bg-sky-50" : "text-slate-400"
+            )}>
+              <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+            </div>
+            <span className={cn(
+              "text-[9px] font-black uppercase tracking-widest transition-colors",
+              isActive ? "text-sky-600" : "text-slate-400"
+            )}>
+              {item.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }

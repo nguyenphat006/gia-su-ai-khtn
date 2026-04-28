@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "motion/react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import AuthFeature from "@/features/auth/AuthFeature";
 import AppLayout from "@/app/AppLayout";
+import ProfileEditModal from "@/components/ui/ProfileEditModal";
 import { useAuth } from "@/hooks/useAuth";
-import { type AuthenticatedUser } from "@/lib/auth";
+import { type AuthenticatedUser } from "@/features/auth/types";
 
 // ── Lazy-loaded Pages (Route-based Code Splitting) ──────────────
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
@@ -39,10 +40,9 @@ export default function App() {
     leaderboard,
     addXP,
     schoolLogo,
-    loginStudent,
-    loginTeacher,
-    activateAccount,
+    login,
     logout,
+    refreshUser,
   } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
 
@@ -60,79 +60,89 @@ export default function App() {
             exit={{ opacity: 0, y: -20 }}
             className="w-full"
           >
-            <AuthFeature
-              onStudentLogin={loginStudent}
-              onTeacherLogin={loginTeacher}
-              onActivateAccount={activateAccount}
-            />
+            <AuthFeature onLogin={login} />
           </motion.div>
         ) : (
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              <Route
-                element={
-                  <AppLayout
-                    user={user}
-                    studentData={studentData}
-                    isAdmin={isAdmin}
-                    leaderboard={leaderboard}
-                    schoolLogo={schoolLogo}
-                    addXP={addXP}
-                    isUploading={isUploading}
-                    setIsUploading={setIsUploading}
-                    onLogout={logout}
-                  />
-                }
-              >
-                <Route index element={<Navigate to="/chat" replace />} />
+          <>
+            {/* Modal bắt buộc đổi mật khẩu nếu user mới kích hoạt hoặc reset */}
+            {user.mustChangePassword && (
+              <ProfileEditModal
+                user={user}
+                isOpen={true}
+                onClose={() => {
+                  // Không cho đóng nếu chưa đổi mật khẩu xong (logic này tùy chọn)
+                  refreshUser();
+                }}
+              />
+            )}
+
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
                 <Route
-                  path="/chat"
                   element={
-                    <ChatPage
-                      studentName={studentData?.displayName || user.displayName || "Học sinh"}
+                    <AppLayout
+                      user={user}
+                      studentData={studentData}
+                      isAdmin={isAdmin}
+                      leaderboard={leaderboard}
+                      schoolLogo={schoolLogo}
                       addXP={addXP}
-                      userId={user.id}
+                      isUploading={isUploading}
+                      setIsUploading={setIsUploading}
+                      onLogout={logout}
                     />
                   }
-                />
-                <Route
-                  path="/quiz"
-                  element={
-                    <QuizPage
-                      studentName={studentData?.displayName || user.displayName || "Học sinh"}
-                      addXP={addXP}
-                      userId={user.id}
-                    />
-                  }
-                />
-                <Route
-                  path="/arena"
-                  element={
-                    <ArenaPage
-                      studentName={studentData?.displayName || user.displayName || "Học sinh"}
-                      addXP={addXP}
-                      totalXP={studentData?.xp || 0}
-                    />
-                  }
-                />
-                {isAdmin && (
+                >
+                  <Route index element={<Navigate to="/chat" replace />} />
                   <Route
-                    path="/teacher"
+                    path="/chat"
                     element={
-                      <TeacherPage
-                        schoolLogo={schoolLogo}
-                        onLogoUpload={async (e) => {
-                          /* handled in AppLayout */
-                        }}
-                        isUploadingLogo={isUploading}
+                      <ChatPage
+                        studentName={studentData?.displayName || user.displayName || "Học sinh"}
+                        addXP={addXP}
+                        userId={user.id}
                       />
                     }
                   />
-                )}
-                <Route path="*" element={<Navigate to="/chat" replace />} />
-              </Route>
-            </Routes>
-          </Suspense>
+                  <Route
+                    path="/quiz"
+                    element={
+                      <QuizPage
+                        studentName={studentData?.displayName || user.displayName || "Học sinh"}
+                        addXP={addXP}
+                        userId={user.id}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/arena"
+                    element={
+                      <ArenaPage
+                        studentName={studentData?.displayName || user.displayName || "Học sinh"}
+                        addXP={addXP}
+                        totalXP={studentData?.xp || 0}
+                      />
+                    }
+                  />
+                  {isAdmin && (
+                    <Route
+                      path="/teacher"
+                      element={
+                        <TeacherPage
+                          schoolLogo={schoolLogo}
+                          onLogoUpload={async (e) => {
+                            /* handled in AppLayout */
+                          }}
+                          isUploadingLogo={isUploading}
+                        />
+                      }
+                    />
+                  )}
+                  <Route path="*" element={<Navigate to="/chat" replace />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </>
         )}
       </AnimatePresence>
     </BrowserRouter>

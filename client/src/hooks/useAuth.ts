@@ -3,6 +3,7 @@ import {
   loginWithServer,
   refreshSession,
   logoutFromServer,
+  fetchCurrentUser,
 } from "../features/auth/service";
 import type { AuthenticatedUser, LoginInput } from "../features/auth/types";
 
@@ -44,7 +45,7 @@ export function useAuth() {
   const [leaderboard] = useState<any[]>([]);
 
   const studentData = useMemo(() => deriveStudentView(user), [user]);
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN" || user?.role === "TEACHER";
 
   // Khởi tạo session khi load app (Dựa vào httpOnly cookie)
   useEffect(() => {
@@ -52,15 +53,17 @@ export function useAuth() {
 
     const bootstrapSession = async () => {
       try {
-        // Cố gắng refresh session (sẽ thành công nếu cookie refreshToken hợp lệ)
-        const activeUser = await refreshSession();
-        if (isMounted) {
-          setUser(activeUser);
-        }
+        // 1. Thử lấy profile hiện tại (nếu access token còn hạn trong cookie)
+        const activeUser = await fetchCurrentUser();
+        if (isMounted) setUser(activeUser);
       } catch (error) {
-        console.log("Không có phiên đăng nhập hợp lệ:", error);
-        if (isMounted) {
-          setUser(null);
+        // 2. Nếu thất bại, thử refresh session
+        try {
+          const refreshedUser = await refreshSession();
+          if (isMounted) setUser(refreshedUser);
+        } catch (refreshError) {
+          console.log("Không có phiên đăng nhập hợp lệ.");
+          if (isMounted) setUser(null);
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -92,7 +95,7 @@ export function useAuth() {
 
   const addXP = useCallback((amount: number) => {
     if (!amount || !user) return;
-    // Logic cập nhật XP (nếu có)
+    // Logic cập nhật XP sẽ được bổ sung sau
   }, [user]);
 
   return {
@@ -105,5 +108,6 @@ export function useAuth() {
     schoolLogo,
     login,
     logout,
+    refreshUser: fetchCurrentUser
   };
 }

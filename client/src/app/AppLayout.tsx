@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import Header from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
-import Footer from "@/components/ui/Footer";
 import MobileNav from "@/components/ui/MobileNav";
 import ProfileEditModal from "@/components/ui/ProfileEditModal";
 import { AnimatePresence } from "motion/react";
-import { type AuthenticatedUser } from "@/lib/auth";
+import { type AuthenticatedUser } from "@/features/auth/types";
 
 interface AppLayoutProps {
   user: AuthenticatedUser;
@@ -33,60 +32,51 @@ export default function AppLayout({
   onLogout,
 }: AppLayoutProps) {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
-
-  const handleSchoolLogoUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (!isAdmin || isUploading) return;
-    alert("Chức năng cập nhật logo trường sẽ được nối sang backend ở pha tiếp theo.");
-  };
+  const location = useLocation();
 
   return (
-    <motion.div
-      key="main"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col h-screen w-full bg-[#f8fafc] font-sans overflow-hidden"
-    >
-      <div className="p-6 flex-1 flex flex-col space-y-4 overflow-hidden max-w-[1400px] mx-auto w-full">
-        <Header
-          user={user}
-          studentData={studentData}
-          onProfileEdit={() => setShowProfileEdit(true)}
-          onLogout={() => {
-            void onLogout();
-          }}
-        />
+    <div className="flex h-screen w-full bg-[#fcfdfe] font-sans overflow-hidden">
+      {/* ── Sidebar: Fixed Left ────────────────────────────────── */}
+      <Sidebar
+        studentData={studentData}
+        leaderboard={leaderboard}
+        currentUserId={user.id}
+        isAdmin={isAdmin}
+        onLogout={() => {
+          void onLogout();
+        }}
+      />
 
-        {/* Profile Edit Modal */}
-        {showProfileEdit && (
-          <ProfileEditModal
-            user={user}
-            studentData={studentData}
-            onClose={() => setShowProfileEdit(false)}
-          />
-        )}
+      {/* ── Main Dashboard Area: Grid 2 rows ───────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 h-full relative">
+        {/* Decorative Background */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-sky-100/20 rounded-full blur-[100px] -mr-64 -mt-64 pointer-events-none"></div>
+        
+        {/* Row 1: Header (Fixed Height) */}
+        <div className="px-6 py-4 relative z-40">
+           <Header
+              user={user}
+              studentData={studentData}
+              onProfileEdit={() => setShowProfileEdit(true)}
+              onLogout={() => {
+                void onLogout();
+              }}
+            />
+        </div>
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
-          {/* Sidebar - LEFT on desktop */}
-          <Sidebar
-            studentData={studentData}
-            leaderboard={leaderboard}
-            currentUserId={user.id}
-          />
-
-          {/* Main Content Area - RIGHT on desktop */}
-          <div className="col-span-1 lg:col-span-9 lg:order-2 flex flex-col space-y-6 overflow-hidden h-full">
-            <div className="flex-1 glass-card rounded-[2rem] p-8 shadow-sm border border-sky-50/50 overflow-hidden bg-white/40 backdrop-blur-xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="h-full"
-                >
-                  {/* Outlet renders the matched child route (ChatPage, QuizPage, etc.) */}
+        {/* Row 2: Content Workspace (Flexible Height) */}
+        <main className="flex-1 px-6 pb-6 relative z-10 min-h-0">
+          <div className="h-full w-full bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative flex flex-col">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, scale: 0.995 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.005 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute inset-0 flex flex-col overflow-hidden"
+              >
+                <div className="flex-1 h-full min-h-0 flex flex-col">
                   <Outlet
                     context={{
                       user,
@@ -94,21 +84,28 @@ export default function AppLayout({
                       isAdmin,
                       addXP,
                       schoolLogo,
-                      onLogoUpload: handleSchoolLogoUpload,
+                      onLogoUpload: async () => {}, // Handled elsewhere
                       isUploadingLogo: isUploading,
                     }}
                   />
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </div>
+        </main>
 
-        <Footer />
+        {/* Profile Modal */}
+        {showProfileEdit && (
+          <ProfileEditModal
+            user={user}
+            isOpen={true}
+            onClose={() => setShowProfileEdit(false)}
+          />
+        )}
       </div>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Nav */}
       <MobileNav isAdmin={isAdmin} />
-    </motion.div>
+    </div>
   );
 }
