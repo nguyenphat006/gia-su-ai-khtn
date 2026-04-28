@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { User } from "firebase/auth";
 import { motion } from "motion/react";
 import {
   Settings,
@@ -11,9 +10,10 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AnimatePresence } from "motion/react";
+import { type AuthenticatedUser } from "@/lib/auth";
 
 interface HeaderProps {
-  user: User;
+  user: AuthenticatedUser;
   studentData: any;
   onProfileEdit: () => void;
   onLogout: () => void;
@@ -96,9 +96,9 @@ export default function Header({
               }}
               className="w-10 h-10 bg-white rounded-xl border-2 border-slate-200 overflow-hidden cursor-pointer shadow-sm transition-all"
             >
-              {studentData?.photoURL || user.photoURL ? (
+              {studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl ? (
                 <img
-                  src={studentData?.photoURL || user.photoURL}
+                  src={studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl || ""}
                   alt="Avatar"
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"

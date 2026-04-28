@@ -1,11 +1,11 @@
 import { useState, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useOutletContext } from "react-router-dom";
-import { User } from "firebase/auth";
 import { motion, AnimatePresence } from "motion/react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import AuthFeature from "@/features/auth/AuthFeature";
 import AppLayout from "@/app/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { type AuthenticatedUser } from "@/lib/auth";
 
 // ── Lazy-loaded Pages (Route-based Code Splitting) ──────────────
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
@@ -15,7 +15,7 @@ const TeacherPage = lazy(() => import("@/pages/TeacherPage"));
 
 // ── Type for Outlet Context ─────────────────────────────────────
 export interface AppOutletContext {
-  user: User;
+  user: AuthenticatedUser;
   studentData: any;
   isAdmin: boolean;
   addXP: (amount: number) => void;
@@ -31,7 +31,19 @@ export function useAppContext() {
 
 // ── Main App Component ──────────────────────────────────────────
 export default function App() {
-  const { user, studentData, isAdmin, isLoading, leaderboard, addXP, schoolLogo } = useAuth();
+  const {
+    user,
+    studentData,
+    isAdmin,
+    isLoading,
+    leaderboard,
+    addXP,
+    schoolLogo,
+    loginStudent,
+    loginTeacher,
+    activateAccount,
+    logout,
+  } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
 
   // ── Render ──────────────────────────────────────────────────────
@@ -48,7 +60,11 @@ export default function App() {
             exit={{ opacity: 0, y: -20 }}
             className="w-full"
           >
-            <AuthFeature />
+            <AuthFeature
+              onStudentLogin={loginStudent}
+              onTeacherLogin={loginTeacher}
+              onActivateAccount={activateAccount}
+            />
           </motion.div>
         ) : (
           <Suspense fallback={<LoadingSpinner />}>
@@ -64,6 +80,7 @@ export default function App() {
                     addXP={addXP}
                     isUploading={isUploading}
                     setIsUploading={setIsUploading}
+                    onLogout={logout}
                   />
                 }
               >
@@ -74,7 +91,7 @@ export default function App() {
                     <ChatPage
                       studentName={studentData?.displayName || user.displayName || "Học sinh"}
                       addXP={addXP}
-                      userId={user.uid}
+                      userId={user.id}
                     />
                   }
                 />
@@ -84,7 +101,7 @@ export default function App() {
                     <QuizPage
                       studentName={studentData?.displayName || user.displayName || "Học sinh"}
                       addXP={addXP}
-                      userId={user.uid}
+                      userId={user.id}
                     />
                   }
                 />

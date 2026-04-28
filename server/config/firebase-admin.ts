@@ -33,6 +33,6 @@ function initFirebaseAdmin() {
 const app = initFirebaseAdmin();
 
 const databaseId = process.env.FIREBASE_DATABASE_ID;
-export const adminDb = getFirestore(app, databaseId);
+export const adminDb = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
 
 export default app;

@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { User } from "firebase/auth";
 import { motion } from "motion/react";
-import { LogOut, ImageIcon, Loader2, Zap } from "lucide-react";
-import { syncStudentData, uploadFile } from "@/lib/firebase";
+import { LogOut, Loader2, ShieldCheck, Zap } from "lucide-react";
+import { type AuthenticatedUser } from "@/lib/auth";
 
 interface ProfileEditModalProps {
-  user: User;
+  user: AuthenticatedUser;
   studentData: any;
   onClose: () => void;
 }
@@ -19,37 +18,19 @@ export default function ProfileEditModal({
     user.displayName || studentData?.displayName || ""
   );
   const [isUpdatingName, setIsUpdatingName] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
   const handleUpdateName = async () => {
     if (!newName.trim() || isUpdatingName) return;
     setIsUpdatingName(true);
     try {
-      await syncStudentData(user, { displayName: newName.trim() });
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      alert("Chỉnh sửa hồ sơ sẽ được nối sang backend ở pha tiếp theo.");
       onClose();
     } catch (error) {
       console.error("Lỗi cập nhật tên:", error);
       alert("Không thể lưu tên. Vui lòng thử lại.");
     } finally {
       setIsUpdatingName(false);
-    }
-  };
-
-  const handleAvatarUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file || isUploading) return;
-
-    setIsUploading(true);
-    try {
-      const url = await uploadFile(file, `avatars/${user.uid}`);
-      await syncStudentData(user, { photoURL: url });
-    } catch (error) {
-      console.error("Lỗi tải ảnh:", error);
-      alert("Không thể tải ảnh. Vui lòng kiểm tra dung lượng và thử lại.");
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -76,9 +57,9 @@ export default function ProfileEditModal({
           <div className="flex flex-col items-center mb-6">
             <div className="relative group/avatar">
               <div className="w-24 h-24 rounded-full border-4 border-sky-50 overflow-hidden shadow-lg bg-sky-50 flex items-center justify-center">
-                {studentData?.photoURL || user.photoURL ? (
+                {studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl ? (
                   <img
-                    src={studentData?.photoURL || user.photoURL}
+                    src={studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl || ""}
                     alt="Avatar"
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
@@ -88,24 +69,10 @@ export default function ProfileEditModal({
                     {studentData?.displayName?.[0] || "?"}
                   </span>
                 )}
-                {isUploading && (
-                  <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                    <Loader2
-                      className="animate-spin text-sky-600"
-                      size={24}
-                    />
-                  </div>
-                )}
               </div>
-              <label className="absolute bottom-0 right-0 p-2 bg-sky-600 text-white rounded-full shadow-lg cursor-pointer hover:bg-sky-700 transition-all">
-                <ImageIcon size={16} />
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                />
-              </label>
+              <div className="absolute bottom-0 right-0 p-2 bg-emerald-600 text-white rounded-full shadow-lg">
+                <ShieldCheck size={16} />
+              </div>
             </div>
             <p className="text-[10px] font-black text-black uppercase tracking-widest mt-3">
               Ảnh đại diện của em
@@ -114,19 +81,19 @@ export default function ProfileEditModal({
 
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-2">
             <p className="text-[10px] font-black text-black uppercase tracking-widest">
-              Mã định danh (UID) của em
+              Mã người dùng của em
             </p>
             <div className="flex items-center justify-between gap-2 overflow-hidden">
               <code className="text-[10px] font-mono text-sky-700 truncate bg-white px-2 py-1 rounded border border-sky-50 flex-1">
-                {user.uid}
+                {user.id}
               </code>
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(user.uid);
-                  alert("Đã sao chép mã UID!");
+                  navigator.clipboard.writeText(user.id);
+                  alert("Đã sao chép mã người dùng!");
                 }}
                 className="p-1.5 hover:bg-sky-100 rounded-lg text-sky-600 transition-colors shrink-0"
-                title="Sao chép UID"
+                title="Sao chép mã"
               >
                 <Zap size={14} />
               </button>
@@ -149,8 +116,9 @@ export default function ProfileEditModal({
 
           <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100">
             <p className="text-[11px] text-sky-700 leading-relaxed font-medium">
-              Họ tên này sẽ được dùng để **ghi nhận kết quả** của em khi tham
-              gia thử thách và lưu danh trên Bảng xếp hạng.
+              Hồ sơ cá nhân đang được chuyển dần sang backend mới. Ở pha này,
+              em đã đăng nhập bằng tài khoản server-side an toàn hơn; chỉnh sửa
+              hồ sơ sẽ được nối hoàn chỉnh ở bước tiếp theo.
             </p>
           </div>
 

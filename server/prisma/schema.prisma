@@ -4,55 +4,130 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String     @id @default(uuid())
-  firebaseUid String     @unique // ID từ Firebase Auth
-  email       String     @unique
-  displayName String
-  role        Role       @default(STUDENT)
-  classId     String?
-  class       Class?     @relation(fields: [classId], references: [id])
-  stats       UserStats?
-  xpLogs      XpLog[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id                 String        @id @default(uuid())
+  username           String        @unique
+  email              String?       @unique
+  displayName        String
+  passwordHash       String
+  role               Role          @default(STUDENT)
+  status             AccountStatus @default(ACTIVE)
+  mustChangePassword Boolean       @default(true)
+  lastLoginAt        DateTime?
+
+  classId            String?
+  class              Class?        @relation(fields: [classId], references: [id], onDelete: SetNull)
+
+  studentProfile     StudentProfile?
+  teacherProfile     TeacherProfile?
+  stats              UserStats?
+  xpLogs             XpLog[]
+  authSessions       AuthSession[]
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([role, status])
+  @@index([classId])
+}
+
+model Class {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  grade        Int
+  academicYear String
+
+  users        User[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([name, academicYear])
+}
+
+model StudentProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  studentCode String   @unique
+  grade       Int
+  avatarUrl   String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TeacherProfile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  employeeCode String?  @unique
+  subject      String?
+  avatarUrl    String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model UserStats {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalXp       Int      @default(0)
-  currentStreak Int      @default(0)
-  longestStreak Int      @default(0)
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  totalXp       Int       @default(0)
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
   lastStudyDate DateTime?
-  updatedAt     DateTime @updatedAt
+
+  updatedAt     DateTime  @updatedAt
 }
 
 model XpLog {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Int      // Ví dụ: +50, -10
+
+  amount      Int
   action      XpAction
-  referenceId String?  // ID của bài Quiz hoặc Arena match để truy vết
+  referenceId String?
+
   createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
-model Class {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  users     User[]
-  createdAt DateTime @default(now())
+model AuthSession {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refreshTokenHash String    @unique
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId, expiresAt])
 }
 
 enum Role {
   STUDENT
   TEACHER
   ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
 }
 
 enum XpAction {

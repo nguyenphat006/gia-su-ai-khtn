@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { User } from "firebase/auth";
-import { signOut } from "firebase/auth";
 import { motion } from "motion/react";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db, uploadFile } from "@/lib/firebase";
 import Header from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import Footer from "@/components/ui/Footer";
 import MobileNav from "@/components/ui/MobileNav";
 import ProfileEditModal from "@/components/ui/ProfileEditModal";
 import { AnimatePresence } from "motion/react";
+import { type AuthenticatedUser } from "@/lib/auth";
 
 interface AppLayoutProps {
-  user: User;
+  user: AuthenticatedUser;
   studentData: any;
   isAdmin: boolean;
   leaderboard: any[];
@@ -21,6 +18,7 @@ interface AppLayoutProps {
   addXP: (amount: number) => void;
   isUploading: boolean;
   setIsUploading: (v: boolean) => void;
+  onLogout: () => Promise<void>;
 }
 
 export default function AppLayout({
@@ -32,31 +30,15 @@ export default function AppLayout({
   addXP,
   isUploading,
   setIsUploading,
+  onLogout,
 }: AppLayoutProps) {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
-
-  const handleLogout = () => signOut(auth);
 
   const handleSchoolLogoUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = e.target.files?.[0];
-    if (!isAdmin || !file || isUploading) return;
-
-    setIsUploading(true);
-    try {
-      const url = await uploadFile(file, `config/school_logo`);
-      await setDoc(
-        doc(db, "config", "school"),
-        { logoUrl: url },
-        { merge: true }
-      );
-    } catch (error) {
-      console.error("Lỗi tải ảnh trường:", error);
-      alert("Không thể tải ảnh trường. Vui lòng thử lại.");
-    } finally {
-      setIsUploading(false);
-    }
+    if (!isAdmin || isUploading) return;
+    alert("Chức năng cập nhật logo trường sẽ được nối sang backend ở pha tiếp theo.");
   };
 
   return (
@@ -71,7 +53,9 @@ export default function AppLayout({
           user={user}
           studentData={studentData}
           onProfileEdit={() => setShowProfileEdit(true)}
-          onLogout={handleLogout}
+          onLogout={() => {
+            void onLogout();
+          }}
         />
 
         {/* Profile Edit Modal */}
@@ -88,7 +72,7 @@ export default function AppLayout({
           <Sidebar
             studentData={studentData}
             leaderboard={leaderboard}
-            currentUserId={user.uid}
+            currentUserId={user.id}
           />
 
           {/* Main Content Area - RIGHT on desktop */}

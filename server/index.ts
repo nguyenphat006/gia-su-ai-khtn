@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { buildApp } from "./app.js";
 
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT || 3001);
 
 async function startServer() {
   try {

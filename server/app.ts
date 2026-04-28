@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
 import { errorHandler } from "./middleware/error-handler.js";
@@ -21,7 +22,13 @@ export async function buildApp() {
 
   // CORS
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || ["*"];
-  app.use(cors({ origin: allowedOrigins }));
+  app.use(cors({ 
+    origin: allowedOrigins,
+    credentials: true 
+  }));
+
+  // Cookie parser
+  app.use(cookieParser());
 
   // Body parser
   app.use(express.json({ limit: "50mb" }));
@@ -46,8 +53,10 @@ export async function buildApp() {
     "/api-docs",
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
-      customCss: ".swagger-ui .topbar { display: none }",
       customSiteTitle: "Gia sư AI KHTN - API Docs",
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
     })
   );
 

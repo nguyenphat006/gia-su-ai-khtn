@@ -37,5 +37,16 @@ export default defineConfig({
     hmr: {
       overlay: true,
     },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
+      "/socket.io": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+        ws: true,
+      },
+    },
   },
 });

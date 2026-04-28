@@ -14,6 +14,17 @@ const swaggerOptions: swaggerJsdoc.Options = {
         name: "Gia sư AI KHTN",
       },
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description:
+            "Dán access token vào đây theo dạng Bearer token để gọi các API cần xác thực.",
+        },
+      },
+    },
     servers: [
       {
         url: "http://localhost:{port}",
@@ -27,6 +38,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
     ],
     tags: [
       { name: "Health", description: "Kiểm tra trạng thái server" },
+      { name: "Auth", description: "Xác thực và quản lý phiên đăng nhập" },
       { name: "AI - Chat", description: "Trợ lý học tập AI (Gemini)" },
       { name: "AI - Quiz", description: "Tạo đề thi/ôn tập bằng AI" },
       { name: "AI - Tools", description: "Flashcards, Mindmap, Phân tích" },

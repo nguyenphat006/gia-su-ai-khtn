@@ -1,4 +1,5 @@
 import { Router } from "express";
+import authRoutes from "./auth.routes.js";
 import aiRoutes from "./ai.routes.js";
 import fileRoutes from "./file.routes.js";
 
@@ -36,6 +37,7 @@ router.get("/health", (req, res) => {
 });
 
 // Gắn các nhóm API
+router.use("/auth", authRoutes);
 router.use("/ai", aiRoutes);
 router.use("/files", fileRoutes);
 
