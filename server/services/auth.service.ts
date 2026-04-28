@@ -306,3 +306,52 @@ export async function provisionUser(data: any) {
         include: publicUserInclude
     });
 }
+
+// Hàm hỗ trợ tạo sẵn Admin và Teacher mặc định
+export async function bootstrapDefaultAccounts() {
+  const adminPasswordHash = await hashPassword("admin@123");
+  const teacherPasswordHash = await hashPassword("teacher@123");
+
+  // Kiểm tra Admin
+  let admin = await prisma.user.findUnique({ where: { username: "admin" } });
+  if (!admin) {
+    admin = await prisma.user.create({
+      data: {
+        username: "admin",
+        displayName: "Quản trị viên",
+        passwordHash: adminPasswordHash,
+        role: "ADMIN",
+        status: "ACTIVE",
+        mustChangePassword: false,
+        teacherProfile: {
+          create: {
+            employeeCode: "ADMIN001",
+          }
+        }
+      }
+    });
+  }
+
+  // Kiểm tra Teacher
+  let teacher = await prisma.user.findUnique({ where: { username: "teacher" } });
+  if (!teacher) {
+    teacher = await prisma.user.create({
+      data: {
+        username: "teacher",
+        displayName: "Giáo viên mặc định",
+        passwordHash: teacherPasswordHash,
+        role: "TEACHER",
+        status: "ACTIVE",
+        mustChangePassword: false,
+        teacherProfile: {
+          create: {
+            employeeCode: "GV001",
+            subject: "KHTN",
+          }
+        }
+      }
+    });
+  }
+
+  return { message: "Tạo tài khoản mặc định thành công (admin/admin@123, teacher/teacher@123)." };
+}

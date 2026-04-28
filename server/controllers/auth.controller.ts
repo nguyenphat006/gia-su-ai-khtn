@@ -6,6 +6,8 @@ import {
   loginUnified,
   logoutSession,
   refreshAuthSession,
+  provisionUser,
+  bootstrapDefaultAccounts,
 } from "../services/auth.service.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
 
@@ -124,3 +126,19 @@ export const getMyProfile = asyncHandler(async (req: Request, res: Response) => 
   const user = await getCurrentUser(userId);
   res.json({ status: "ok", data: { user } });
 });
+
+export const provisionSchoolUser = asyncHandler(async (req: Request, res: Response) => {
+  const data = req.body;
+  if (!data.role || !data.displayName || !data.username) {
+    throw new ValidationError("Thiếu dữ liệu tạo tài khoản (role, displayName, username).");
+  }
+
+  const result = await provisionUser(data);
+  res.status(201).json({ status: "ok", data: { user: result } });
+});
+
+export const bootstrapDefaults = asyncHandler(async (req: Request, res: Response) => {
+  const result = await bootstrapDefaultAccounts();
+  res.status(201).json({ status: "ok", data: result });
+});
+
