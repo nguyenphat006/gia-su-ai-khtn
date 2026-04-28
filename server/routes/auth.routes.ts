@@ -90,10 +90,10 @@ router.post("/users/provision", authenticate, authorize(Role.ADMIN, Role.TEACHER
  *               identifier:
  *                 type: string
  *                 description: "Có thể là username, email hoặc studentCode"
- *                 example: "hs001"
+ *                 example: "admin"
  *               password:
  *                 type: string
- *                 example: "123456"
+ *                 example: "admin@123"
  *     responses:
  *       200:
  *         description: Đăng nhập thành công, trả về cookie và user profile

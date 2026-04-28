@@ -258,7 +258,11 @@ export async function updateUserByAdmin(id: string, data: {
   if (data.email !== undefined) userUpdate.email = data.email?.trim().toLowerCase() || null;
   if (data.role !== undefined) userUpdate.role = data.role;
   if (data.status !== undefined) userUpdate.status = data.status as any;
-  if (data.classId !== undefined) userUpdate.classId = data.classId;
+  if (data.classId !== undefined) {
+    userUpdate.class = data.classId
+      ? { connect: { id: data.classId } }
+      : { disconnect: true };
+  }
   if (data.password) {
     userUpdate.passwordHash = await hashPassword(data.password);
     userUpdate.mustChangePassword = true;
