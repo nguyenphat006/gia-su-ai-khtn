@@ -3,6 +3,7 @@ import authRoutes from "./auth.routes.js";
 import aiRoutes from "./ai.routes.js";
 import fileRoutes from "./file.routes.js";
 import userRoutes from "./user.routes.js";
+import classRoutes from "./class.routes.js";
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.use("/auth", authRoutes);
 router.use("/ai", aiRoutes);
 router.use("/files", fileRoutes);
 router.use("/users", userRoutes);
+router.use("/classes", classRoutes);
 
 export default router;

@@ -1,17 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  activateFirstTimeAccount,
-  clearAuthSession,
-  getStoredAccessToken,
-  getStoredRefreshToken,
-  loginStudentWithServer,
-  loginTeacherWithServer,
+  loginWithServer,
+  refreshSession,
   logoutFromServer,
-  refreshSessionWithServer,
-  type ActivateAccountInput,
-  type AuthenticatedUser,
-  type LoginInput,
-} from "@/lib/auth";
+} from "../features/auth/service";
+import type { AuthenticatedUser, LoginInput } from "../features/auth/types";
 
 export const SCHOOL_LOGO_URL =
   "https://thcsphuoctan3.edu.vn/wp-content/uploads/2024/03/LOGO-THCS-PHUOC-TAN-3-326x245.jpg";
@@ -53,26 +46,19 @@ export function useAuth() {
   const studentData = useMemo(() => deriveStudentView(user), [user]);
   const isAdmin = user?.role === "ADMIN";
 
+  // Khởi tạo session khi load app (Dựa vào httpOnly cookie)
   useEffect(() => {
     let isMounted = true;
 
     const bootstrapSession = async () => {
-      const accessToken = getStoredAccessToken();
-      const refreshToken = getStoredRefreshToken();
-
-      if (!accessToken && !refreshToken) {
-        if (isMounted) setIsLoading(false);
-        return;
-      }
-
       try {
-        const session = await refreshSessionWithServer(refreshToken || undefined);
+        // Cố gắng refresh session (sẽ thành công nếu cookie refreshToken hợp lệ)
+        const activeUser = await refreshSession();
         if (isMounted) {
-          setUser(session.user);
+          setUser(activeUser);
         }
       } catch (error) {
-        console.error("Không thể khôi phục phiên đăng nhập:", error);
-        clearAuthSession();
+        console.log("Không có phiên đăng nhập hợp lệ:", error);
         if (isMounted) {
           setUser(null);
         }
@@ -88,45 +74,25 @@ export function useAuth() {
     };
   }, []);
 
-  const loginStudent = useCallback(async (input: LoginInput) => {
-    const session = await loginStudentWithServer(input);
-    setUser(session.user);
-    return session.user;
-  }, []);
-
-  const loginTeacher = useCallback(async (input: LoginInput) => {
-    const session = await loginTeacherWithServer(input);
-    setUser(session.user);
-    return session.user;
-  }, []);
-
-  const activateAccount = useCallback(async (input: ActivateAccountInput) => {
-    const session = await activateFirstTimeAccount(input);
-    setUser(session.user);
-    return session.user;
+  const login = useCallback(async (input: LoginInput) => {
+    const activeUser = await loginWithServer(input);
+    setUser(activeUser);
+    return activeUser;
   }, []);
 
   const logout = useCallback(async () => {
     try {
       await logoutFromServer();
     } catch (error) {
-      console.error("Đăng xuất server thất bại, đang xóa phiên cục bộ:", error);
+      console.error("Lỗi khi đăng xuất:", error);
     } finally {
-      clearAuthSession();
       setUser(null);
     }
   }, []);
 
   const addXP = useCallback((amount: number) => {
     if (!amount || !user) return;
-
-    setUser((current) => {
-      if (!current) return current;
-
-      return {
-        ...current,
-      };
-    });
+    // Logic cập nhật XP (nếu có)
   }, [user]);
 
   return {
@@ -137,9 +103,7 @@ export function useAuth() {
     leaderboard,
     addXP,
     schoolLogo,
-    loginStudent,
-    loginTeacher,
-    activateAccount,
+    login,
     logout,
   };
 }

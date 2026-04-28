@@ -43,6 +43,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
       { name: "AI - Quiz", description: "Tạo đề thi/ôn tập bằng AI" },
       { name: "AI - Tools", description: "Flashcards, Mindmap, Phân tích" },
       { name: "File", description: "Trích xuất văn bản từ PDF/Word" },
+      { name: "Classes - Lớp học", description: "Quản lý lớp học và học sinh" },
     ],
   },
   apis: ["./routes/*.ts", "./controllers/*.ts"],

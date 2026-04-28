@@ -1,14 +1,12 @@
-import { useMemo, useState } from "react";
-import { ChevronRight, KeyRound, Loader2, ShieldCheck, UserRound } from "lucide-react";
+import { useState } from "react";
+import { ChevronRight, Loader2, ShieldCheck, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type ActivateAccountInput, type LoginInput } from "@/lib/auth";
+import type { LoginInput } from "../types";
 
-type AuthMode = "student-login" | "activate" | "teacher-login";
+type AuthMode = "student-login" | "teacher-login";
 
 interface LoginFormProps {
-  onStudentLogin: (input: LoginInput) => Promise<unknown>;
-  onTeacherLogin: (input: LoginInput) => Promise<unknown>;
-  onActivateAccount: (input: ActivateAccountInput) => Promise<unknown>;
+  onLogin: (input: LoginInput) => Promise<unknown>;
 }
 
 const MODE_META: Record<
@@ -18,46 +16,33 @@ const MODE_META: Record<
     description: string;
     icon: React.ReactNode;
     submitLabel: string;
+    placeholder: string;
   }
 > = {
   "student-login": {
-    title: "Đăng nhập học sinh",
-    description: "Dùng mã học sinh hoặc tên đăng nhập cùng mật khẩu đã được kích hoạt trước đó.",
+    title: "Đăng nhập Học sinh",
+    description: "Sử dụng mã học sinh hoặc tên đăng nhập để vào lớp học AI.",
     icon: <UserRound size={16} />,
     submitLabel: "Vào lớp học AI",
-  },
-  activate: {
-    title: "Kích hoạt lần đầu",
-    description: "Nhập mã học sinh hoặc tên đăng nhập, mã kích hoạt và mật khẩu mới để bắt đầu sử dụng.",
-    icon: <ShieldCheck size={16} />,
-    submitLabel: "Kích hoạt tài khoản",
+    placeholder: "vd: HS6A012 hoặc hocsinh_6a012",
   },
   "teacher-login": {
-    title: "Đăng nhập giáo viên",
-    description: "Dành cho giáo viên và quản trị viên để quản lý lớp học, tài liệu và tri thức hệ thống.",
-    icon: <KeyRound size={16} />,
+    title: "Đăng nhập Giáo viên",
+    description: "Dành cho giáo viên và quản trị viên quản lý hệ thống.",
+    icon: <ShieldCheck size={16} />,
     submitLabel: "Vào khu quản lý",
+    placeholder: "vd: cotrang hoặc teacher@school.vn",
   },
 };
 
-export default function LoginForm({
-  onStudentLogin,
-  onTeacherLogin,
-  onActivateAccount,
-}: LoginFormProps) {
+export default function LoginForm({ onLogin }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("student-login");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [activationCode, setActivationCode] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const meta = MODE_META[mode];
-  const identifierLabel = useMemo(() => {
-    if (mode === "teacher-login") return "Tên đăng nhập hoặc email";
-    return "Mã học sinh hoặc tên đăng nhập";
-  }, [mode]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -67,28 +52,10 @@ export default function LoginForm({
     setError("");
 
     try {
-      if (mode === "student-login") {
-        await onStudentLogin({
-          identifier: identifier.trim(),
-          password,
-        });
-      } else if (mode === "teacher-login") {
-        await onTeacherLogin({
-          identifier: identifier.trim(),
-          password,
-        });
-      } else {
-        if (!activationCode.trim()) {
-          throw new Error("Mã kích hoạt là bắt buộc.");
-        }
-
-        await onActivateAccount({
-          identifier: identifier.trim(),
-          password,
-          activationCode: activationCode.trim(),
-          displayName: displayName.trim() || undefined,
-        });
-      }
+      await onLogin({
+        identifier: identifier.trim(),
+        password,
+      });
     } catch (submitError: any) {
       console.error("Auth error:", submitError);
       setError(submitError.message || "Không thể kết nối tới máy chủ xác thực.");
@@ -99,8 +66,8 @@ export default function LoginForm({
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6 bg-slate-50 rounded-[1.5rem] p-2 border border-slate-100">
-        {(["student-login", "activate", "teacher-login"] as AuthMode[]).map((value) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6 bg-slate-50 rounded-[1.5rem] p-2 border border-slate-100">
+        {(["student-login", "teacher-login"] as AuthMode[]).map((value) => (
           <button
             key={value}
             type="button"
@@ -115,9 +82,9 @@ export default function LoginForm({
                 : "border-transparent hover:bg-white/70"
             )}
           >
-            <div className="flex items-center gap-2 text-sky-700 font-bold text-xs">
+            <div className="flex items-center gap-2 text-sky-700 font-bold text-xs uppercase tracking-wider">
               {MODE_META[value].icon}
-              {MODE_META[value].title}
+              {value === "student-login" ? "Học sinh" : "Giáo viên"}
             </div>
           </button>
         ))}
@@ -132,34 +99,17 @@ export default function LoginForm({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field
-          label={identifierLabel}
+          label="Tên đăng nhập / Mã định danh"
           value={identifier}
           onChange={setIdentifier}
-          placeholder={mode === "teacher-login" ? "vd: cotrang hoặc teacher@school.vn" : "vd: HS6A012 hoặc hocsinh_6a012"}
+          placeholder={meta.placeholder}
         />
 
-        {mode === "activate" && (
-          <>
-            <Field
-              label="Mã kích hoạt"
-              value={activationCode}
-              onChange={setActivationCode}
-              placeholder="Nhập mã kích hoạt do nhà trường cấp..."
-            />
-            <Field
-              label="Họ và tên hiển thị"
-              value={displayName}
-              onChange={setDisplayName}
-              placeholder="Tên hiển thị của em..."
-            />
-          </>
-        )}
-
         <Field
-          label={mode === "activate" ? "Mật khẩu mới" : "Mật khẩu"}
+          label="Mật khẩu"
           value={password}
           onChange={setPassword}
-          placeholder={mode === "activate" ? "Tạo mật khẩu gồm chữ và số..." : "Nhập mật khẩu của em..."}
+          placeholder="Nhập mật khẩu..."
           type="password"
         />
 
@@ -190,8 +140,8 @@ export default function LoginForm({
           Hướng dẫn nhanh
         </p>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Nếu em là học sinh mới, hãy chọn <b>Kích hoạt lần đầu</b>. Nếu quên mật khẩu,
-          em hãy liên hệ giáo viên hoặc quản trị viên để được cấp lại quyền truy cập.
+          Nếu em là học sinh chưa có tài khoản, vui lòng liên hệ giáo viên để được cấp. 
+          Nếu lần đầu đăng nhập, hệ thống sẽ yêu cầu em đổi mật khẩu để bảo mật.
         </p>
       </div>
     </div>
