@@ -21,9 +21,20 @@ export async function buildApp() {
   // ========================
 
   // CORS
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || ["*"];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(s => s.trim()) || [];
   app.use(cors({ 
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Cho phép requests không có origin (Swagger UI, curl, mobile apps)
+      if (!origin) return callback(null, true);
+      // Cho phép tất cả nếu chưa cấu hình ALLOWED_ORIGINS
+      if (allowedOrigins.length === 0 || allowedOrigins.includes("*")) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS không cho phép origin này."));
+    },
     credentials: true 
   }));
 
