@@ -9,7 +9,7 @@ services:
 
     # Build & Start
     rootDir: server
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
 
     # Biến môi trường
