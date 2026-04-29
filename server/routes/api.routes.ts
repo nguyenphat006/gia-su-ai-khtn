@@ -4,6 +4,9 @@ import aiRoutes from "./ai.routes.js";
 import fileRoutes from "./file.routes.js";
 import userRoutes from "./user.routes.js";
 import classRoutes from "./class.routes.js";
+import systemRoutes from "./system.routes.js";
+import knowledgeRoutes from "./knowledge.routes.js";
+import chatRoutes from "./chat.routes.js";
 
 const router = Router();
 
@@ -44,5 +47,8 @@ router.use("/ai", aiRoutes);
 router.use("/files", fileRoutes);
 router.use("/users", userRoutes);
 router.use("/classes", classRoutes);
+router.use("/system", systemRoutes);
+router.use("/knowledge", knowledgeRoutes);
+router.use("/chat", chatRoutes);
 
 export default router;

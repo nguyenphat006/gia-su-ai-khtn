@@ -3,8 +3,10 @@ import {
   UserIcon,
   LogOut,
   Bell,
-  Search
+  ChevronRight,
+  Home
 } from "lucide-react";
+import { useLocation, Link } from "react-router-dom";
 import { type AuthenticatedUser } from "@/features/auth/types";
 
 interface HeaderProps {
@@ -14,40 +16,50 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
+const ROUTE_NAMES: Record<string, string> = {
+  "/chat": "Trợ lý AI",
+  "/quiz": "Ôn tập kiến thức",
+  "/arena": "Đấu trường trí tuệ",
+  "/teacher": "Bảng điều khiển giáo viên",
+};
+
 export default function Header({
   user,
   studentData,
   onProfileEdit,
   onLogout,
 }: HeaderProps) {
+  const location = useLocation();
+  const path = location.pathname;
+  const pageName = ROUTE_NAMES[path] || "Trang chủ";
+
   return (
-    <header className="flex items-center justify-between py-2 shrink-0">
-      {/* ── Left: Search Bar (Gợi ý thêm để đi thi chuyên nghiệp hơn) ── */}
-      <div className="flex-1 max-w-md hidden sm:block">
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" size={18} />
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm bài học, thử thách..." 
-            className="w-full bg-white border border-slate-100 rounded-2xl py-3 pl-12 pr-4 text-xs font-bold text-slate-900 outline-none focus:border-sky-200 focus:ring-4 focus:ring-sky-500/5 transition-all"
-          />
-        </div>
-      </div>
+    <header className="flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-md rounded-2xl border border-slate-100 shadow-sm shrink-0">
+      {/* ── Left: Breadcrumbs ────────────────────────────────── */}
+      <nav className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-wider">
+        <Home size={14} className="text-slate-300" />
+        <ChevronRight size={12} className="text-slate-200" />
+        <span className="text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-100/50">
+          {pageName}
+        </span>
+      </nav>
 
       {/* ── Right: User Info & Actions ────────────────────────── */}
       <div className="flex items-center gap-4 ml-auto">
-        <button className="relative p-3 text-slate-400 hover:text-sky-500 hover:bg-white rounded-2xl transition-all border border-transparent hover:border-slate-100">
+        <button className="relative p-2.5 text-slate-400 hover:text-sky-500 hover:bg-slate-50 rounded-xl transition-all border border-transparent">
           <Bell size={20} />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
+
+        <div className="w-px h-6 bg-slate-100 hidden sm:block"></div>
 
         <div className="group relative">
           <motion.div
             whileHover={{ y: -1 }}
             onClick={onProfileEdit}
-            className="flex items-center gap-3 p-1.5 pr-4 bg-white rounded-2xl border border-slate-100 cursor-pointer shadow-sm hover:shadow-md transition-all"
+            className="flex items-center gap-3 p-1.5 pr-4 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all"
           >
-            <div className="w-9 h-9 bg-sky-50 rounded-xl border border-sky-100 overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 bg-sky-100 rounded-lg border border-sky-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner">
               {studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl ? (
                 <img
                   src={studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl || ""}
@@ -55,27 +67,31 @@ export default function Header({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-sky-600 font-black text-sm uppercase">
+                <div className="text-sky-600 font-black text-base uppercase">
                   {(studentData?.displayName || user.displayName)?.[0]}
                 </div>
               )}
             </div>
             <div className="hidden sm:block">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Cá nhân</p>
-              <p className="text-xs font-black text-slate-900 leading-none">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">
+                {user.role === "STUDENT" ? "Học sinh" : "Cá nhân"}
+              </p>
+              <p className="text-sm font-black text-slate-900 leading-none">
                 {studentData?.displayName || user.displayName}
               </p>
             </div>
           </motion.div>
 
-          {/* Dropdown nhanh */}
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-             <button onClick={onProfileEdit} className="w-full flex items-center gap-3 p-2.5 text-[10px] font-black text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
-                <UserIcon size={14} /> Hồ sơ của em
+          {/* Dropdown Menu */}
+          <div className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 transform group-hover:translate-y-0 translate-y-2">
+             <button onClick={onProfileEdit} className="w-full flex items-center gap-3 p-3 text-xs font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 rounded-xl transition-colors mb-1">
+                <div className="p-2 bg-slate-50 rounded-lg"><UserIcon size={16} /></div>
+                Hồ sơ cá nhân
              </button>
              <div className="h-px bg-slate-50 my-1 mx-2"></div>
-             <button onClick={onLogout} className="w-full flex items-center gap-3 p-2.5 text-[10px] font-black text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                <LogOut size={14} /> Đăng xuất
+             <button onClick={onLogout} className="w-full flex items-center gap-3 p-3 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                <div className="p-2 bg-red-50/50 rounded-lg"><LogOut size={16} /></div>
+                Đăng xuất
              </button>
           </div>
         </div>

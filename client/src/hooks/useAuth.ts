@@ -98,6 +98,17 @@ export function useAuth() {
     // Logic cập nhật XP sẽ được bổ sung sau
   }, [user]);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const activeUser = await fetchCurrentUser();
+      setUser(activeUser);
+      return activeUser;
+    } catch (error) {
+      console.error("Lỗi khi refresh user:", error);
+      return null;
+    }
+  }, []);
+
   return {
     user,
     studentData,
@@ -108,6 +119,6 @@ export function useAuth() {
     schoolLogo,
     login,
     logout,
-    refreshUser: fetchCurrentUser
+    refreshUser
   };
 }

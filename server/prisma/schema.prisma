@@ -25,6 +25,7 @@ model User {
   stats              UserStats?
   xpLogs             XpLog[]
   authSessions       AuthSession[]
+  chatSessions       ChatSession[]
 
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -136,4 +137,56 @@ enum XpAction {
   WIN_ARENA
   DAILY_LOGIN
   ADMIN_BONUS
+}
+
+// ========================
+// AI CHAT & DYNAMIC CONFIG
+// ========================
+
+model SystemConfig {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+  updatedBy String?  
+}
+
+model KnowledgeDocument {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  tags      String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model ChatSession {
+  id        String        @id @default(uuid())
+  userId    String
+  title     String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id          String      @id @default(uuid())
+  sessionId   String
+  role        ChatRole
+  content     String      @db.Text
+  attachments Json?       
+  createdAt   DateTime    @default(now())
+
+  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+enum ChatRole {
+  USER
+  MODEL
+  SYSTEM
 }

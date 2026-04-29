@@ -1,113 +1,88 @@
 import { useState, useEffect } from "react";
-import { collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, getDocs } from "firebase/firestore";
-import { db, handleFirestoreError } from "@/lib/firebase";
-import { askGiaSu, getRelevantContext } from "@/lib/gemini";
 import { Message, SelectedImage, SelectedFile } from "../types";
 
+// ── Mock Data dành cho demo ──────────────────────────────────────
+const MOCK_MESSAGES: Message[] = [
+  {
+    role: "model",
+    content: "Chào em! Cô là trợ lý học tập KHTN. Em có biết tại sao lá cây lại có màu xanh không? 🌱",
+    timestamp: new Date(Date.now() - 1000 * 60 * 10),
+    studentId: "demo"
+  },
+  {
+    role: "user",
+    content: "Dạ có phải do diệp lục không cô?",
+    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+    studentId: "demo"
+  },
+  {
+    role: "model",
+    content: "Chính xác rồi! Diệp lục giúp cây hấp thụ ánh sáng mặt trời để quang hợp. Em nắm bài rất tốt! 👏",
+    timestamp: new Date(Date.now() - 1000 * 60 * 2),
+    studentId: "demo"
+  }
+];
+
 export function useChat(userId: string, studentName: string, addXP: (xp: number) => void) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
-  const [context, setContext] = useState("");
 
+  // Giả lập khởi tạo chào mừng
   useEffect(() => {
-    // Fetch RAG context from Firestore
-    const fetchContext = async () => {
-      try {
-        const docsSnap = await getDocs(collection(db, "documents"));
-        const docsText = docsSnap.docs.map(d => d.data().content).join("\n\n");
-        setContext(docsText);
-      } catch (err) {
-        handleFirestoreError(err, 'list', 'documents');
-      }
-    };
-    fetchContext();
-
-    // Listen to messages
-    const q = query(
-      collection(db, "messages"),
-      where("studentId", "==", userId),
-      orderBy("timestamp", "asc")
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map(doc => doc.data() as Message);
-      if (msgs.length === 0) {
-         setMessages([{ 
-            role: "model", 
-            content: `Chào mừng em **${studentName}** đến với Gia sư AI KHTN! 👋\n\nCô là trợ lý giúp em học tốt môn Khoa học Tự nhiên. Hôm nay em muốn khám phá điều gì cùng cô nào?`,
-            timestamp: new Date(),
-            studentId: userId
-         }]);
-      } else {
-         setMessages(msgs);
-      }
-    }, (error) => {
-      handleFirestoreError(error, 'list', 'messages');
-    });
-
-    return () => unsubscribe();
-  }, [userId, studentName]);
+    if (messages.length === 0) {
+      setMessages([{ 
+        role: "model", 
+        content: `Chào mừng em **${studentName}** đến với Gia sư AI KHTN! 👋\n\nHôm nay em muốn cùng cô khám phá kiến thức thú vị nào?`,
+        timestamp: new Date(),
+        studentId: userId
+      }]);
+    }
+  }, [studentName, userId]);
 
   const handleSend = async () => {
     if ((!input.trim() && !selectedImage && !selectedFile) || isLoading) return;
 
     const userText = input;
-    const currentImage = selectedImage;
-    const currentFile = selectedFile;
     
+    // 1. Add User Message
+    const userMsg: Message = {
+      studentId: userId,
+      role: "user",
+      content: userText || "🖼️ Đã gửi nội dung đính kèm",
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMsg]);
     setInput("");
     setSelectedImage(null);
     setSelectedFile(null);
     setIsLoading(true);
 
-    try {
-      const relevantContext = await getRelevantContext(userText || "Phân tích nội dung đính kèm");
+    // 2. Giả lập AI trả lời (Static Chat)
+    setTimeout(() => {
+      const aiResponses = [
+        "Câu hỏi của em rất hay! Để cô giải thích kỹ hơn về phần này nhé...",
+        "Đúng rồi đó em, kiến thức này nằm trong chương 2 sách Chân trời sáng tạo.",
+        "Em có muốn thử làm một bài tập nhỏ về nội dung này không? 😊",
+        "Tuyệt vời! Em đang học rất chăm chỉ. Điểm 10 cho sự nỗ lực của em! 🌟"
+      ];
       
-      let finalPrompt = userText;
-      if (currentFile) {
-        finalPrompt = `Dựa trên tài liệu đính kèm ("${currentFile.name}"): \n\n${currentFile.content}\n\nHọc sinh hỏi: ${userText || "Hãy giải bài tập/tóm tắt tài liệu này."}`;
-      }
-
-      try {
-        await addDoc(collection(db, "messages"), {
-          studentId: userId,
-          role: "user",
-          content: userText || (currentImage ? "🖼️ Em đã gửi một hình ảnh." : (currentFile ? `📂 Tài liệu: ${currentFile.name}` : "")),
-          timestamp: serverTimestamp()
-        });
-      } catch (err) {
-        handleFirestoreError(err, 'create', 'messages');
-      }
-
-      const history = messages.map(m => ({ role: m.role, parts: [{ text: m.content }] }));
-      const response = await askGiaSu(finalPrompt, history, relevantContext, currentImage || undefined);
+      const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
       
-      try {
-        await addDoc(collection(db, "messages"), {
-          studentId: userId,
-          role: "model",
-          content: response || "",
-          timestamp: serverTimestamp()
-        });
-      } catch (err) {
-        handleFirestoreError(err, 'create', 'messages');
-      }
-
-      addXP(5);
-    } catch (error) {
-      console.error(error);
-      await addDoc(collection(db, "messages"), {
+      const aiMsg: Message = {
         studentId: userId,
         role: "model",
-        content: "❗ Có lỗi xảy ra, cô chưa thể trả lời ngay lúc này.",
-        timestamp: serverTimestamp()
-      });
-    } finally {
+        content: randomResponse,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMsg]);
       setIsLoading(false);
-    }
+      addXP(10); // Tăng XP ảo để demo
+    }, 1500);
   };
 
   return {

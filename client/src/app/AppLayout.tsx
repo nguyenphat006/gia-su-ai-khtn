@@ -47,13 +47,13 @@ export default function AppLayout({
         }}
       />
 
-      {/* ── Main Dashboard Area: Grid 2 rows ───────────────────── */}
+      {/* ── Main Dashboard Area ────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Decorative Background */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-sky-100/20 rounded-full blur-[100px] -mr-64 -mt-64 pointer-events-none"></div>
+        {/* Decorative Background Accents - Hidden on small mobile to avoid noise */}
+        <div className="hidden sm:block absolute top-0 right-0 w-[600px] h-[600px] bg-sky-100/20 rounded-full blur-[100px] -mr-64 -mt-64 pointer-events-none"></div>
         
-        {/* Row 1: Header (Fixed Height) */}
-        <div className="px-6 py-4 relative z-40">
+        {/* Header - Sát lề hơn trên mobile */}
+        <div className="px-4 sm:px-6 py-2 sm:py-4 relative z-40 shrink-0">
            <Header
               user={user}
               studentData={studentData}
@@ -64,9 +64,9 @@ export default function AppLayout({
             />
         </div>
 
-        {/* Row 2: Content Workspace (Flexible Height) */}
-        <main className="flex-1 px-6 pb-6 relative z-10 min-h-0">
-          <div className="h-full w-full bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative flex flex-col">
+        {/* Main Workspace Area: Full-screen on mobile */}
+        <main className="flex-1 px-0 sm:px-6 pb-0 sm:pb-6 relative z-10 min-h-0 flex flex-col">
+          <div className="flex-1 bg-white sm:rounded-[2.5rem] shadow-none sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-t sm:border border-slate-100 overflow-hidden relative flex flex-col">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={location.pathname}
@@ -84,7 +84,7 @@ export default function AppLayout({
                       isAdmin,
                       addXP,
                       schoolLogo,
-                      onLogoUpload: async () => {}, // Handled elsewhere
+                      onLogoUpload: async () => {}, 
                       isUploadingLogo: isUploading,
                     }}
                   />
