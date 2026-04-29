@@ -68,7 +68,9 @@ export default function MessageList({ messages, isLoading }: MessageListProps) {
             </div>
             
             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest px-2">
-              {msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Vừa xong"}
+              {msg.timestamp instanceof Date 
+                ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                : (msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Vừa xong")}
             </span>
           </div>
         </div>

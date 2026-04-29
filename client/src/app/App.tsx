@@ -14,6 +14,10 @@ const QuizPage = lazy(() => import("@/pages/QuizPage"));
 const ArenaPage = lazy(() => import("@/pages/ArenaPage"));
 const TeacherPage = lazy(() => import("@/pages/TeacherPage"));
 
+const AdminLayout = lazy(() => import("@/app/AdminLayout"));
+const SystemConfigPage = lazy(() => import("@/pages/admin/SystemConfigPage"));
+const KnowledgeBasePage = lazy(() => import("@/pages/admin/KnowledgeBasePage"));
+
 // ── Type for Outlet Context ─────────────────────────────────────
 export interface AppOutletContext {
   user: AuthenticatedUser;
@@ -140,6 +144,18 @@ export default function App() {
                   )}
                   <Route path="*" element={<Navigate to="/chat" replace />} />
                 </Route>
+
+                {/* Admin Routes with Separate Layout */}
+                {isAdmin && (
+                  <Route
+                    path="/admin"
+                    element={<AdminLayout user={user} isAdmin={isAdmin} onLogout={async () => { await logout(); }} />}
+                  >
+                    <Route index element={<Navigate to="/admin/ai-config" replace />} />
+                    <Route path="ai-config" element={<SystemConfigPage />} />
+                    <Route path="knowledge" element={<KnowledgeBasePage />} />
+                  </Route>
+                )}
               </Routes>
             </Suspense>
           </>

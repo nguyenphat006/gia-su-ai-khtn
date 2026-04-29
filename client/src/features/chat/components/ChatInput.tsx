@@ -150,7 +150,7 @@ export default function ChatInput({
               disabled={isLoading}
               className="p-2 sm:p-3 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all disabled:opacity-50"
             >
-              <Upload size={18} sm:size={20} />
+              <Upload className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px]" />
             </button>
             <button 
               onClick={toggleRecording}
@@ -160,7 +160,7 @@ export default function ChatInput({
                 isRecording ? "text-red-500 animate-pulse bg-red-50" : "text-slate-400 hover:text-sky-600 hover:bg-sky-50"
               )}
             >
-              <Mic size={18} sm:size={20} />
+              <Mic className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px]" />
             </button>
           </div>
 
@@ -186,7 +186,7 @@ export default function ChatInput({
                 : "bg-sky-600 text-white shadow-lg shadow-sky-200 hover:bg-sky-700"
             )}
           >
-            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <SendHorizontal size={18} sm:size={22} />}
+            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <SendHorizontal className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" />}
           </button>
         </div>
         
