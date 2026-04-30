@@ -300,17 +300,20 @@ export async function updateUserByAdmin(id: string, data: {
 }
 
 /**
- * Admin xóa user (Hard delete — cascade sẽ xóa profile, sessions, stats, xpLogs)
+ * Admin xóa nhiều users
  */
-export async function deleteUser(id: string) {
-  const user = await prisma.user.findUnique({ where: { id } });
-  if (!user) {
-    throw new NotFoundError("Không tìm thấy người dùng.");
+export async function deleteUsers(ids: string[]) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ValidationError("Danh sách ID không hợp lệ.");
   }
 
-  await prisma.user.delete({ where: { id } });
+  const result = await prisma.user.deleteMany({ where: { id: { in: ids } } });
 
-  return { message: "Xóa người dùng thành công." };
+  if (result.count === 0) {
+    throw new NotFoundError("Không tìm thấy người dùng nào để xóa.");
+  }
+
+  return { message: `Xóa thành công ${result.count} người dùng.` };
 }
 
 // ========================

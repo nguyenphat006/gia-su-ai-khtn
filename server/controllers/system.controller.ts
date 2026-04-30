@@ -1,59 +1,76 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
+import { prisma } from "../config/prisma.js";
+import { asyncHandler } from "../middleware/error-handler.js";
 import {
   getAllSystemConfigs,
   getSystemConfig,
   upsertSystemConfig,
+  createSystemConfig,
+  deleteSystemConfig,
 } from "../services/system.service.js";
+import { ValidationError, NotFoundError } from "../utils/errors.js";
 
-export async function listConfigs(req: Request, res: Response, next: NextFunction) {
-  try {
-    const configs = await getAllSystemConfigs();
-    res.json({
-      status: "success",
-      data: { configs },
-    });
-  } catch (error) {
-    next(error);
+/**
+ * GET /api/system/configs — Lấy danh sách cấu hình hệ thống
+ */
+export const listConfigs = asyncHandler(async (req: Request, res: Response) => {
+  const result = await getAllSystemConfigs();
+  res.json({ status: "ok", data: result });
+});
+
+/**
+ * GET /api/system/configs/:key — Lấy chi tiết một cấu hình
+ */
+export const getConfig = asyncHandler(async (req: Request, res: Response) => {
+  const { key } = req.params;
+  const config = await prisma.systemConfig.findUnique({ where: { key } });
+  
+  if (!config) {
+    throw new NotFoundError("Không tìm thấy cấu hình hệ thống.");
   }
-}
 
-export async function getConfig(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { key } = req.params;
-    const value = await getSystemConfig(key);
-    
-    if (!value) {
-      res.status(404).json({ status: "error", message: "Config not found" });
-      return;
-    }
+  res.json({ status: "ok", data: { config } });
+});
 
-    res.json({
-      status: "success",
-      data: { key, value },
-    });
-  } catch (error) {
-    next(error);
+/**
+ * POST /api/system/configs — Thêm cấu hình mới
+ */
+export const addConfig = asyncHandler(async (req: Request, res: Response) => {
+  const { key, value } = req.body;
+  const userId = req.auth?.userId || "system";
+
+  if (!key || !value) {
+    throw new ValidationError("Khóa và giá trị cấu hình là bắt buộc.");
   }
-}
 
-export async function updateConfig(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { key } = req.params;
-    const { value } = req.body;
-    const userId = req.auth?.userId || "system";
+  const config = await createSystemConfig(key, value, userId);
 
-    if (!value) {
-      res.status(400).json({ status: "error", message: "Value is required" });
-      return;
-    }
+  res.status(201).json({ status: "ok", data: { config } });
+});
 
-    const updated = await upsertSystemConfig(key, value, userId);
+/**
+ * PUT /api/system/configs/:key — Cập nhật cấu hình hệ thống
+ */
+export const updateConfig = asyncHandler(async (req: Request, res: Response) => {
+  const { key } = req.params;
+  const { value } = req.body;
+  const userId = req.auth?.userId || "system";
 
-    res.json({
-      status: "success",
-      data: { config: updated },
-    });
-  } catch (error) {
-    next(error);
+  if (value === undefined) {
+    throw new ValidationError("Giá trị cấu hình là bắt buộc.");
   }
-}
+
+  const config = await upsertSystemConfig(key, value, userId);
+
+  res.json({ status: "ok", data: { config } });
+});
+
+/**
+ * DELETE /api/system/configs/:key — Xóa cấu hình hệ thống
+ */
+export const removeConfig = asyncHandler(async (req: Request, res: Response) => {
+  const { key } = req.params;
+  const result = await deleteSystemConfig(key);
+  
+  res.json({ status: "ok", data: result });
+});

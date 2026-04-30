@@ -1,4 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { NotFoundError } from "../utils/errors.js";
 
 export interface CreateKnowledgeDto {
   title: string;
@@ -14,14 +16,54 @@ export interface UpdateKnowledgeDto {
   isActive?: boolean;
 }
 
+interface ListKnowledgeQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  onlyActive?: boolean;
+}
+
 /**
- * Lấy danh sách tài liệu
+ * Lấy danh sách tài liệu với phân trang và tìm kiếm (Chuẩn hóa theo user.service)
  */
-export async function getKnowledgeDocuments(onlyActive = false) {
-  return prisma.knowledgeDocument.findMany({
-    where: onlyActive ? { isActive: true } : undefined,
-    orderBy: { createdAt: "desc" },
-  });
+export async function getKnowledgeDocuments(query: ListKnowledgeQuery) {
+  const page = Math.max(1, query.page || 1);
+  const limit = Math.min(100, Math.max(1, query.limit || 20));
+  const skip = (page - 1) * limit;
+
+  const where: Prisma.KnowledgeDocumentWhereInput = {};
+
+  if (query.onlyActive) {
+    where.isActive = true;
+  }
+
+  if (query.search) {
+    const search = query.search.trim();
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { content: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const [documents, total] = await Promise.all([
+    prisma.knowledgeDocument.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.knowledgeDocument.count({ where }),
+  ]);
+
+  return {
+    documents,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 }
 
 /**
@@ -30,7 +72,7 @@ export async function getKnowledgeDocuments(onlyActive = false) {
 export async function createKnowledgeDocument(data: CreateKnowledgeDto) {
   return prisma.knowledgeDocument.create({
     data: {
-      title: data.title,
+      title: data.title.trim(),
       content: data.content,
       tags: data.tags || [],
       isActive: data.isActive ?? true,
@@ -42,10 +84,15 @@ export async function createKnowledgeDocument(data: CreateKnowledgeDto) {
  * Cập nhật tài liệu
  */
 export async function updateKnowledgeDocument(id: string, data: UpdateKnowledgeDto) {
+  const existing = await prisma.knowledgeDocument.findUnique({ where: { id } });
+  if (!existing) {
+    throw new NotFoundError("Không tìm thấy tài liệu tri thức.");
+  }
+
   return prisma.knowledgeDocument.update({
     where: { id },
     data: {
-      title: data.title,
+      title: data.title?.trim(),
       content: data.content,
       tags: data.tags,
       isActive: data.isActive,
@@ -54,19 +101,27 @@ export async function updateKnowledgeDocument(id: string, data: UpdateKnowledgeD
 }
 
 /**
- * Xóa tài liệu
+ * Xóa nhiều tài liệu (bulk delete)
  */
-export async function deleteKnowledgeDocument(id: string) {
-  return prisma.knowledgeDocument.delete({
-    where: { id },
+export async function deleteKnowledgeDocuments(ids: string[]) {
+  const result = await prisma.knowledgeDocument.deleteMany({
+    where: { id: { in: ids } },
   });
+
+  if (result.count === 0) {
+    throw new NotFoundError("Không tìm thấy tài liệu nào để xoá.");
+  }
+
+  return { message: `Xóa thành công ${result.count} tài liệu.` };
 }
+
 
 /**
  * Trích xuất các tài liệu phù hợp nhất (Keyword Matching/Simple RAG)
  */
 export async function retrieveRelevantContext(query: string, limit = 3): Promise<string> {
-  const docs = await getKnowledgeDocuments(true);
+  const result = await getKnowledgeDocuments({ onlyActive: true });
+  const docs = result.documents;
   
   if (docs.length === 0) return "";
 

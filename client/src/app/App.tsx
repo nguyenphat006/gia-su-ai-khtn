@@ -154,6 +154,8 @@ export default function App() {
                     <Route index element={<Navigate to="/admin/ai-config" replace />} />
                     <Route path="ai-config" element={<SystemConfigPage />} />
                     <Route path="knowledge" element={<KnowledgeBasePage />} />
+                    {/* Catch-all for undefined admin routes to keep user inside AdminLayout */}
+                    <Route path="*" element={<></>} />
                   </Route>
                 )}
               </Routes>

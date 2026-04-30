@@ -4,9 +4,10 @@ import {
   LogOut,
   Bell,
   ChevronRight,
-  Home
+  Home,
+  Shield
 } from "lucide-react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { type AuthenticatedUser } from "@/features/auth/types";
 
 interface HeaderProps {
@@ -30,8 +31,10 @@ export default function Header({
   onLogout,
 }: HeaderProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
   const pageName = ROUTE_NAMES[path] || "Trang chủ";
+  const canAccessAdmin = user.role === "ADMIN" || user.role === "TEACHER";
 
   return (
     <header className="flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-md rounded-2xl border border-slate-100 shadow-sm shrink-0">
@@ -74,7 +77,7 @@ export default function Header({
             </div>
             <div className="hidden sm:block">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">
-                {user.role === "STUDENT" ? "Học sinh" : "Cá nhân"}
+                {user.role === "STUDENT" ? "Học sinh" : (user.role === "TEACHER" ? "Giáo viên" : "Quản trị viên")}
               </p>
               <p className="text-sm font-black text-slate-900 leading-none">
                 {studentData?.displayName || user.displayName}
@@ -83,11 +86,19 @@ export default function Header({
           </motion.div>
 
           {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 transform group-hover:translate-y-0 translate-y-2">
+          <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 transform group-hover:translate-y-0 translate-y-2">
              <button onClick={onProfileEdit} className="w-full flex items-center gap-3 p-3 text-xs font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 rounded-xl transition-colors mb-1">
                 <div className="p-2 bg-slate-50 rounded-lg"><UserIcon size={16} /></div>
                 Hồ sơ cá nhân
              </button>
+             
+             {canAccessAdmin && (
+               <button onClick={() => navigate("/admin/ai-config")} className="w-full flex items-center gap-3 p-3 text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors mb-1">
+                  <div className="p-2 bg-indigo-50/50 rounded-lg text-indigo-500"><Shield size={16} /></div>
+                  Quản trị hệ thống
+               </button>
+             )}
+
              <div className="h-px bg-slate-50 my-1 mx-2"></div>
              <button onClick={onLogout} className="w-full flex items-center gap-3 p-3 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                 <div className="p-2 bg-red-50/50 rounded-lg"><LogOut size={16} /></div>

@@ -42,6 +42,9 @@ model Class {
   academicYear String
 
   users        User[]
+  questions    QuestionBank[]
+  flashcards   FlashcardDeck[]
+  mindmaps     MindmapData[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -189,4 +192,62 @@ enum ChatRole {
   USER
   MODEL
   SYSTEM
+}
+
+// ========================
+// REVISION (ÔN TẬP)
+// ========================
+
+// Ngân hàng câu hỏi
+model QuestionBank {
+  id            String   @id @default(uuid())
+  classId       String   
+  topic         String   
+  type          String   
+  difficulty    String   
+  content       String   @db.Text
+  options       Json?    
+  correctAnswer String   
+  explanation   String?  @db.Text
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  class         Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+// Bộ Flashcard
+model FlashcardDeck {
+  id          String   @id @default(uuid())
+  classId     String
+  topic       String
+  title       String
+  cards       Json     
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+// Sơ đồ tư duy
+model MindmapData {
+  id          String   @id @default(uuid())
+  classId     String
+  topic       String
+  title       String
+  markdown    String   @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+// Lưu lịch sử bài thi
+model QuizHistory {
+  id              String   @id @default(uuid())
+  userId          String
+  quizType        String   
+  totalQuestions  Int
+  correctCount    Int
+  xpEarned        Int
+  createdAt       DateTime @default(now())
 }

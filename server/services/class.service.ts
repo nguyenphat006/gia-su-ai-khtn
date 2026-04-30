@@ -202,25 +202,31 @@ export async function updateClass(id: string, data: {
 }
 
 /**
- * Xóa lớp học (chỉ xóa được khi không còn học sinh)
+ * Xóa nhiều lớp học (chỉ xóa được khi không còn học sinh)
  */
-export async function deleteClass(id: string) {
-  const cls = await prisma.class.findUnique({
-    where: { id },
+export async function deleteClasses(ids: string[]) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ValidationError("Danh sách ID không hợp lệ.");
+  }
+
+  const classes = await prisma.class.findMany({
+    where: { id: { in: ids } },
     include: { _count: { select: { users: true } } },
   });
 
-  if (!cls) {
-    throw new NotFoundError("Không tìm thấy lớp học.");
+  if (classes.length === 0) {
+    throw new NotFoundError("Không tìm thấy lớp học nào để xoá.");
   }
 
-  if (cls._count.users > 0) {
+  const classesWithStudents = classes.filter(c => c._count.users > 0);
+  if (classesWithStudents.length > 0) {
+    const names = classesWithStudents.map(c => c.name).join(", ");
     throw new ValidationError(
-      `Không thể xóa lớp "${cls.name}" vì còn ${cls._count.users} học sinh. Hãy chuyển học sinh sang lớp khác trước.`
+      `Không thể xóa các lớp: ${names} vì vẫn còn học sinh. Hãy chuyển học sinh sang lớp khác trước.`
     );
   }
 
-  await prisma.class.delete({ where: { id } });
+  const result = await prisma.class.deleteMany({ where: { id: { in: ids } } });
 
-  return { message: "Xóa lớp học thành công." };
+  return { message: `Xóa thành công ${result.count} lớp học.` };
 }

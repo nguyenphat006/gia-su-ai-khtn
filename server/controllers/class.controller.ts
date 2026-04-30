@@ -5,7 +5,7 @@ import {
   getClassById,
   createClass,
   updateClass,
-  deleteClass,
+  deleteClasses,
 } from "../services/class.service.js";
 import { ValidationError } from "../utils/errors.js";
 
@@ -57,9 +57,13 @@ export const updateExistingClass = asyncHandler(async (req: Request, res: Respon
 });
 
 /**
- * DELETE /api/classes/:id — Xóa lớp
+ * DELETE /api/classes — Xóa nhiều lớp học
  */
-export const removeClass = asyncHandler(async (req: Request, res: Response) => {
-  const result = await deleteClass(req.params.id);
+export const removeClasses = asyncHandler(async (req: Request, res: Response) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ValidationError("Danh sách ID không hợp lệ.");
+  }
+  const result = await deleteClasses(ids);
   res.json({ status: "ok", data: result });
 });

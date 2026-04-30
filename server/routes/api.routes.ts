@@ -1,12 +1,11 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes.js";
-import aiRoutes from "./ai.routes.js";
-import fileRoutes from "./file.routes.js";
 import userRoutes from "./user.routes.js";
 import classRoutes from "./class.routes.js";
 import systemRoutes from "./system.routes.js";
 import knowledgeRoutes from "./knowledge.routes.js";
 import chatRoutes from "./chat.routes.js";
+import revisionRoutes from "./revision.routes.js";
 
 const router = Router();
 
@@ -32,6 +31,7 @@ const router = Router();
  *                   example: "Gia sư AI KHTN API is running"
  *                 timestamp:
  *                   type: string
+ *                   example: "2023-01-01T00:00:00.000Z"
  */
 router.get("/health", (req, res) => {
   res.json({
@@ -43,12 +43,11 @@ router.get("/health", (req, res) => {
 
 // Gắn các nhóm API
 router.use("/auth", authRoutes);
-router.use("/ai", aiRoutes);
-router.use("/files", fileRoutes);
 router.use("/users", userRoutes);
 router.use("/classes", classRoutes);
 router.use("/system", systemRoutes);
 router.use("/knowledge", knowledgeRoutes);
 router.use("/chat", chatRoutes);
+router.use("/revision", revisionRoutes);
 
 export default router;

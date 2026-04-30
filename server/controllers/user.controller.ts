@@ -5,7 +5,7 @@ import {
   getUserById,
   createUser,
   updateUserByAdmin,
-  deleteUser,
+  deleteUsers,
   updateMyProfile,
 } from "../services/user.service.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
@@ -80,10 +80,14 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * DELETE /api/users/:id — Admin xóa user
+ * DELETE /api/users — Xóa nhiều người dùng (Admin)
  */
-export const removeUser = asyncHandler(async (req: Request, res: Response) => {
-  const result = await deleteUser(req.params.id);
+export const removeUsers = asyncHandler(async (req: Request, res: Response) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ValidationError("Danh sách ID không hợp lệ.");
+  }
+  const result = await deleteUsers(ids);
   res.json({ status: "ok", data: result });
 });
 

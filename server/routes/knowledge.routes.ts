@@ -4,7 +4,7 @@ import { authenticate, authorize } from "../middleware/auth.js";
 import {
   createDocument,
   listDocuments,
-  removeDocument,
+  removeDocuments,
   updateDocument,
 } from "../controllers/knowledge.controller.js";
 
@@ -20,19 +20,27 @@ const router = Router();
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
  *         name: active
  *         schema:
  *           type: string
- *         description: Trạng thái tài liệu (ví dụ active=true)
+ *         description: Lọc theo trạng thái (true/false)
  *     responses:
  *       200:
  *         description: Danh sách tài liệu
- */
-router.get("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), listDocuments);
-
-/**
- * @swagger
- * /api/knowledge:
  *   post:
  *     summary: Thêm tài liệu mới vào hệ thống
  *     tags: [Knowledge Base]
@@ -44,9 +52,7 @@ router.get("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), listDocuments
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - title
- *               - content
+ *             required: [title, content]
  *             properties:
  *               title:
  *                 type: string
@@ -65,8 +71,31 @@ router.get("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), listDocuments
  *     responses:
  *       201:
  *         description: Tạo thành công
+ *   delete:
+ *     summary: Xóa nhiều tài liệu (bulk delete)
+ *     tags: [Knowledge Base]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ids]
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["id-1", "id-2"]
+ *     responses:
+ *       200:
+ *         description: Xóa thành công
  */
+router.get("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), listDocuments);
 router.post("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), createDocument);
+router.delete("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), removeDocuments);
 
 /**
  * @swagger
@@ -82,7 +111,6 @@ router.post("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), createDocume
  *         required: true
  *         schema:
  *           type: string
- *         description: ID tài liệu
  *     requestBody:
  *       required: true
  *       content:
@@ -92,43 +120,18 @@ router.post("/", authenticate, authorize(Role.ADMIN, Role.TEACHER), createDocume
  *             properties:
  *               title:
  *                 type: string
- *                 example: "Bài 1: Giới thiệu KHTN 6 (Cập nhật)"
  *               content:
  *                 type: string
- *                 example: "Nội dung cập nhật..."
  *               tags:
  *                 type: array
  *                 items:
  *                   type: string
- *                 example: ["khtn6"]
  *               isActive:
  *                 type: boolean
- *                 example: true
  *     responses:
  *       200:
  *         description: Cập nhật thành công
  */
 router.put("/:id", authenticate, authorize(Role.ADMIN, Role.TEACHER), updateDocument);
-
-/**
- * @swagger
- * /api/knowledge/{id}:
- *   delete:
- *     summary: Xóa tài liệu khỏi hệ thống
- *     tags: [Knowledge Base]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID tài liệu
- *     responses:
- *       200:
- *         description: Xóa thành công
- */
-router.delete("/:id", authenticate, authorize(Role.ADMIN, Role.TEACHER), removeDocument);
 
 export default router;

@@ -1,4 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { ConflictError, NotFoundError } from "../utils/errors.js";
 
 /**
  * Lấy giá trị của một cấu hình hệ thống
@@ -16,13 +18,36 @@ export async function getSystemConfig(key: string): Promise<string | undefined> 
  * Lấy tất cả cấu hình hệ thống
  */
 export async function getAllSystemConfigs() {
-  return prisma.systemConfig.findMany({
+  const configs = await prisma.systemConfig.findMany({
     orderBy: { updatedAt: "desc" },
+  });
+  
+  return {
+    configs,
+    total: configs.length
+  };
+}
+
+/**
+ * Tạo mới một cấu hình hệ thống
+ */
+export async function createSystemConfig(key: string, value: string, userId: string) {
+  const existing = await prisma.systemConfig.findUnique({ where: { key } });
+  if (existing) {
+    throw new ConflictError("Khóa cấu hình này đã tồn tại.");
+  }
+
+  return prisma.systemConfig.create({
+    data: {
+      key,
+      value,
+      updatedBy: userId,
+    },
   });
 }
 
 /**
- * Cập nhật hoặc tạo mới một cấu hình hệ thống
+ * Cập nhật hoặc tạo mới một cấu hình hệ thống (Upsert)
  */
 export async function upsertSystemConfig(key: string, value: string, userId: string) {
   return prisma.systemConfig.upsert({
@@ -37,6 +62,19 @@ export async function upsertSystemConfig(key: string, value: string, userId: str
       updatedBy: userId,
     },
   });
+}
+
+/**
+ * Xóa một cấu hình hệ thống
+ */
+export async function deleteSystemConfig(key: string) {
+  const existing = await prisma.systemConfig.findUnique({ where: { key } });
+  if (!existing) {
+    throw new NotFoundError("Không tìm thấy cấu hình hệ thống.");
+  }
+
+  await prisma.systemConfig.delete({ where: { key } });
+  return { message: "Xóa cấu hình thành công." };
 }
 
 // Khởi tạo Prompt Mặc định nếu DB chưa có
