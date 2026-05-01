@@ -16,7 +16,7 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
 
   const fetchLeaderboard = async () => {
     try {
-      const token = getAccessToken();
+      const token = getStoredAccessToken();
       const headers = {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -46,7 +46,7 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
 
   const generateBattleQuestions = async (config: BattleConfig) => {
     try {
-      const token = getAccessToken();
+      const token = getStoredAccessToken();
       const res = await fetch("/api/arena/generate-quiz", {
         method: "POST",
         headers: {
@@ -105,7 +105,7 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
     if (winner) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
     try {
-      const token = getAccessToken();
+      const token = getStoredAccessToken();
       const res = await fetch("/api/arena/results", {
         method: "POST",
         headers: {

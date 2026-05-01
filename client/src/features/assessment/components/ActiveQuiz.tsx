@@ -1,3 +1,4 @@
+import * as React from "react"
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, HelpCircle, CheckCircle2, XCircle, ChevronRight, AlertCircle, Sparkles, Image as ImageIcon, Loader2 } from "lucide-react";
@@ -40,6 +41,15 @@ export function ActiveQuiz({
   const current = quizzes[currentIdx];
   const isMultipleChoice = current?.options && current.options.length > 0;
 
+  // Resolve answer index from string if missing
+  const actualAnswerIndex = React.useMemo(() => {
+    if (current?.answerIndex !== undefined) return current.answerIndex;
+    if (current?.correctAnswer && current.options) {
+      return current.options.findIndex(opt => opt === current.correctAnswer);
+    }
+    return -1;
+  }, [current]);
+
   useEffect(() => {
     if (!isAnswered && quizzes.length > 0) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -72,7 +82,7 @@ export function ActiveQuiz({
     if (timerRef.current) clearInterval(timerRef.current);
     setSelectedIdx(idx);
     
-    if (idx === current.answerIndex) {
+    if (idx === actualAnswerIndex) {
       setIsAnswered(true);
       setScore(prev => prev + 1);
       setResults(prev => [...prev, true]);
@@ -97,7 +107,7 @@ export function ActiveQuiz({
     setIsGrading(true);
     
     try {
-      const evaluation = await gradeEssay(current.question, essayAnswer, essayImage || undefined);
+      const evaluation = await gradeEssay(current.content, essayAnswer, essayImage || undefined);
       setEssayFeedback(evaluation);
       
       if (evaluation.isPassing) {
@@ -172,7 +182,7 @@ export function ActiveQuiz({
                </div>
             </div>
             <div>
-               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] leading-none mb-1.5 ">Phần thưởng</p>
+               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] Wood mb-1.5 ">Phần thưởng</p>
                <p className="text-base font-black text-orange-600 leading-none">+{score * 10} EXP</p>
             </div>
          </div>
@@ -199,7 +209,7 @@ export function ActiveQuiz({
         >
            <div className="text-2xl font-display font-black text-sky-900 mb-12 leading-tight tracking-tight">
              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-               {processLaTeX(current.question)}
+               {processLaTeX(current.content)}
              </ReactMarkdown>
            </div>
            
@@ -245,10 +255,10 @@ export function ActiveQuiz({
                     className={cn(
                       "w-full p-6 rounded-[1.5rem] flex items-center gap-6 border-2 transition-all text-left font-bold text-sm relative group",
                       selectedIdx === idx 
-                        ? (idx === current.answerIndex 
+                        ? (idx === actualAnswerIndex 
                             ? "bg-sky-50 border-sky-500 text-sky-700 shadow-lg shadow-sky-100 ring-4 ring-sky-50/50" 
                             : "bg-red-50 border-red-500 text-red-700 shadow-lg shadow-red-100 ring-4 ring-red-50/50")
-                        : (isAnswered && idx === current.answerIndex 
+                        : (isAnswered && idx === actualAnswerIndex 
                             ? "bg-sky-50 border-sky-500 text-sky-700 shadow-md animate-pulse" 
                             : "bg-white border-slate-100 text-slate-600 hover:border-sky-200 hover:bg-sky-50/10")
                     )}
@@ -257,8 +267,8 @@ export function ActiveQuiz({
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-display font-black text-sm border shadow-sm transition-all duration-300",
                       selectedIdx === idx 
-                        ? (idx === current.answerIndex ? "bg-sky-500 text-white border-sky-400 rotate-[360deg]" : "bg-red-500 text-white border-red-400")
-                        : (isAnswered && idx === current.answerIndex ? "bg-sky-500 text-white border-sky-400" : "bg-white text-sky-600 border-sky-100 group-hover:bg-sky-50 shadow-inner")
+                        ? (idx === actualAnswerIndex ? "bg-sky-500 text-white border-sky-400 rotate-[360deg]" : "bg-red-500 text-white border-red-400")
+                        : (isAnswered && idx === actualAnswerIndex ? "bg-sky-500 text-white border-sky-400" : "bg-white text-sky-600 border-sky-100 group-hover:bg-sky-50 shadow-inner")
                     )}>
                       {String.fromCharCode(65 + idx)}
                     </div>
@@ -268,7 +278,7 @@ export function ActiveQuiz({
                       </ReactMarkdown>
                     </span>
                     <AnimatePresence>
-                      {isAnswered && idx === current.answerIndex && (
+                      {isAnswered && idx === actualAnswerIndex && (
                         <motion.div 
                           initial={{ scale: 0, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
@@ -277,7 +287,7 @@ export function ActiveQuiz({
                           <CheckCircle2 size={28} className="text-sky-500 shrink-0" />
                         </motion.div>
                       )}
-                      {isAnswered && selectedIdx === idx && idx !== current.answerIndex && (
+                      {isAnswered && selectedIdx === idx && idx !== actualAnswerIndex && (
                         <motion.div
                           initial={{ scale: 0, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}

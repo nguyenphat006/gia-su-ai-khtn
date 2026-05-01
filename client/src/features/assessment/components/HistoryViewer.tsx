@@ -39,9 +39,9 @@ export function HistoryViewer({ history, setMode }: HistoryViewerProps) {
               <Clock size={24} />
             </div>
             <div className="flex-1">
-              <h4 className="font-black text-sky-900 text-lg uppercase tracking-tight">{record.topic}</h4>
+              <h4 className="font-black text-sky-900 text-lg uppercase tracking-tight">{record.quizType === 'CHINH_PHUC' ? 'Chinh phục tri thức' : 'Học Flashcards'}</h4>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                {record.createdAt?.toDate().toLocaleDateString('vi-VN', { 
+                {new Date(record.createdAt).toLocaleDateString('vi-VN', { 
                   day: '2-digit', 
                   month: '2-digit', 
                   year: 'numeric',
@@ -51,12 +51,12 @@ export function HistoryViewer({ history, setMode }: HistoryViewerProps) {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-display font-black text-sky-600">{record.score}<span className="text-black text-opacity-30 mx-1">/</span>{record.total}</p>
+              <p className="text-2xl font-display font-black text-sky-600">{record.correctCount}<span className="text-black text-opacity-30 mx-1">/</span>{record.totalQuestions}</p>
               <p className={cn(
                 "text-[10px] font-black uppercase tracking-[0.2em]",
-                (record.score / record.total) >= 0.8 ? "text-orange-500" : "text-sky-500"
+                (record.correctCount / record.totalQuestions) >= 0.8 ? "text-orange-500" : "text-sky-500"
               )}>
-                {(record.score / record.total) >= 0.8 ? "Xuất sắc" : "Hoàn thành"}
+                {(record.correctCount / record.totalQuestions) >= 0.8 ? "Xuất sắc" : "Hoàn thành"}
               </p>
             </div>
           </motion.div>

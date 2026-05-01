@@ -26,7 +26,9 @@ model User {
   xpLogs             XpLog[]
   authSessions       AuthSession[]
   chatSessions       ChatSession[]
+
   arenaResults       ArenaResult[]
+  quizHistories      QuizHistory[]
 
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -202,7 +204,8 @@ enum ChatRole {
 // Ngân hàng câu hỏi
 model QuestionBank {
   id            String   @id @default(uuid())
-  classId       String   
+  grade         Int?     // Khối (6, 7, 8, 9)
+  classId       String?   
   topic         String   
   type          String   
   difficulty    String   
@@ -213,44 +216,50 @@ model QuestionBank {
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
 
-  class         Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class         Class?    @relation(fields: [classId], references: [id], onDelete: Cascade)
 }
 
 // Bộ Flashcard
 model FlashcardDeck {
   id          String   @id @default(uuid())
-  classId     String
+  grade       Int?
+  classId     String?
   topic       String
   title       String
   cards       Json     
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class       Class?    @relation(fields: [classId], references: [id], onDelete: Cascade)
 }
 
 // Sơ đồ tư duy
 model MindmapData {
   id          String   @id @default(uuid())
-  classId     String
+  grade       Int?
+  classId     String?
   topic       String
   title       String
   markdown    String   @db.Text
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class       Class?    @relation(fields: [classId], references: [id], onDelete: Cascade)
 }
 
 // Lưu lịch sử bài thi
 model QuizHistory {
   id              String   @id @default(uuid())
   userId          String
-  quizType        String   
+  quizType        String   // CHINH_PHUC hoặc FLASHCARD_QUIZ
   totalQuestions  Int
   correctCount    Int
   xpEarned        Int
   createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ========================

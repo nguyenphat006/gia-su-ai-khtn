@@ -61,6 +61,11 @@ export const ADMIN_NAV_CONFIG: NavGroup[] = [
         title: "Nội dung bài học",
         to: "/admin/lessons", // Future use
         icon: FileText,
+      },
+      {
+        title: "Ngân hàng Ôn tập",
+        to: "/admin/revision",
+        icon: BookOpen,
       }
     ]
   },

@@ -1,19 +1,29 @@
-import { Timestamp } from "firebase/firestore";
-
 export type AssessmentMode = "menu" | "quiz" | "chat" | "history" | "flashcard" | "mindmap";
 
 export interface Quiz {
-  question: string;
-  options?: string[]; // Optional for essay
-  answerIndex?: number; // Optional for essay
+  id?: string;
+  content: string;
+  options?: string[];
+  correctAnswer?: string;
   explanation: string;
   hint?: string;
   difficulty?: string;
+  type?: "MULTIPLE_CHOICE" | "ESSAY";
+  isAiGenerated?: boolean;
 }
 
 export interface Flashcard {
   front: string;
   back: string;
+}
+
+export interface FlashcardDeck {
+  id: string;
+  title: string;
+  topic: string;
+  grade: number;
+  cards: Flashcard[];
+  isAiGenerated?: boolean;
 }
 
 export interface MindmapNode {
@@ -22,13 +32,23 @@ export interface MindmapNode {
   parentId: string | null;
 }
 
+export interface MindmapData {
+  id: string;
+  title: string;
+  topic: string;
+  grade: number;
+  nodes: MindmapNode[];
+  isAiGenerated?: boolean;
+}
+
 export interface QuizHistory {
   id: string;
-  topic: string;
-  score: number;
-  total: number;
-  createdAt: Timestamp | null;
-  performance?: any;
+  userId: string;
+  quizType: string;
+  totalQuestions: number;
+  correctCount: number;
+  xpEarned: number;
+  createdAt: string;
 }
 
 export interface EssayFeedback {
