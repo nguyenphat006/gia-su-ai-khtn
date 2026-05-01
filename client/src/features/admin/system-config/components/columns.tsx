@@ -1,5 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { SystemConfig } from "../types";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DataTableColumnHeader } from "@/components/DataTable/DataTableColumnHeader";
 import { 
   MoreHorizontal, 
@@ -17,6 +18,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const columns: ColumnDef<SystemConfig>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onChange={(e: any) => table.toggleAllPageRowsSelected(!!e.target.checked)}
+        aria-label="Chọn tất cả"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onChange={(e: any) => row.toggleSelected(!!e.target.checked)}
+        aria-label="Chọn hàng"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "key",
     header: ({ column }) => (
@@ -38,7 +58,7 @@ export const columns: ColumnDef<SystemConfig>[] = [
     cell: ({ row }) => {
       const value = row.getValue("value") as string;
       return (
-        <div className="max-w-[400px] truncate text-xs font-medium text-slate-500 italic">
+        <div className="max-w-[400px] truncate text-xs font-medium text-slate-500 italic mx-auto">
           {value || "Rỗng"}
         </div>
       );
@@ -94,17 +114,13 @@ export const columns: ColumnDef<SystemConfig>[] = [
             >
               <Pencil size={16} className="text-slate-400" /> Chỉnh sửa
             </DropdownMenuItem>
-            {config.key !== "AI_SYSTEM_PROMPT" && (
-              <>
-                <DropdownMenuSeparator className="bg-slate-50" />
-                <DropdownMenuItem 
-                  className="flex items-center gap-3 p-2.5 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
-                  onClick={() => meta?.onDelete?.(config.key)}
-                >
-                  <Trash2 size={16} className="text-red-400" /> Xóa cấu hình
-                </DropdownMenuItem>
-              </>
-            )}
+            <DropdownMenuSeparator className="bg-slate-50" />
+            <DropdownMenuItem 
+              className="flex items-center gap-3 p-2.5 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+              onClick={() => meta?.onDelete?.(config.key)}
+            >
+              <Trash2 size={16} className="text-red-400" /> Xóa cấu hình
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Role } from "@prisma/client";
 import { authenticate, authorize } from "../middleware/auth.js";
-import { getConfig, listConfigs, updateConfig, addConfig, removeConfig } from "../controllers/system.controller.js";
+import { getConfig, listConfigs, updateConfig, addConfig, removeConfigs } from "../controllers/system.controller.js";
 
 const router = Router();
 
@@ -102,23 +102,29 @@ router.put("/configs/:key", authenticate, authorize(Role.ADMIN), updateConfig);
 
 /**
  * @swagger
- * /api/system/configs/{key}:
+ * /api/system/configs:
  *   delete:
- *     summary: Xóa cấu hình hệ thống
+ *     summary: Xóa nhiều cấu hình hệ thống (bulk delete)
  *     tags: [System Configs]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: key
- *         required: true
- *         schema:
- *           type: string
- *         description: Khóa cấu hình
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [keys]
+ *             properties:
+ *               keys:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["KEY_1", "KEY_2"]
  *     responses:
  *       200:
  *         description: Xóa thành công
  */
-router.delete("/configs/:key", authenticate, authorize(Role.ADMIN), removeConfig);
+router.delete("/configs", authenticate, authorize(Role.ADMIN), removeConfigs);
 
 export default router;

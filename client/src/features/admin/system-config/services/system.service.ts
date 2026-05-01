@@ -45,9 +45,10 @@ export const systemService = {
     });
   },
 
-  deleteConfig: async (key: string) => {
-    return request<{ status: "ok"; data: { message: string } }>(`/api/system/configs/${key}`, {
+  deleteConfigs: async (keys: string[]) => {
+    return request<{ status: "ok"; data: { message: string } }>("/api/system/configs", {
       method: "DELETE",
+      body: JSON.stringify({ keys }),
     });
   },
 };

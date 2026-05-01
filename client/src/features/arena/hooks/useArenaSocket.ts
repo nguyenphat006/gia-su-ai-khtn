@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { ArenaStatus, ConfigRole, BattleConfig } from "../types";
 
-export function useArenaSocket(studentName: string) {
+export function useArenaSocket(studentName: string, grade: string = "") {
   const socketRef = useRef<Socket | null>(null);
   const [players, setPlayers] = useState<any[]>([]);
   const [status, setStatus] = useState<ArenaStatus>("lobby");
@@ -24,7 +24,7 @@ export function useArenaSocket(studentName: string) {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      socket.emit("join-lobby", studentName);
+      socket.emit("join-lobby", { username: studentName, grade });
     });
 
     socket.on("players-update", (data) => setPlayers(data));

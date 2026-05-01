@@ -6,7 +6,7 @@ import {
   getSystemConfig,
   upsertSystemConfig,
   createSystemConfig,
-  deleteSystemConfig,
+  deleteSystemConfigs,
 } from "../services/system.service.js";
 import { ValidationError, NotFoundError } from "../utils/errors.js";
 
@@ -66,11 +66,14 @@ export const updateConfig = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /**
- * DELETE /api/system/configs/:key — Xóa cấu hình hệ thống
+ * DELETE /api/system/configs — Xóa nhiều cấu hình hệ thống (bulk)
  */
-export const removeConfig = asyncHandler(async (req: Request, res: Response) => {
-  const { key } = req.params;
-  const result = await deleteSystemConfig(key);
+export const removeConfigs = asyncHandler(async (req: Request, res: Response) => {
+  const { keys } = req.body;
+  if (!Array.isArray(keys) || keys.length === 0) {
+    throw new ValidationError("Danh sách keys không hợp lệ.");
+  }
+  const result = await deleteSystemConfigs(keys);
   
   res.json({ status: "ok", data: result });
 });

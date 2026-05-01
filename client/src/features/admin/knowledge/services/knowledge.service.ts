@@ -46,9 +46,10 @@ export const knowledgeService = {
     return request<KnowledgeListResponse>(`/api/knowledge?${query.toString()}`);
   },
 
-  deleteDocument: async (id: string) => {
-    return request(`/api/knowledge/${id}`, {
+  deleteDocuments: async (ids: string[]) => {
+    return request("/api/knowledge", {
       method: "DELETE",
+      body: JSON.stringify({ ids }),
     });
   },
 

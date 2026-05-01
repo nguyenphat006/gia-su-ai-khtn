@@ -4,6 +4,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+.no-pagination .datatable-pagination {
+  display: none;
+}
+
 @custom-variant dark (&:is(.dark *));
 @plugin "@tailwindcss/typography";
 

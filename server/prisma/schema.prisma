@@ -26,6 +26,7 @@ model User {
   xpLogs             XpLog[]
   authSessions       AuthSession[]
   chatSessions       ChatSession[]
+  arenaResults       ArenaResult[]
 
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -250,4 +251,26 @@ model QuizHistory {
   correctCount    Int
   xpEarned        Int
   createdAt       DateTime @default(now())
+}
+
+// ========================
+// ARENA (ĐẤU TRƯỜNG TRÍ TUỆ)
+// ========================
+
+model ArenaResult {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  score      Int      // Điểm đạt được
+  mode       String   // "PVP" hoặc "AI"
+  winner     Boolean  // Thắng hay thua
+  opponent   String   // Tên đối thủ (username hoặc "Gia sư AI")
+  topic      String?  // Chủ đề trận đấu
+  xpEarned   Int      @default(0)
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([score])
 }

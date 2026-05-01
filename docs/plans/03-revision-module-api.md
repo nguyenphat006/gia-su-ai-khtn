@@ -99,7 +99,7 @@ Các API này sẽ được thêm vào tính năng Admin UI trong tương lai đ
   - *Logic:* Lấy FlashcardDeck từ DB.
 - `POST /api/revision/flashcards/quiz`
   - *Payload:* `{ flashcardDeckId }`
-  - *Logic:* Lấy content của bộ flashcard đó, dùng prompt yêu cầu AI: "Dựa vào bộ kiến thức này, hãy tạo ra N câu hỏi trắc nghiệm". Trả về list câu hỏi.
+- *Logic:* Lấy content của bộ flashcard đó, dùng prompt yêu cầu AI: "Dựa vào bộ kiến thức này, hãy tạo ra N câu hỏi trắc nghiệm". Trả về list câu hỏi.
 
 **3. Mindmap**
 - `POST /api/revision/mindmap`

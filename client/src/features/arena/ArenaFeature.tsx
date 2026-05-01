@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useArenaSocket } from "./hooks/useArenaSocket";
 import { useArenaLogic } from "./hooks/useArenaLogic";
 import { ArenaView } from "./types";
+import { useAuth } from "@/hooks/useAuth";
 
 import { ArenaLobby } from "./components/ArenaLobby";
 import { AiMatchConfig } from "./components/AiMatchConfig";
@@ -17,7 +18,9 @@ interface ArenaFeatureProps {
 }
 
 export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatureProps) {
-  const sock = useArenaSocket(studentName);
+  const { user } = useAuth();
+  const grade = user?.studentProfile?.grade?.toString() || user?.class?.grade?.toString() || "8";
+  const sock = useArenaSocket(studentName, grade);
   const logic = useArenaLogic(studentName, addXP);
   const [view, setView] = useState<ArenaView>("main");
 
@@ -112,5 +115,5 @@ export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatu
     return <BattleResult battleResult={sock.battleResult} battleData={sock.battleData} socketId={sock.getSocketId()} studentName={studentName} totalXP={totalXP} isAiMode={logic.isAiMode} battleConfig={sock.battleConfig} loadingReport={logic.loadingReport} performanceReport={logic.performanceReport} onBackToLobby={backToLobby} />;
   }
 
-  return <ArenaLobby studentName={studentName} totalXP={totalXP} players={sock.players} leaderboard={logic.leaderboard} userStats={logic.userStats} view={view} setView={setView} challengeTarget={sock.challengeTarget} setChallengeTarget={sock.setChallengeTarget} incomingChallenge={sock.incomingChallenge} setIncomingChallenge={sock.setIncomingChallenge} sendChallenge={sock.sendChallenge} startAiMatch={startAiMatch} getSocket={() => sock.getSocket()} setBattleData={sock.setBattleData} setStatus={sock.setStatus} />;
+  return <ArenaLobby studentName={studentName} totalXP={totalXP} players={sock.players} leaderboard={logic.leaderboard} userStats={logic.userStats} view={view} setView={setView} challengeTarget={sock.challengeTarget} setChallengeTarget={sock.setChallengeTarget} incomingChallenge={sock.incomingChallenge} setIncomingChallenge={sock.setIncomingChallenge} sendChallenge={sock.sendChallenge} startAiMatch={startAiMatch} getSocket={() => sock.getSocket()} setBattleData={sock.setBattleData} setStatus={sock.setStatus} grade={grade} />;
 }

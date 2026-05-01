@@ -7,6 +7,7 @@ import AppLayout from "@/app/AppLayout";
 import ProfileEditModal from "@/components/ui/ProfileEditModal";
 import { useAuth } from "@/hooks/useAuth";
 import { type AuthenticatedUser } from "@/features/auth/types";
+import { Toaster } from "sonner";
 
 // ── Lazy-loaded Pages (Route-based Code Splitting) ──────────────
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
@@ -53,6 +54,7 @@ export default function App() {
   // ── Render ──────────────────────────────────────────────────────
   return (
     <BrowserRouter>
+      <Toaster position="top-right" richColors />
       <AnimatePresence mode="wait">
         {isLoading && !user ? (
           <LoadingSpinner key="loader" />

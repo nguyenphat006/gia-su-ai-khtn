@@ -22,11 +22,11 @@ export function DataTableColumnHeader<TData, TValue>({
   const isSorted = column.getIsSorted()
 
   return (
-    <div className={cn("flex items-center space-x-2", className)}>
+    <div className={cn("flex items-center justify-center space-x-2", className)}>
       <Button
         variant="ghost"
         size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent hover:bg-slate-100/50 text-[10px] font-black uppercase tracking-widest text-slate-500"
+        className="h-8 data-[state=open]:bg-accent hover:bg-slate-100/50 text-[10px] font-black uppercase tracking-widest text-slate-500"
         onClick={() => {
             if (isSorted === "desc") column.clearSorting()
             else if (isSorted === "asc") column.toggleSorting(true)

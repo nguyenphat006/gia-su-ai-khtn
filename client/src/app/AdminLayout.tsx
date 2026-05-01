@@ -1,7 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { 
-  Settings, 
-  BookOpen, 
+import {
+  Settings,
+  BookOpen,
   Shield,
   LayoutDashboard,
   Users,
@@ -67,7 +67,7 @@ export default function AdminLayout({ user, isAdmin, onLogout }: AdminLayoutProp
           </div>
           <h1 className="text-2xl font-black mb-2 text-red-600 uppercase">Truy cập bị từ chối</h1>
           <p className="text-slate-500 mb-6 font-medium">Bạn không có quyền quản trị viên để truy cập khu vực này.</p>
-          <Button 
+          <Button
             onClick={() => navigate("/")}
             className="w-full h-12 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg"
           >
@@ -82,23 +82,23 @@ export default function AdminLayout({ user, isAdmin, onLogout }: AdminLayoutProp
     <div className="flex h-screen bg-[#0B1120] w-full overflow-hidden font-sans text-slate-900">
       {/* Sidebar Overlay for Mobile */}
       {isMobile && isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-40 animate-in fade-in duration-300" 
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-40 animate-in fade-in duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      <AdminSidebar 
-        isOpen={isSidebarOpen} 
+      <AdminSidebar
+        isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
         isMobile={isMobile}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 md:rounded-[3rem] my-2 mr-2 shadow-2xl border-l border-white/5 transition-all duration-500">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 shadow-2xl border-l border-white/5 transition-all duration-500">
         <div className="p-3 pb-0">
-          <AdminHeader 
-            user={user} 
-            onLogout={onLogout} 
+          <AdminHeader
+            user={user}
+            onLogout={onLogout}
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             isSidebarOpen={isSidebarOpen}
           />
@@ -120,8 +120,8 @@ export default function AdminLayout({ user, isAdmin, onLogout }: AdminLayoutProp
                 <p className="text-slate-500 max-w-md mb-8 font-medium leading-relaxed">
                   Trang bạn đang truy cập hiện chưa được khai báo hoặc đang trong quá trình hoàn thiện. Vui lòng quay lại sau!
                 </p>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => navigate("/admin/ai-config")}
                   className="rounded-2xl font-bold h-11 px-6 gap-2 border-slate-200"
                 >

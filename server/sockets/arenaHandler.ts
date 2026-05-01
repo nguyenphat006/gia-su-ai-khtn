@@ -15,10 +15,15 @@ export function setupArenaSockets(io: Server) {
     console.log("⚔️  User connected to Arena:", socket.id);
 
     // ------- THAM GIA LOBBY -------
-    socket.on("join-lobby", (username: string) => {
+    socket.on("join-lobby", (data: { username: string, grade?: string }) => {
+      // Tương thích ngược: Nếu client gửi thẳng chuỗi username
+      const username = typeof data === 'string' ? data : data.username;
+      const grade = typeof data === 'string' ? "Unknown" : data.grade || "Unknown";
+
       players.set(socket.id, {
         id: socket.id,
         username,
+        grade,
         score: 0,
         status: "idle",
       });
@@ -184,20 +189,22 @@ export function setupArenaSockets(io: Server) {
 
         if (ans1 && ans2) {
           if (ans1.correct && ans2.correct) {
-            // Cả 2 đúng -> Ai nhanh hơn được 5 điểm
+            // Cả 2 đúng -> Được 10 điểm. Ai nhanh hơn được thưởng thêm 5 điểm bonus
             if (ans1.timeLeft > ans2.timeLeft) {
-              battle.scores[p1Id] += 5;
+              battle.scores[p1Id] += 15;
+              battle.scores[p2Id] += 10;
             } else if (ans2.timeLeft > ans1.timeLeft) {
-              battle.scores[p2Id] += 5;
+              battle.scores[p1Id] += 10;
+              battle.scores[p2Id] += 15;
             } else {
-              // Hòa -> Cả 2 đều được 5 điểm
-              battle.scores[p1Id] += 5;
-              battle.scores[p2Id] += 5;
+              // Hòa -> Cả 2 đều được 10 điểm
+              battle.scores[p1Id] += 10;
+              battle.scores[p2Id] += 10;
             }
           } else if (ans1.correct && !ans2.correct) {
-            battle.scores[p1Id] += 5;
+            battle.scores[p1Id] += 10;
           } else if (!ans1.correct && ans2.correct) {
-            battle.scores[p2Id] += 5;
+            battle.scores[p2Id] += 10;
           }
           io.to(p1Id)
             .to(p2Id)

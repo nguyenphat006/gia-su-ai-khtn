@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, query, orderBy, limit, serverTimestamp, where } from "firebase/firestore";
-import { generateQuiz, analyzePerformance } from "@/lib/gemini";
 import confetti from "canvas-confetti";
 import { BattleConfig, UserStats } from "../types";
+import { getStoredAccessToken } from "@/lib/auth";
+import { analyzePerformance } from "@/lib/gemini"; // Chỉ giữ lại phân tích hiệu suất cục bộ/client nếu chưa code server
 
 export function useArenaLogic(studentName: string, addXP: (xp: number) => void) {
   const [isAiMode, setIsAiMode] = useState(false);
@@ -17,16 +16,27 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
 
   const fetchLeaderboard = async () => {
     try {
-      const q = query(collection(db, "arena_results"), orderBy("score", "desc"), limit(10));
-      const snap = await getDocs(q);
-      setLeaderboard(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const token = getAccessToken();
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
 
-      const userQ = query(collection(db, "arena_results"), where("username", "==", studentName));
-      const userSnap = await getDocs(userQ);
-      const wins = userSnap.docs.filter(d => d.data().winner).length;
-      setUserStats({ wins, total: userSnap.size });
+      // Gọi API lấy Leaderboard
+      const resLeaderboard = await fetch("/api/arena/leaderboard?limit=10", { headers });
+      if (resLeaderboard.ok) {
+        const data = await resLeaderboard.json();
+        setLeaderboard(data.data.leaderboard || []);
+      }
+
+      // Gọi API lấy My Stats
+      const resStats = await fetch("/api/arena/my-stats", { headers });
+      if (resStats.ok) {
+        const data = await resStats.json();
+        setUserStats({ wins: data.data.stats.wins, total: data.data.stats.totalMatches });
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Lỗi khi tải bảng xếp hạng:", e);
     }
   };
 
@@ -35,36 +45,30 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
   }, [studentName]);
 
   const generateBattleQuestions = async (config: BattleConfig) => {
-    const knowledgeRef = collection(db, "knowledge_base");
-    const snap = await getDocs(query(knowledgeRef, limit(20)));
-    const chunks = snap.docs.map(d => d.data().content as string);
+    try {
+      const token = getAccessToken();
+      const res = await fetch("/api/arena/generate-quiz", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          grade: config.grade || "8",
+          topic: config.topic || "KHTN THCS (Vật lý, Hóa học, Sinh học)",
+          type: config.type || "Trắc nghiệm",
+          count: config.count || 10,
+        }),
+      });
 
-    let context = chunks.join("\n\n");
-    if (config.topic) {
-      const keywords = config.topic.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-      context = chunks
-        .map(content => {
-          let score = 0;
-          const lowContent = content.toLowerCase();
-          keywords.forEach(word => { if (lowContent.includes(word)) score++; });
-          return { content, score };
-        })
-        .filter(item => item.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(item => item.content)
-        .join("\n\n---\n\n");
+      const data = await res.json();
+      if (!res.ok || data.status === "error") {
+        throw new Error(data.message || "Lỗi tạo câu hỏi");
+      }
+      return data.data.quizzes || [];
+    } catch (err: any) {
+      throw new Error(err.message || "Lỗi kết nối máy chủ");
     }
-
-    const quizData = await generateQuiz(
-      config.topic || "KHTN THCS (Vật lý, Hóa học, Sinh học)",
-      context,
-      config.grade || "8",
-      config.type || "Trắc nghiệm",
-      config.count || 10
-    );
-
-    if (quizData.error) throw new Error(quizData.error);
-    return quizData.quizzes || [];
   };
 
   const handleBattleFinish = async (
@@ -81,38 +85,52 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
     const oppScore = oppId ? result.scores[oppId] : 0;
     const winner = myScore >= oppScore;
 
+    // AI phân tích điểm yếu (tạm thời vẫn dùng client function nếu muốn, hoặc bạn có thể chuyển lên server)
     if (isAi) {
       try {
-        const report = await analyzePerformance(battleConfig.topic, result.results.map((res: boolean, i: number) => ({
-          question: questions[i].question,
-          correct: res
-        })), "Tài liệu học tập về " + battleConfig.topic);
+        const report = await analyzePerformance(
+          battleConfig.topic,
+          result.results.map((res: boolean, i: number) => ({
+            question: questions[i]?.question || "Câu hỏi",
+            correct: res,
+          })),
+          "Tài liệu học tập về " + battleConfig.topic
+        );
         setPerformanceReport(report);
       } catch (e) {
         console.error("AI Analysis Error:", e);
       }
     }
 
-    let xpEarned = isAi ? 50 : 20;
-    if (winner) xpEarned += isAi ? 50 : 30;
-    if (streak >= 10) xpEarned += 100;
-
-    addXP(xpEarned);
     if (winner) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
     try {
-      await addDoc(collection(db, "arena_results"), {
-        username: studentName,
-        score: myScore,
-        winner,
-        opponent: battleData.opponent.username,
-        xpEarned,
-        createdAt: serverTimestamp(),
-        mode: isAi ? "AI" : "PvP"
+      const token = getAccessToken();
+      const res = await fetch("/api/arena/results", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          score: myScore,
+          mode: isAi ? "AI" : "PVP",
+          winner,
+          opponent: battleData.opponent.username || "Đối thủ",
+          topic: battleConfig.topic,
+        }),
       });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Server đã cộng XP, ta gọi hàm addXP để cập nhật UI cục bộ
+        if (data.data?.result?.xpEarned) {
+          addXP(data.data.result.xpEarned);
+        }
+      }
       fetchLeaderboard();
     } catch (err) {
-      console.error(err);
+      console.error("Lỗi khi lưu kết quả:", err);
     } finally {
       setLoadingReport(false);
     }

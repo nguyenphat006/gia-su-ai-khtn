@@ -46,6 +46,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
       { name: "Knowledge Base", description: "Quản lý tài liệu RAG" },
       { name: "Chat", description: "Quản lý phiên chat AI" },
       { name: "Revision", description: "Quản lý ngân hàng câu hỏi, flashcards, mindmap" },
+      { name: "Arena", description: "Đấu trường trí tuệ & Bảng xếp hạng" },
     ],
   },
   apis: ["./routes/*.ts", "./controllers/*.ts"],

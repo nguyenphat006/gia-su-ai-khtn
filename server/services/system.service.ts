@@ -65,16 +65,18 @@ export async function upsertSystemConfig(key: string, value: string, userId: str
 }
 
 /**
- * Xóa một cấu hình hệ thống
+ * Xóa nhiều cấu hình hệ thống
  */
-export async function deleteSystemConfig(key: string) {
-  const existing = await prisma.systemConfig.findUnique({ where: { key } });
-  if (!existing) {
-    throw new NotFoundError("Không tìm thấy cấu hình hệ thống.");
+export async function deleteSystemConfigs(keys: string[]) {
+  const result = await prisma.systemConfig.deleteMany({
+    where: { key: { in: keys } },
+  });
+
+  if (result.count === 0) {
+    throw new NotFoundError("Không tìm thấy cấu hình nào để xoá.");
   }
 
-  await prisma.systemConfig.delete({ where: { key } });
-  return { message: "Xóa cấu hình thành công." };
+  return { message: `Xóa thành công ${result.count} cấu hình.` };
 }
 
 // Khởi tạo Prompt Mặc định nếu DB chưa có

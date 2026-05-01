@@ -1,20 +1,36 @@
 import * as React from "react"
+import { motion } from "motion/react"
 import { DataTable } from "@/components/DataTable/DataTable"
 import { columns } from "./components/columns"
 import { systemService } from "./services/system.service"
 import { SystemConfig } from "./types"
-import { Plus, RefreshCcw, Settings } from "lucide-react"
+import { Plus, RefreshCcw, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import SystemConfigModal from "./components/SystemConfigModal"
+import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { toast } from "sonner"
 
 export default function SystemConfigIndex() {
   const [data, setData] = React.useState<SystemConfig[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  const [rowSelection, setRowSelection] = React.useState({})
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [selectedConfig, setSelectedConfig] = React.useState<SystemConfig | undefined>()
+
+  // Confirm Modal state
+  const [confirmDelete, setConfirmDelete] = React.useState<{ 
+    isOpen: boolean; 
+    keys?: string[];
+    title: string;
+    description: string;
+  }>({ 
+    isOpen: false, 
+    title: "", 
+    description: "" 
+  })
 
   const fetchData = React.useCallback(async () => {
     setLoading(true)
@@ -38,31 +54,72 @@ export default function SystemConfigIndex() {
     setIsModalOpen(true)
   }
 
-  const handleDelete = async (key: string) => {
-    if (confirm(`Bạn có chắc chắn muốn xóa cấu hình "${key}"?`)) {
-      try {
-        await systemService.deleteConfig(key)
-        fetchData()
-      } catch (err: any) {
-        alert(err.message || "Lỗi khi xóa cấu hình.")
-      }
+  const handleDeleteOne = async (key: string) => {
+    setConfirmDelete({ 
+      isOpen: true, 
+      keys: [key],
+      title: "Xác nhận xóa cấu hình",
+      description: `Bạn có chắc chắn muốn xóa cấu hình "${key}"? Hành động này không thể hoàn tác.`
+    })
+  }
+
+  const handleDeleteSelected = () => {
+    const selectedKeys = Object.keys(rowSelection).map(
+      (index) => data[parseInt(index)].key
+    ).filter(key => key !== "AI_SYSTEM_PROMPT")
+
+    if (selectedKeys.length === 0) return
+
+    setConfirmDelete({
+      isOpen: true,
+      keys: selectedKeys,
+      title: `Xác nhận xóa ${selectedKeys.length} cấu hình`,
+      description: `Hành động này sẽ xóa vĩnh viễn các cấu hình đã chọn. Bạn có chắc chắn muốn tiếp tục?`
+    })
+  }
+
+  const onConfirmDelete = async () => {
+    const keys = confirmDelete.keys
+    if (!keys || keys.length === 0) return
+
+    try {
+      await systemService.deleteConfigs(keys)
+      toast.success(keys.length > 1 ? `Đã xóa ${keys.length} cấu hình thành công!` : "Đã xóa cấu hình thành công!")
+      setRowSelection({})
+      fetchData()
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi khi xóa cấu hình.")
     }
   }
+
+  const selectedCount = Object.keys(rowSelection).length
 
   return (
     <div className="space-y-6">
       {/* Header Actions */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-slate-900 rounded-xl text-white">
-            <Settings size={20} />
-          </div>
-          <div>
-            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Biến môi trường AI</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quản lý các tham số vận hành hệ thống</p>
-          </div>
+        <div className="flex-1">
+          {selectedCount > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 bg-slate-100 p-2 pl-4 rounded-2xl border border-slate-200"
+            >
+              <span className="text-xs font-bold text-slate-600">Đã chọn <span className="text-slate-900">{selectedCount}</span> mục</span>
+              <div className="h-4 w-px bg-slate-300 mx-1" />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleDeleteSelected}
+                className="h-8 px-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl gap-2"
+              >
+                <Trash2 size={14} />
+                Xóa các mục đã chọn
+              </Button>
+            </motion.div>
+          )}
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Button 
             variant="outline" 
@@ -85,17 +142,21 @@ export default function SystemConfigIndex() {
       </div>
 
       {/* DataTable */}
-      <DataTable
-        columns={columns}
-        data={data}
-        loading={loading}
-        error={error}
-        totalCount={data.length}
-        meta={{
-          onEdit: handleEdit,
-          onDelete: handleDelete,
-        }}
-      />
+      <div className="no-pagination">
+        <DataTable
+          columns={columns}
+          data={data}
+          loading={loading}
+          error={error}
+          totalCount={data.length}
+          meta={{
+            onEdit: handleEdit,
+            onDelete: handleDeleteOne,
+          }}
+          onRowSelectionChange={setRowSelection}
+          state={{ rowSelection }}
+        />
+      </div>
 
       {/* Form Modal */}
       <SystemConfigModal
@@ -103,6 +164,16 @@ export default function SystemConfigIndex() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchData}
         config={selectedConfig}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={onConfirmDelete}
+        title={confirmDelete.title}
+        description={confirmDelete.description}
+        confirmText={confirmDelete.keys && confirmDelete.keys.length > 1 ? "Xóa tất cả" : "Xóa cấu hình"}
       />
     </div>
   )

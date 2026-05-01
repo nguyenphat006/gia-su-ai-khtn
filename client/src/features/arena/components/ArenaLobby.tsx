@@ -21,14 +21,16 @@ interface ArenaLobbyProps {
   incomingChallenge: any; setIncomingChallenge: (c: any) => void;
   sendChallenge: () => void; startAiMatch: () => void;
   getSocket: () => any; setBattleData: (d: any) => void; setStatus: (s: any) => void;
+  grade: string;
 }
 
 export function ArenaLobby({
   studentName, totalXP, players, leaderboard, userStats, view, setView,
   challengeTarget, setChallengeTarget, incomingChallenge, setIncomingChallenge,
-  sendChallenge, startAiMatch, getSocket, setBattleData, setStatus
+  sendChallenge, startAiMatch, getSocket, setBattleData, setStatus, grade
 }: ArenaLobbyProps) {
   const socket = getSocket();
+  const onlinePlayers = players.filter(p => p.grade === grade || p.username === studentName);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -74,7 +76,7 @@ export function ArenaLobby({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                       <div className="bg-gradient-to-br from-sky-500 to-sky-700 rounded-[2rem] p-6 text-white shadow-2xl relative flex flex-col h-48">
                         <h4 className="text-xl font-display font-black mb-2 relative z-10">Thách đấu đôi</h4>
                         <Users size={80} className="absolute -right-4 -bottom-4 opacity-20 pointer-events-none" />
@@ -104,16 +106,6 @@ export function ArenaLobby({
                         <p className="text-purple-100 text-xs mb-8 leading-relaxed font-medium">Thử thách Gia sư AI với các câu hỏi khó.</p>
                         <div className="mt-auto"><button className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Thiết lập</button></div>
                       </div>
-
-                      <div className="bg-gradient-to-br from-orange-500 to-orange-700 rounded-[2rem] p-6 text-white shadow-2xl relative overflow-hidden h-48 flex flex-col">
-                        <Medal size={80} className="absolute -right-4 -bottom-4 opacity-20" />
-                        <h4 className="text-xl font-display font-black mb-2">Bảng danh hiệu</h4>
-                        <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 mt-auto">
-                           <div className="flex items-center gap-3 mb-2"><Shield className="text-orange-300" size={20} /><div><p className="text-[9px] font-black uppercase text-white/70">Danh hiệu hiện tại</p><p className="font-bold text-sm text-white leading-none truncate max-w-[120px]">{getRank(totalXP).name}</p></div></div>
-                           <div className="w-full bg-black/20 h-1.5 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(((totalXP) / (getRank(totalXP).max === Infinity ? 1 : getRank(totalXP).max)) * 100, 100)}%` }} className="h-full bg-orange-400" /></div>
-                           <p className="text-[8px] font-black text-white/50 mt-2 uppercase tracking-widest leading-tight truncate">Đặc quyền: {getRank(totalXP).perk}</p>
-                        </div>
-                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -127,9 +119,9 @@ export function ArenaLobby({
 
           <div className="lg:col-span-4 space-y-6">
               <div className="bg-white rounded-[2rem] p-8 border border-sky-50 shadow-xl shadow-sky-900/5">
-                <div className="flex items-center gap-3 mb-8"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /><h4 className="text-[10px] font-black text-black uppercase tracking-widest">Chiến binh online ({players.length})</h4></div>
+                <div className="flex items-center gap-3 mb-8"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /><h4 className="text-[10px] font-black text-black uppercase tracking-widest">Chiến binh online - Khối {grade} ({onlinePlayers.length})</h4></div>
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                    {players.map(p => {
+                    {onlinePlayers.map(p => {
                       const isMe = p.username === studentName;
                       return (
                         <div key={p.id} className={cn("flex flex-col gap-2 p-4 hover:bg-slate-50 rounded-2xl transition-colors border border-transparent hover:border-slate-100 group", isMe && "bg-sky-50/50 border-sky-100")}>

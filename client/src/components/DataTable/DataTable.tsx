@@ -36,6 +36,8 @@ interface DataTableProps<TData, TValue> {
   error?: string | null
   totalCount?: number
   meta?: any
+  state?: any
+  onRowSelectionChange?: any
 }
 
 export function DataTable<TData, TValue>({
@@ -50,8 +52,10 @@ export function DataTable<TData, TValue>({
   error,
   totalCount,
   meta,
+  state: externalState,
+  onRowSelectionChange: externalOnRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = React.useState({})
+  const [internalRowSelection, setInternalRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   
   // Internal pagination state for client-side mode
@@ -72,12 +76,12 @@ export function DataTable<TData, TValue>({
     state: {
       pagination: pagination ?? internalPagination,
       sorting: sorting ?? internalSorting,
-      rowSelection,
+      rowSelection: externalState?.rowSelection ?? internalRowSelection,
       columnVisibility,
     },
     onPaginationChange: onPaginationChange ?? setInternalPagination,
     onSortingChange: onSortingChange ?? setInternalSorting,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: externalOnRowSelectionChange ?? setInternalRowSelection,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -97,7 +101,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id} className="hover:bg-transparent border-slate-200">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="text-slate-500 font-bold uppercase text-[10px] tracking-wider py-4">
+                    <TableHead key={header.id} className="text-slate-500 font-bold uppercase text-[10px] tracking-wider py-4 text-center">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -137,7 +141,7 @@ export function DataTable<TData, TValue>({
                   className="border-slate-100 hover:bg-slate-50/50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-4 text-sm font-medium text-slate-600">
+                    <TableCell key={cell.id} className="py-4 text-sm font-medium text-slate-600 text-center">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -158,7 +162,9 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} totalCount={totalCount} />
+      <div className="datatable-pagination">
+        <DataTablePagination table={table} totalCount={totalCount} />
+      </div>
     </div>
   )
 }

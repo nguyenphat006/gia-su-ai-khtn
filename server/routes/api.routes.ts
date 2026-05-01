@@ -6,6 +6,7 @@ import systemRoutes from "./system.routes.js";
 import knowledgeRoutes from "./knowledge.routes.js";
 import chatRoutes from "./chat.routes.js";
 import revisionRoutes from "./revision.routes.js";
+import arenaRoutes from "./arena.routes.js";
 
 const router = Router();
 
@@ -49,5 +50,6 @@ router.use("/system", systemRoutes);
 router.use("/knowledge", knowledgeRoutes);
 router.use("/chat", chatRoutes);
 router.use("/revision", revisionRoutes);
+router.use("/arena", arenaRoutes);
 
 export default router;
