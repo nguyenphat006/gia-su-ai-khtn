@@ -35,14 +35,21 @@ function buildQueryString(params?: any) {
 
 export const adminRevisionService = {
   // 1. NGÂN HÀNG CÂU HỎI (QUIZ)
-  getQuestions: async (params?: { grade?: number; topic?: string; difficulty?: string }) => {
+  getQuestions: async (params?: { page?: number; limit?: number; grade?: number; topic?: string; difficulty?: string }) => {
     const query = buildQueryString(params);
-    return request<{ status: string; data: { questions: any[] } }>(`/api/revision/questions?${query}`);
+    return request<{ status: string; data: { questions: any[]; pagination: any } }>(`/api/revision/questions?${query}`);
   },
 
   createQuestion: async (data: any) => {
     return request<{ status: string; data: { question: any } }>("/api/revision/questions", {
       method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateQuestion: async (id: string, data: any) => {
+    return request<{ status: string; data: { question: any } }>(`/api/revision/questions/${id}`, {
+      method: "PUT",
       body: JSON.stringify(data),
     });
   },
@@ -55,14 +62,21 @@ export const adminRevisionService = {
   },
 
   // 2. BỘ FLASHCARDS
-  getFlashcards: async (params?: { grade?: number; topic?: string }) => {
+  getFlashcards: async (params?: { page?: number; limit?: number; grade?: number; topic?: string }) => {
     const query = buildQueryString(params);
-    return request<{ status: string; data: { decks: any[] } }>(`/api/revision/flashcards?${query}`);
+    return request<{ status: string; data: { decks: any[]; pagination: any } }>(`/api/revision/flashcards?${query}`);
   },
 
   createFlashcard: async (data: any) => {
     return request<{ status: string; data: { deck: any } }>("/api/revision/flashcards", {
       method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateFlashcard: async (id: string, data: any) => {
+    return request<{ status: string; data: { deck: any } }>(`/api/revision/flashcards/${id}`, {
+      method: "PUT",
       body: JSON.stringify(data),
     });
   },
@@ -75,14 +89,21 @@ export const adminRevisionService = {
   },
 
   // 3. SƠ ĐỒ TƯ DUY (MINDMAP)
-  getMindmaps: async (params?: { grade?: number; topic?: string }) => {
+  getMindmaps: async (params?: { page?: number; limit?: number; grade?: number; topic?: string }) => {
     const query = buildQueryString(params);
-    return request<{ status: string; data: { mindmaps: any[] } }>(`/api/revision/mindmaps?${query}`);
+    return request<{ status: string; data: { mindmaps: any[]; pagination: any } }>(`/api/revision/mindmaps?${query}`);
   },
 
   createMindmap: async (data: any) => {
     return request<{ status: string; data: { mindmap: any } }>("/api/revision/mindmaps", {
       method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateMindmap: async (id: string, data: any) => {
+    return request<{ status: string; data: { mindmap: any } }>(`/api/revision/mindmaps/${id}`, {
+      method: "PUT",
       body: JSON.stringify(data),
     });
   },

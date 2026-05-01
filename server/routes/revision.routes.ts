@@ -12,6 +12,9 @@ import {
   getFlashcards,
   getMindmaps,
   getQuestionBank,
+  updateFlashcard,
+  updateMindmap,
+  updateQuestionBank,
   generateStudentQuiz,
   submitStudentQuiz,
   getStudentFlashcards,
@@ -31,123 +34,46 @@ router.use(authenticate);
  * @swagger
  * /api/revision/questions:
  *   get:
- *     summary: "[Admin/Teacher] Lấy danh sách câu hỏi ôn tập"
+ *     summary: "[Admin/Teacher] Lấy danh sách câu hỏi ôn tập (Phân trang)"
  *     tags: [Revision Admin]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *       - in: query
  *         name: classId
- *         schema:
- *           type: string
- *         description: ID của lớp học
+ *         schema: { type: string }
  *       - in: query
  *         name: grade
- *         schema:
- *           type: integer
- *         example: 6
- *         description: Khối lớp (6, 7, 8, 9)
+ *         schema: { type: integer }
  *       - in: query
  *         name: topic
- *         schema:
- *           type: string
- *         example: "Năng lượng"
- *         description: Tìm kiếm theo chủ đề
+ *         schema: { type: string }
  *       - in: query
  *         name: difficulty
- *         schema:
- *           type: string
- *           enum: [EASY, MEDIUM, HARD]
- *         example: "MEDIUM"
+ *         schema: { type: string, enum: [EASY, MEDIUM, HARD] }
  *       - in: query
  *         name: type
- *         schema:
- *           type: string
- *           enum: [MULTIPLE_CHOICE, ESSAY]
- *         example: "MULTIPLE_CHOICE"
+ *         schema: { type: string, enum: [MULTIPLE_CHOICE, ESSAY] }
  *     responses:
- *       200:
- *         description: Trả về danh sách câu hỏi
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 data: 
- *                   type: object
- *                   properties:
- *                     questions:
- *                       type: array
- *                       items:
- *                         type: object
+ *       200: { description: "Thành công" }
  *   post:
- *     summary: "[Admin/Teacher] Thêm câu hỏi mới vào Ngân hàng"
+ *     summary: "[Admin/Teacher] Thêm câu hỏi mới"
  *     tags: [Revision Admin]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [grade, topic, type, difficulty, content, correctAnswer]
- *             properties:
- *               grade:
- *                 type: integer
- *                 example: 6
- *               topic:
- *                 type: string
- *                 example: "Hệ mặt trời"
- *               type:
- *                 type: string
- *                 enum: [MULTIPLE_CHOICE, ESSAY]
- *                 example: "MULTIPLE_CHOICE"
- *               difficulty:
- *                 type: string
- *                 enum: [EASY, MEDIUM, HARD]
- *                 example: "EASY"
- *               content:
- *                 type: string
- *                 example: "Hành tinh nào gần mặt trời nhất?"
- *               options:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["Sao Kim", "Sao Thủy", "Trái Đất", "Sao Hỏa"]
- *               correctAnswer:
- *                 type: string
- *                 example: "Sao Thủy"
- *               explanation:
- *                 type: string
- *                 example: "Sao Thủy là hành tinh thứ nhất trong hệ mặt trời."
  *     responses:
- *       201:
- *         description: "Tạo thành công"
+ *       201: { description: "Tạo thành công" }
  *   delete:
- *     summary: "[Admin/Teacher] Xóa nhiều câu hỏi (truyền mảng ids)"
+ *     summary: "[Admin/Teacher] Xóa nhiều câu hỏi"
  *     tags: [Revision Admin]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [ids]
- *             properties:
- *               ids:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["id1", "id2"]
- *     responses:
- *       200:
- *         description: "Xóa thành công"
  */
 router.get("/questions", authorize(Role.ADMIN, Role.TEACHER), getQuestionBank);
 router.post("/questions", authorize(Role.ADMIN, Role.TEACHER), createQuestionBank);
@@ -155,61 +81,32 @@ router.delete("/questions", authorize(Role.ADMIN, Role.TEACHER), deleteQuestionB
 
 /**
  * @swagger
+ * /api/revision/questions/{id}:
+ *   put:
+ *     summary: "[Admin/Teacher] Cập nhật câu hỏi"
+ *     tags: [Revision Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ */
+router.put("/questions/:id", authorize(Role.ADMIN, Role.TEACHER), updateQuestionBank);
+
+/**
+ * @swagger
  * /api/revision/flashcards:
  *   get:
- *     summary: "[Admin/Teacher] Lấy danh sách bộ Flashcard"
+ *     summary: "[Admin/Teacher] Lấy danh sách bộ Flashcard (Phân trang)"
  *     tags: [Revision Admin]
- *     parameters:
- *       - in: query
- *         name: grade
- *         schema:
- *           type: integer
- *       - in: query
- *         name: topic
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: "Thành công"
  *   post:
  *     summary: "[Admin/Teacher] Tạo bộ Flashcard mới"
  *     tags: [Revision Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [grade, topic, title, cards]
- *             properties:
- *               grade:
- *                 type: integer
- *                 example: 7
- *               topic:
- *                 type: string
- *                 example: "Tế bào"
- *               title:
- *                 type: string
- *                 example: "Cấu tạo tế bào nhân sơ"
- *               cards:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     front:
- *                       type: string
- *                     back:
- *                       type: string
- *                 example: [{front: "DNA", back: "Vật chất di truyền"}]
- *     responses:
- *       201:
- *         description: "Tạo thành công"
  *   delete:
  *     summary: "[Admin/Teacher] Xóa nhiều bộ Flashcard"
  *     tags: [Revision Admin]
- *     responses:
- *       200:
- *         description: "Xóa thành công"
  */
 router.get("/flashcards", authorize(Role.ADMIN, Role.TEACHER), getFlashcards);
 router.post("/flashcards", authorize(Role.ADMIN, Role.TEACHER), createFlashcard);
@@ -217,32 +114,32 @@ router.delete("/flashcards", authorize(Role.ADMIN, Role.TEACHER), deleteFlashcar
 
 /**
  * @swagger
+ * /api/revision/flashcards/{id}:
+ *   put:
+ *     summary: "[Admin/Teacher] Cập nhật bộ Flashcard"
+ *     tags: [Revision Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ */
+router.put("/flashcards/:id", authorize(Role.ADMIN, Role.TEACHER), updateFlashcard);
+
+/**
+ * @swagger
  * /api/revision/mindmaps:
  *   get:
- *     summary: "[Admin/Teacher] Lấy danh sách Sơ đồ tư duy"
+ *     summary: "[Admin/Teacher] Lấy danh sách Sơ đồ tư duy (Phân trang)"
  *     tags: [Revision Admin]
- *     responses:
- *       200:
- *         description: "Thành công"
  *   post:
  *     summary: "[Admin/Teacher] Tạo Sơ đồ tư duy mới"
  *     tags: [Revision Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [grade, topic, title, markdown]
- *     responses:
- *       201:
- *         description: "Tạo thành công"
  *   delete:
  *     summary: "[Admin/Teacher] Xóa Sơ đồ tư duy"
  *     tags: [Revision Admin]
- *     responses:
- *       200:
- *         description: "Xóa thành công"
  */
 router.get("/mindmaps", authorize(Role.ADMIN, Role.TEACHER), getMindmaps);
 router.post("/mindmaps", authorize(Role.ADMIN, Role.TEACHER), createMindmap);
@@ -250,33 +147,26 @@ router.delete("/mindmaps", authorize(Role.ADMIN, Role.TEACHER), deleteMindmap);
 
 /**
  * @swagger
+ * /api/revision/mindmaps/{id}:
+ *   put:
+ *     summary: "[Admin/Teacher] Cập nhật Sơ đồ tư duy"
+ *     tags: [Revision Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ */
+router.put("/mindmaps/:id", authorize(Role.ADMIN, Role.TEACHER), updateMindmap);
+
+/**
+ * @swagger
  * /api/revision/admin/generate:
  *   post:
  *     summary: "[Admin/Teacher] Gọi AI sinh nội dung nháp"
  *     tags: [Revision Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [type, grade, topic]
- *             properties:
- *               type:
- *                 type: string
- *                 enum: [QUIZ, FLASHCARD, MINDMAP]
- *               grade:
- *                 type: integer
- *                 example: 6
- *               topic:
- *                 type: string
- *                 example: "Quang hợp"
- *               count:
- *                 type: integer
- *                 example: 5
- *     responses:
- *       200:
- *         description: "Thành công"
  */
 router.post("/admin/generate", authorize(Role.ADMIN, Role.TEACHER), generateDraft);
 
@@ -290,25 +180,6 @@ router.post("/admin/generate", authorize(Role.ADMIN, Role.TEACHER), generateDraf
  *   post:
  *     summary: "[Student] Lấy bộ câu hỏi ôn tập (Hybrid: Bank + AI)"
  *     tags: [Revision Student]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [grade, topic]
- *             properties:
- *               grade:
- *                 type: integer
- *                 example: 6
- *               topic:
- *                 type: string
- *                 example: "Năng lượng"
- *               limit:
- *                 type: integer
- *                 example: 5
- *     responses:
- *       200:
- *         description: "Thành công"
  */
 router.post("/quiz/generate", authorize(Role.STUDENT, Role.ADMIN), generateStudentQuiz);
 
@@ -318,15 +189,6 @@ router.post("/quiz/generate", authorize(Role.STUDENT, Role.ADMIN), generateStude
  *   post:
  *     summary: "[Student] Nộp kết quả quiz và nhận XP"
  *     tags: [Revision Student]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [quizType, totalQuestions, correctCount]
- *     responses:
- *       200:
- *         description: "Thành công"
  */
 router.post("/quiz/submit", authorize(Role.STUDENT, Role.ADMIN), submitStudentQuiz);
 
@@ -336,9 +198,6 @@ router.post("/quiz/submit", authorize(Role.STUDENT, Role.ADMIN), submitStudentQu
  *   post:
  *     summary: "[Student] Lấy bộ Flashcard theo chủ đề"
  *     tags: [Revision Student]
- *     responses:
- *       200:
- *         description: "Thành công"
  */
 router.post("/flashcards/get", authorize(Role.STUDENT, Role.ADMIN), getStudentFlashcards);
 
@@ -348,9 +207,6 @@ router.post("/flashcards/get", authorize(Role.STUDENT, Role.ADMIN), getStudentFl
  *   post:
  *     summary: "[Student] Lấy Mindmap theo chủ đề"
  *     tags: [Revision Student]
- *     responses:
- *       200:
- *         description: "Thành công"
  */
 router.post("/mindmap/get", authorize(Role.STUDENT, Role.ADMIN), getStudentMindmap);
 

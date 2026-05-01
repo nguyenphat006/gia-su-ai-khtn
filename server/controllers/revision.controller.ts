@@ -3,6 +3,16 @@ import { prisma } from "../config/prisma.js";
 import * as revisionService from "../services/revision.service.js";
 import { asyncHandler } from "../middleware/error-handler.js";
 
+/**
+ * Helper to get pagination params
+ */
+const getPagination = (query: any) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+  return { page, limit, skip };
+};
+
 // ==========================================
 // 1. QUESTION BANK (ADMIN & CLIENT COMMON)
 // ==========================================
@@ -10,6 +20,7 @@ import { asyncHandler } from "../middleware/error-handler.js";
 export async function getQuestionBank(req: Request, res: Response, next: NextFunction) {
   try {
     const { classId, grade, topic, difficulty, type, isActive } = req.query;
+    const { page, limit, skip } = getPagination(req.query);
     
     // Xây dựng query filter
     const whereClause: any = {};
@@ -20,15 +31,28 @@ export async function getQuestionBank(req: Request, res: Response, next: NextFun
     if (difficulty) whereClause.difficulty = String(difficulty);
     if (type) whereClause.type = String(type);
 
-    const questions = await prisma.questionBank.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' },
-      include: { class: true }
-    });
+    const [questions, total] = await Promise.all([
+      prisma.questionBank.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        include: { class: true },
+        skip,
+        take: limit
+      }),
+      prisma.questionBank.count({ where: whereClause })
+    ]);
 
     res.json({
       status: "success",
-      data: { questions }
+      data: { 
+        questions,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
     });
   } catch (error) {
     next(error);
@@ -39,7 +63,6 @@ export async function createQuestionBank(req: Request, res: Response, next: Next
   try {
     const { classId, grade, topic, type, difficulty, content, options, correctAnswer, explanation } = req.body;
     
-    // Support both old and new requirements
     if (!topic || !type || !difficulty || !content || !correctAnswer) {
       return res.status(400).json({ status: "error", message: "Thiếu các trường bắt buộc" });
     }
@@ -67,6 +90,29 @@ export async function createQuestionBank(req: Request, res: Response, next: Next
   }
 }
 
+export const updateQuestionBank = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { classId, grade, topic, type, difficulty, content, options, correctAnswer, explanation, isActive } = req.body;
+
+  const question = await prisma.questionBank.update({
+    where: { id },
+    data: {
+      classId,
+      grade: grade ? Number(grade) : undefined,
+      topic,
+      type,
+      difficulty,
+      content,
+      options: options !== undefined ? options : undefined,
+      correctAnswer,
+      explanation,
+      isActive
+    }
+  });
+
+  res.json({ status: "success", data: { question } });
+});
+
 export async function deleteQuestionBank(req: Request, res: Response, next: NextFunction) {
   try {
     const { ids } = req.body; 
@@ -87,6 +133,7 @@ export async function deleteQuestionBank(req: Request, res: Response, next: Next
 export async function getFlashcards(req: Request, res: Response, next: NextFunction) {
   try {
     const { classId, grade, topic, isActive } = req.query;
+    const { page, limit, skip } = getPagination(req.query);
     
     const whereClause: any = {};
     if (isActive !== undefined) whereClause.isActive = isActive === "true";
@@ -94,15 +141,28 @@ export async function getFlashcards(req: Request, res: Response, next: NextFunct
     if (grade) whereClause.grade = Number(grade);
     if (topic) whereClause.topic = { contains: String(topic), mode: "insensitive" };
 
-    const decks = await prisma.flashcardDeck.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' },
-      include: { class: true }
-    });
+    const [decks, total] = await Promise.all([
+      prisma.flashcardDeck.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        include: { class: true },
+        skip,
+        take: limit
+      }),
+      prisma.flashcardDeck.count({ where: whereClause })
+    ]);
 
     res.json({
       status: "success",
-      data: { decks }
+      data: { 
+        decks,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
     });
   } catch (error) {
     next(error);
@@ -136,6 +196,25 @@ export async function createFlashcard(req: Request, res: Response, next: NextFun
   }
 }
 
+export const updateFlashcard = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { classId, grade, topic, title, cards, isActive } = req.body;
+
+  const deck = await prisma.flashcardDeck.update({
+    where: { id },
+    data: {
+      classId,
+      grade: grade ? Number(grade) : undefined,
+      topic,
+      title,
+      cards,
+      isActive
+    }
+  });
+
+  res.json({ status: "success", data: { deck } });
+});
+
 export async function deleteFlashcard(req: Request, res: Response, next: NextFunction) {
   try {
     const { ids } = req.body;
@@ -156,6 +235,7 @@ export async function deleteFlashcard(req: Request, res: Response, next: NextFun
 export async function getMindmaps(req: Request, res: Response, next: NextFunction) {
   try {
     const { classId, grade, topic, isActive } = req.query;
+    const { page, limit, skip } = getPagination(req.query);
     
     const whereClause: any = {};
     if (isActive !== undefined) whereClause.isActive = isActive === "true";
@@ -163,15 +243,28 @@ export async function getMindmaps(req: Request, res: Response, next: NextFunctio
     if (grade) whereClause.grade = Number(grade);
     if (topic) whereClause.topic = { contains: String(topic), mode: "insensitive" };
 
-    const mindmaps = await prisma.mindmapData.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' },
-      include: { class: true }
-    });
+    const [mindmaps, total] = await Promise.all([
+      prisma.mindmapData.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        include: { class: true },
+        skip,
+        take: limit
+      }),
+      prisma.mindmapData.count({ where: whereClause })
+    ]);
 
     res.json({
       status: "success",
-      data: { mindmaps }
+      data: { 
+        mindmaps,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
     });
   } catch (error) {
     next(error);
@@ -204,6 +297,25 @@ export async function createMindmap(req: Request, res: Response, next: NextFunct
     next(error);
   }
 }
+
+export const updateMindmap = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { classId, grade, topic, title, markdown, isActive } = req.body;
+
+  const mindmap = await prisma.mindmapData.update({
+    where: { id },
+    data: {
+      classId,
+      grade: grade ? Number(grade) : undefined,
+      topic,
+      title,
+      markdown,
+      isActive
+    }
+  });
+
+  res.json({ status: "success", data: { mindmap } });
+});
 
 export async function deleteMindmap(req: Request, res: Response, next: NextFunction) {
   try {

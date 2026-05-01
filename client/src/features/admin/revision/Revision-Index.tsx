@@ -25,6 +25,7 @@ import AiDraftModal from "./components/AiDraftModal"
 import QuizFormModal from "./components/QuizFormModal"
 import FlashcardFormModal from "./components/FlashcardFormModal"
 import MindmapFormModal from "./components/MindmapFormModal"
+import { PaginationState } from "@tanstack/react-table"
 
 const TABS = [
   { id: "quiz", label: "Câu hỏi (Quiz)", icon: Zap, color: "text-sky-600", bg: "bg-sky-50" },
@@ -40,6 +41,14 @@ export default function RevisionIndex() {
   const [loading, setLoading] = React.useState(true)
   const [rowSelection, setRowSelection] = React.useState({})
   
+  // Pagination state
+  const [{ pageIndex, pageSize }, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
+  const [totalCount, setTotalCount] = React.useState(0)
+  const [pageCount, setPageCount] = React.useState(0)
+
   // Modal states
   const [isAiModalOpen, setIsAiModalOpen] = React.useState(false)
   const [isFormModalOpen, setIsFormModalOpen] = React.useState(false)
@@ -50,6 +59,8 @@ export default function RevisionIndex() {
     setLoading(true)
     try {
       const params = {
+        page: pageIndex + 1,
+        limit: pageSize,
         grade: grade === "all" ? undefined : Number(grade),
         topic: search || undefined
       }
@@ -59,16 +70,26 @@ export default function RevisionIndex() {
       else if (activeTab === "flashcard") response = await adminRevisionService.getFlashcards(params)
       else if (activeTab === "mindmap") response = await adminRevisionService.getMindmaps(params)
 
-      if (activeTab === "quiz") setData(response.data.questions)
-      else if (activeTab === "flashcard") setData(response.data.decks)
-      else if (activeTab === "mindmap") setData(response.data.mindmaps)
+      if (activeTab === "quiz") {
+        setData(response.data.questions)
+        setTotalCount(response.data.pagination.total)
+        setPageCount(response.data.pagination.totalPages)
+      } else if (activeTab === "flashcard") {
+        setData(response.data.decks)
+        setTotalCount(response.data.pagination.total)
+        setPageCount(response.data.pagination.totalPages)
+      } else if (activeTab === "mindmap") {
+        setData(response.data.mindmaps)
+        setTotalCount(response.data.pagination.total)
+        setPageCount(response.data.pagination.totalPages)
+      }
 
     } catch (err: any) {
       toast.error(err.message || "Không thể tải dữ liệu")
     } finally {
       setLoading(false)
     }
-  }, [activeTab, grade, search])
+  }, [activeTab, grade, search, pageIndex, pageSize])
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,6 +152,7 @@ export default function RevisionIndex() {
                 setActiveTab(tab.id)
                 setRowSelection({})
                 setData([])
+                setPagination({ pageIndex: 0, pageSize: 10 })
             }}
             className={cn(
               "flex items-center gap-2 px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all relative",
@@ -169,7 +191,10 @@ export default function RevisionIndex() {
              <Filter size={14} className="ml-2 text-slate-400" />
              <select 
                value={grade}
-               onChange={(e) => setGrade(e.target.value)}
+               onChange={(e) => {
+                 setGrade(e.target.value)
+                 setPagination({ pageIndex: 0, pageSize: 10 })
+               }}
                className="bg-transparent border-none outline-none text-xs font-bold text-slate-600 px-2 pr-4 appearance-none cursor-pointer"
              >
                 <option value="all">Tất cả Khối</option>
@@ -222,12 +247,15 @@ export default function RevisionIndex() {
       </div>
 
       {/* DataTable */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden no-pagination">
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
         <DataTable
           columns={getColumns()}
           data={data}
           loading={loading}
-          totalCount={data.length}
+          totalCount={totalCount}
+          pageCount={pageCount}
+          pagination={{ pageIndex, pageSize }}
+          onPaginationChange={setPagination}
           meta={{
             onEdit: handleEdit,
             onDelete: handleDeleteOne,
