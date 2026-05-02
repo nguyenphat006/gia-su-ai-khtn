@@ -53,18 +53,12 @@ export function useAuth() {
 
     const bootstrapSession = async () => {
       try {
-        // 1. Thử lấy profile hiện tại (nếu access token còn hạn trong cookie)
+        // apiClient sẽ tự động thử /refresh nếu /me trả về 401
         const activeUser = await fetchCurrentUser();
         if (isMounted) setUser(activeUser);
       } catch (error) {
-        // 2. Nếu thất bại, thử refresh session
-        try {
-          const refreshedUser = await refreshSession();
-          if (isMounted) setUser(refreshedUser);
-        } catch (refreshError) {
-          console.log("Không có phiên đăng nhập hợp lệ.");
-          if (isMounted) setUser(null);
-        }
+        console.log("Không có phiên đăng nhập hợp lệ hoặc không thể tự động làm mới.");
+        if (isMounted) setUser(null);
       } finally {
         if (isMounted) setIsLoading(false);
       }

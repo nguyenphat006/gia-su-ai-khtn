@@ -89,11 +89,11 @@ export async function apiClient<T>(path: string, init?: RequestInit): Promise<T>
  * Forces a logout and redirects to login page.
  */
 function handleGlobalLogout() {
-  // Clear any local state if necessary (cookies are cleared by server on /logout)
-  // For now, we force a hard reload/redirect to ensure all state is reset
   if (typeof window !== "undefined") {
-    // We can't use useNavigate here as it's not a component
-    // but we can trigger a redirect
-    window.location.href = "/";
+    // Only redirect if we are not already on the login/root page
+    // This prevents the infinite redirect loop on fresh sessions
+    if (window.location.pathname !== "/" && window.location.pathname !== "/login") {
+      window.location.href = "/";
+    }
   }
 }
