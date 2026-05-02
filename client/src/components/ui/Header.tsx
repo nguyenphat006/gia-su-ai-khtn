@@ -24,6 +24,14 @@ const ROUTE_NAMES: Record<string, string> = {
   "/teacher": "Bảng điều khiển giáo viên",
 };
 
+const MODE_NAMES: Record<string, string> = {
+  "quiz": "Thử thách Quiz",
+  "flashcard": "Thẻ ghi nhớ",
+  "mindmap": "Sơ đồ tư duy",
+  "chat": "Hỏi đáp AI",
+  "history": "Lịch sử học tập",
+};
+
 export default function Header({
   user,
   studentData,
@@ -33,7 +41,19 @@ export default function Header({
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname;
-  const pageName = ROUTE_NAMES[path] || "Trang chủ";
+  
+  const searchParams = new URLSearchParams(location.search);
+  const mode = searchParams.get("mode");
+  const topic = searchParams.get("topic");
+
+  let pageName = ROUTE_NAMES[path] || "Trang chủ";
+  
+  // Dynamic title for Quiz module
+  if (path === "/quiz" && mode && mode !== "menu") {
+    const modeName = MODE_NAMES[mode] || "Ôn tập";
+    pageName = topic ? `${modeName}: ${topic}` : modeName;
+  }
+
   const canAccessAdmin = user.role === "ADMIN" || user.role === "TEACHER";
 
   return (

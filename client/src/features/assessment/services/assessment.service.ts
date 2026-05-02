@@ -8,7 +8,7 @@ import {
 
 export const assessmentService = {
   // Sinh bộ câu hỏi (Hybrid: Bank + AI)
-  generateQuiz: async (params: { grade: number; topic: string; limit?: number }) => {
+  generateQuiz: async (params: { grade: number; topic: string; limit?: number; type?: string }) => {
     return apiClient<{ status: string; data: { questions: Quiz[] } }>("/api/revision/quiz/generate", {
       method: "POST",
       body: JSON.stringify(params),
@@ -40,6 +40,14 @@ export const assessmentService = {
     return apiClient<{ status: string; data: MindmapData }>("/api/revision/mindmap/get", {
       method: "POST",
       body: JSON.stringify({ grade, topic }),
+    });
+  },
+
+  // Chấm điểm bài tự luận bằng AI
+  evaluateEssay: async (question: string, answer: string, image?: { data: string; mimeType: string }) => {
+    return apiClient<{ status: string; data: EssayFeedback }>("/api/revision/quiz/grade-essay", {
+      method: "POST",
+      body: JSON.stringify({ question, answer, image }),
     });
   },
 };

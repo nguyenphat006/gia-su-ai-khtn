@@ -39,11 +39,19 @@ export function ActiveQuiz({
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const current = quizzes[currentIdx];
-  const isMultipleChoice = current?.options && current.options.length > 0;
+  
+  // Robust MCQ detection: MUST have at least 2 non-empty options
+  const isMultipleChoice = React.useMemo(() => {
+    if (!current?.options || !Array.isArray(current.options)) return false;
+    return current.options.filter(opt => opt && opt.trim().length > 0).length >= 2;
+  }, [current]);
+
+  // Fallback for content field (support both content and question)
+  const questionContent = current?.content || (current as any)?.question || "";
 
   // Resolve answer index from string if missing
   const actualAnswerIndex = React.useMemo(() => {
-    if (current?.answerIndex !== undefined) return current.answerIndex;
+    if (current?.answerIndex !== undefined && current.answerIndex !== null) return current.answerIndex;
     if (current?.correctAnswer && current.options) {
       return current.options.findIndex(opt => opt === current.correctAnswer);
     }
@@ -51,7 +59,7 @@ export function ActiveQuiz({
   }, [current]);
 
   useEffect(() => {
-    if (!isAnswered && quizzes.length > 0) {
+    if (!isAnswered && quizzes.length > 0 && current) {
       if (timerRef.current) clearInterval(timerRef.current);
       setTimeLeft(45);
       timerRef.current = setInterval(() => {
@@ -68,7 +76,7 @@ export function ActiveQuiz({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [currentIdx, isAnswered]);
+  }, [currentIdx, isAnswered, quizzes.length]);
 
   const handleTimeout = () => {
     if (isAnswered) return;
@@ -107,7 +115,7 @@ export function ActiveQuiz({
     setIsGrading(true);
     
     try {
-      const evaluation = await gradeEssay(current.content, essayAnswer, essayImage || undefined);
+      const evaluation = await gradeEssay(questionContent, essayAnswer, essayImage || undefined);
       setEssayFeedback(evaluation);
       
       if (evaluation.isPassing) {
@@ -156,7 +164,25 @@ export function ActiveQuiz({
     }
   };
 
-  if (!current) return null;
+  if (!current || quizzes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-6 h-full">
+         <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center shadow-inner">
+            <HelpCircle size={40} className="opacity-20" />
+         </div>
+         <div className="text-center">
+            <p className="text-lg font-black text-slate-600 uppercase tracking-tight">Không tìm thấy câu hỏi</p>
+            <p className="text-sm font-medium">Cô Trang chưa chuẩn bị kịp nội dung cho phần này.</p>
+         </div>
+         <button 
+           onClick={() => onFinish()}
+           className="px-8 py-3 bg-sky-600 text-white rounded-xl font-black shadow-lg hover:bg-sky-700 transition-all uppercase tracking-widest text-[10px]"
+         >
+           Quay lại Menu
+         </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto h-full flex flex-col custom-scrollbar">
@@ -209,7 +235,7 @@ export function ActiveQuiz({
         >
            <div className="text-2xl font-display font-black text-sky-900 mb-12 leading-tight tracking-tight">
              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-               {processLaTeX(current.content)}
+               {processLaTeX(questionContent)}
              </ReactMarkdown>
            </div>
            

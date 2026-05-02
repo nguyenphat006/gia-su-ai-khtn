@@ -35,16 +35,23 @@ export async function getQuizForStudent(params: {
   grade: number;
   topic: string;
   limit: number;
+  type?: string;
 }) {
-  const { grade, topic, limit } = params;
+  const { grade, topic, limit, type } = params;
 
   // Try to get from Bank first
+  const whereClause: any = {
+    isActive: true,
+    grade: grade,
+    topic: { contains: topic, mode: "insensitive" }
+  };
+
+  if (type && type !== "Trắc nghiệm & Tự luận") {
+    whereClause.type = type === "Trắc nghiệm" ? "MULTIPLE_CHOICE" : "ESSAY";
+  }
+
   const bankQuestions = await prisma.questionBank.findMany({
-    where: {
-      isActive: true,
-      grade: grade,
-      topic: { contains: topic, mode: "insensitive" }
-    },
+    where: whereClause,
     take: limit
   });
 
@@ -55,7 +62,7 @@ export async function getQuizForStudent(params: {
       topic, 
       context, 
       `Lớp ${grade}`, 
-      "Trắc nghiệm", 
+      type || "Trắc nghiệm", 
       limit - bankQuestions.length
     );
 
@@ -65,8 +72,9 @@ export async function getQuizForStudent(params: {
         id: `ai-${Math.random().toString(36).substr(2, 9)}`,
         content: q.question,
         options: q.options,
-        correctAnswer: q.options[q.answerIndex],
+        correctAnswer: q.correctAnswer || (q.options ? q.options[q.answerIndex] : ""),
         explanation: q.explanation,
+        hint: q.hint,
         type: q.isEssay ? "ESSAY" : "MULTIPLE_CHOICE",
         difficulty: q.difficulty,
         topic: topic,
@@ -196,4 +204,15 @@ export async function saveQuizResult(data: {
 
     return { history, xpEarned };
   });
+}
+
+/**
+ * 6. ESSAY EVALUATION
+ */
+export async function evaluateEssayLogic(params: {
+  question: string;
+  answer: string;
+  image?: { data: string; mimeType: string };
+}) {
+  return geminiService.evaluateEssay(params.question, params.answer, params.image);
 }

@@ -344,13 +344,20 @@ export const generateDraft = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const generateStudentQuiz = asyncHandler(async (req: Request, res: Response) => {
-  const { grade, topic, limit = 5 } = req.body;
+  const { grade, topic, limit = 5, type } = req.body;
   if (!grade || !topic) {
     return res.status(400).json({ status: "error", message: "Vui lòng chọn Khối và Chủ đề" });
   }
-  const questions = await revisionService.getQuizForStudent({ grade: Number(grade), topic, limit: Number(limit) });
+
+  const questions = await revisionService.getQuizForStudent({ 
+    grade: Number(grade), 
+    topic, 
+    limit: Number(limit),
+    type 
+  });
   res.json({ status: "success", data: { questions } });
 });
+
 
 export const submitStudentQuiz = asyncHandler(async (req: Request, res: Response) => {
   const { quizType, totalQuestions, correctCount } = req.body;
@@ -362,6 +369,19 @@ export const submitStudentQuiz = asyncHandler(async (req: Request, res: Response
     correctCount
   });
   res.json({ status: "success", data: result });
+});
+
+/**
+ * Chấm điểm bài tự luận bằng AI
+ */
+export const evaluateStudentEssay = asyncHandler(async (req: Request, res: Response) => {
+  const { question, answer, image } = req.body;
+  if (!question || (!answer && !image)) {
+    return res.status(400).json({ status: "error", message: "Thiếu thông tin câu hỏi hoặc bài làm" });
+  }
+
+  const evaluation = await revisionService.evaluateEssayLogic({ question, answer, image });
+  res.json({ status: "success", data: evaluation });
 });
 
 export const getStudentFlashcards = asyncHandler(async (req: Request, res: Response) => {

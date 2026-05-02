@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, ArrowLeft } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import ChatFeature from "@/features/chat/ChatFeature";
 
 import { useAssessment } from "./hooks/useAssessment";
@@ -17,6 +18,11 @@ interface AssessmentFeatureProps {
 }
 
 export default function AssessmentFeature({ studentName, addXP, userId }: AssessmentFeatureProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlMode = searchParams.get("mode") as any;
+  const urlTopic = searchParams.get("topic");
+  const urlId = searchParams.get("id");
+
   const {
     mode, setMode,
     topic, setTopic,
@@ -31,6 +37,7 @@ export default function AssessmentFeature({ studentName, addXP, userId }: Assess
     mindmapNodes, setMindmapNodes,
     score, setScore,
     results, setResults,
+    activeId,
     startQuiz,
     createFlashcards,
     createMindmap,
@@ -39,6 +46,25 @@ export default function AssessmentFeature({ studentName, addXP, userId }: Assess
   } = useAssessment(userId);
 
   const [isFinished, setIsFinished] = useState(false);
+
+  // Sync state from URL on mount
+  useEffect(() => {
+    if (urlMode && urlMode !== mode) {
+      setMode(urlMode);
+    }
+    if (urlTopic && urlTopic !== topic) {
+      setTopic(urlTopic);
+    }
+    // We don't necessarily need to sync id back to hook yet unless we add fetchById logic
+  }, []);
+
+  // Update URL when state changes
+  useEffect(() => {
+    const params: any = { mode };
+    if (topic) params.topic = topic;
+    if (activeId) params.id = activeId;
+    setSearchParams(params, { replace: true });
+  }, [mode, topic, activeId]);
 
   // Wrap startQuiz to reset isFinished
   const handleStartQuiz = () => {

@@ -188,9 +188,9 @@ export async function generateQuiz(
     - Số lượng câu hỏi: ${count || 5} câu
 
     CHẾ ĐỘ THI & LOẠI CÂU HỎI:
-    ${type === "Trắc nghiệm" ? `- Thử thách phản xạ và độ chính xác (Nhận biết nhanh).\n- Tập trung vào: Định nghĩa, khái niệm khoa học, nhận diện công thức, đơn vị đo, và các hiện tượng thực tế đơn giản.` : ""}
-    ${type === "Tự luận" ? `- Thử thách khả năng vận dụng và tính toán.\n- Tập trung vào: Điền khuyết (điền vào chỗ trống), trả lời ngắn, nêu tên các bộ phận/quá trình, bài toán 1-2 phép tính, và đổi đơn vị.` : ""}
-    ${type === "Trắc nghiệm & Tự luận" ? `- Kết hợp 50% Trắc nghiệm và 50% Tự luận dựa trên tổng số ${count} câu.` : ""}
+    ${type === "Trắc nghiệm" ? `- Loại: TRẮC NGHIỆM.\n- isEssay: false.\n- Cung cấp 4 options và answerIndex.` : ""}
+    ${type === "Tự luận" ? `- Loại: TỰ LUẬN.\n- isEssay: true.\n- options: null, answerIndex: null.\n- Cung cấp nội dung đáp án chuẩn vào trường correctAnswer.` : ""}
+    ${type === "Trắc nghiệm & Tự luận" ? `- Kết hợp 50% Trắc nghiệm và 50% Tự luận dựa trên tổng số ${count} câu.\n- Tự luận thì isEssay: true, Trắc nghiệm thì isEssay: false.` : ""}
 
     QUY TẮC TẠO ĐỀ:
     1. Truy xuất dữ liệu (Retrieve): Sử dụng nội dung chính xác trong tài liệu:
@@ -207,15 +207,17 @@ export async function generateQuiz(
       "quizzes": [
         {
           "question": "Câu hỏi...",
-          "options": ["A...", "B...", "C...", "D..."],
+          "options": ["A...", "B...", "C...", "D..."], 
           "answerIndex": 0,
+          "correctAnswer": "Nội dung đáp án đúng (MCQ) hoặc Đáp án mẫu/Từ khóa (Tự luận)",
           "hint": "Gợi ý nhỏ...",
           "difficulty": "Biết" | "Hiểu" | "Vận dụng",
           "explanation": "Giải thích chi tiết...",
           "isEssay": false
         }
       ]
-    }`;
+    }
+`;
 
   try {
     const response = await ai.models.generateContent({

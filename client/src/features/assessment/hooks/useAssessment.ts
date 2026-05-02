@@ -19,6 +19,7 @@ export function useAssessment(userId: string) {
   const [score, setScore] = useState(0);
 
   // Flashcards & Mindmap
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [mindmapNodes, setMindmapNodes] = useState<MindmapNode[]>([]);
 
@@ -40,7 +41,8 @@ export function useAssessment(userId: string) {
       const response = await assessmentService.generateQuiz({
         grade: Number(grade),
         topic,
-        limit: quizCount
+        limit: quizCount,
+        type: quizType
       });
       
       if (response.status === "success") {
@@ -62,6 +64,7 @@ export function useAssessment(userId: string) {
     try {
       const response = await assessmentService.getFlashcards(Number(grade), topic);
       setFlashcards(response.data.cards || []);
+      setActiveId(response.data.id || null);
       setMode("flashcard");
     } catch (error: any) {
       console.error(error);
@@ -77,6 +80,7 @@ export function useAssessment(userId: string) {
     try {
       const response = await assessmentService.getMindmap(Number(grade), topic);
       setMindmapNodes(response.data.nodes || []);
+      setActiveId(response.data.id || null);
       setMode("mindmap");
     } catch (error: any) {
       console.error(error);
@@ -110,10 +114,13 @@ export function useAssessment(userId: string) {
   };
 
   const gradeEssay = async (question: string, answer: string, image?: {data: string, mimeType: string}): Promise<EssayFeedback> => {
-     // Still using gemini direct library for realtime evaluation if needed, 
-     // or could be moved to a backend proxy endpoint for better security.
-     // For now I will leave this as is or assume evaluateEssay was moved.
-     throw new Error("Tính năng này đang được cập nhật.");
+     try {
+       const response = await assessmentService.evaluateEssay(question, answer, image);
+       return response.data;
+     } catch (err: any) {
+       toast.error("Lỗi khi chấm điểm bài tự luận.");
+       throw err;
+     }
   };
 
   return {
@@ -130,6 +137,7 @@ export function useAssessment(userId: string) {
     mindmapNodes, setMindmapNodes,
     score, setScore,
     results, setResults,
+    activeId,
     startQuiz,
     createFlashcards,
     createMindmap,

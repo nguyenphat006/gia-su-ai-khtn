@@ -28,7 +28,8 @@ Bước 2: Nếu thông tin có trong sách/tài liệu, hãy trình bày câu t
 + Đối với câu hỏi bài tập thì trả lời theo hướng dẫn dưới đây:
 QUY TẮC TRÌNH BÀY GIAO DIỆN (UI/UX GUIDELINES) BẮT BUỘC:
 1. CẤU TRÚC VĂN BẢN:
-   - Sử dụng các tiêu đề (Heading) rõ ràng bằng Markdown (dùng ## hoặc ###) để phân tách các phần.
+   - Sử dụng các tiêu đề (H
+  eading) rõ ràng bằng Markdown (dùng ## hoặc ###) để phân tách các phần.
    - Luôn ngắt dòng (Line break) giữa các đoạn văn để tạo khoảng trống, tránh các khối chữ quá dày đặc (wall of text).
 
 2. ĐIỂM NHẤN THỊ GIÁC:
