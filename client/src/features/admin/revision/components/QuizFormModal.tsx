@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import Spinner from "@/components/ui/Spinner"
 import { adminRevisionService } from "../services/revision.service"
-import { Plus, Save, X } from "lucide-react"
+import { Plus, Save, CheckCircle2 } from "lucide-react"
 import { ResponsiveModal } from "@/components/ui/ResponsiveModal"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -37,6 +37,9 @@ export default function QuizFormModal({
   const [options, setOptions] = React.useState<string[]>(["", "", "", ""])
   const [correctAnswer, setCorrectAnswer] = React.useState("")
   const [explanation, setExplanation] = React.useState("")
+  
+  // Track selected index for Multiple Choice
+  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
 
   React.useEffect(() => {
     if (isOpen) {
@@ -46,9 +49,14 @@ export default function QuizFormModal({
         setType(quiz.type)
         setDifficulty(quiz.difficulty)
         setContent(quiz.content)
-        setOptions(quiz.options || ["", "", "", ""])
+        const opts = quiz.options || ["", "", "", ""]
+        setOptions(opts)
         setCorrectAnswer(quiz.correctAnswer)
         setExplanation(quiz.explanation || "")
+        
+        // Try to find selected index
+        const idx = opts.findIndex((o: string) => o === quiz.correctAnswer)
+        setSelectedIndex(idx >= 0 ? idx : null)
       } else {
         setGrade("6")
         setTopic("")
@@ -58,6 +66,7 @@ export default function QuizFormModal({
         setOptions(["", "", "", ""])
         setCorrectAnswer("")
         setExplanation("")
+        setSelectedIndex(null)
       }
     }
   }, [isOpen, quiz])
@@ -66,12 +75,32 @@ export default function QuizFormModal({
     const newOptions = [...options]
     newOptions[index] = value
     setOptions(newOptions)
+    
+    // If this was the correct answer, update the string
+    if (selectedIndex === index) {
+      setCorrectAnswer(value)
+    }
+  }
+
+  const handleSelectCorrect = (index: number) => {
+    setSelectedIndex(index)
+    setCorrectAnswer(options[index])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!topic.trim() || !content.trim() || !correctAnswer.trim()) {
+    
+    const finalAnswer = type === "MULTIPLE_CHOICE" && selectedIndex !== null 
+      ? options[selectedIndex] 
+      : correctAnswer
+
+    if (!topic.trim() || !content.trim() || !finalAnswer.trim()) {
         toast.error("Vui lòng điền đầy đủ các trường bắt buộc")
+        return
+    }
+
+    if (type === "MULTIPLE_CHOICE" && !options[selectedIndex!].trim()) {
+        toast.error("Đáp án đúng không được để trống nội dung")
         return
     }
 
@@ -84,7 +113,7 @@ export default function QuizFormModal({
         difficulty,
         content,
         options: type === "MULTIPLE_CHOICE" ? options : null,
-        correctAnswer,
+        correctAnswer: finalAnswer,
         explanation,
         isActive: true
       }
@@ -210,40 +239,72 @@ export default function QuizFormModal({
 
         {type === "MULTIPLE_CHOICE" && (
           <div className="space-y-4 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
-            <Label className="text-sky-700 font-black uppercase tracking-widest text-[10px]">Các phương án lựa chọn</Label>
+            <Label className="text-sky-700 font-black uppercase tracking-widest text-[10px]">Các phương án lựa chọn & Đáp án đúng</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {options.map((opt, i) => (
-                <div key={i} className="space-y-1">
-                   <Label className="text-[9px] font-black text-slate-400 ml-2">Đáp án {String.fromCharCode(65+i)}</Label>
-                   <Input 
-                     value={opt}
-                     onChange={(e) => handleOptionChange(i, e.target.value)}
-                     placeholder={`Nhập lựa chọn ${i+1}...`}
-                     className="bg-white border-slate-200 rounded-xl"
-                   />
+                <div key={i} className="space-y-1 relative group">
+                   <div className="flex items-center justify-between ml-2">
+                      <Label className="text-[9px] font-black text-slate-400">Phương án {String.fromCharCode(65+i)}</Label>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectCorrect(i)}
+                        className={cn(
+                          "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter transition-all",
+                          selectedIndex === i 
+                            ? "bg-emerald-500 text-white shadow-md" 
+                            : "bg-slate-200 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600"
+                        )}
+                      >
+                        {selectedIndex === i ? "Đang chọn" : "Chọn làm đáp án đúng"}
+                      </button>
+                   </div>
+                   <div className="relative">
+                      <Input 
+                        value={opt}
+                        onChange={(e) => handleOptionChange(i, e.target.value)}
+                        placeholder={`Nhập lựa chọn ${i+1}...`}
+                        className={cn(
+                          "bg-white border-slate-200 rounded-xl pr-10 transition-all",
+                          selectedIndex === i && "border-emerald-500 ring-2 ring-emerald-50 bg-emerald-50/20"
+                        )}
+                      />
+                      {selectedIndex === i && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
+                           <CheckCircle2 size={16} />
+                        </div>
+                      )}
+                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-2 p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                <p className="text-[10px] font-bold text-emerald-700">
+                   <span className="uppercase tracking-widest mr-2">Đáp án đã chọn:</span>
+                   {selectedIndex !== null ? `${String.fromCharCode(65 + selectedIndex)}. ${options[selectedIndex] || "(Chưa nhập nội dung)"}` : "Chưa chọn"}
+                </p>
             </div>
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="correctAnswer">Đáp án đúng</Label>
-          <Input
-            id="correctAnswer"
-            placeholder={type === "MULTIPLE_CHOICE" ? "Nhập chính xác chuỗi đáp án đúng..." : "Nhập nội dung đáp án chuẩn..."}
-            value={correctAnswer}
-            onChange={(e) => setCorrectAnswer(e.target.value)}
-            className="h-12 bg-emerald-50 border-emerald-100 rounded-xl font-bold text-emerald-700"
-            required
-          />
-        </div>
+        {type === "ESSAY" && (
+          <div className="space-y-2">
+            <Label htmlFor="correctAnswer">Đáp án mẫu / Từ khóa chuẩn</Label>
+            <Input
+              id="correctAnswer"
+              placeholder="Nhập nội dung đáp án chuẩn hoặc các ý chính..."
+              value={correctAnswer}
+              onChange={(e) => setCorrectAnswer(e.target.value)}
+              className="h-12 bg-emerald-50 border-emerald-100 rounded-xl font-bold text-emerald-700"
+              required
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
-          <Label htmlFor="explanation">Lời giải chi tiết (Giải thích)</Label>
+          <Label htmlFor="explanation">Lời giải chi tiết (Dùng để AI đối chiếu & giải thích)</Label>
           <Textarea
             id="explanation"
-            placeholder="Giải thích vì sao đáp án đó là đúng..."
+            placeholder="Giải thích chi tiết kiến thức hoặc các bước giải..."
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             className="min-h-[100px] bg-slate-50 border-slate-200 rounded-2xl p-4 text-xs italic"
