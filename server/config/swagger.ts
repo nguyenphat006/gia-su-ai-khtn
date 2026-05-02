@@ -27,8 +27,8 @@ const swaggerOptions: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: "http://localhost:{port}",
-        description: "Local Development Server",
+        url: "/",
+        description: "Current Environment",
         variables: {
           port: {
             default: "3001",
