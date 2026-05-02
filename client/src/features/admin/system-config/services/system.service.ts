@@ -1,52 +1,35 @@
-import { SystemConfigListResponse, SystemConfigResponse } from "../types";
-import { getStoredAccessToken } from "@/lib/auth";
+import { apiClient } from "@/lib/apiClient";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers || {});
-  if (!headers.has("Content-Type") && init?.body) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const accessToken = getStoredAccessToken();
-  if (accessToken && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
-
-  const response = await fetch(path, {
-    ...init,
-    headers,
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(payload?.message || "Yêu cầu tới máy chủ không thành công.");
-  }
-
-  return payload as T;
+function buildQueryString(params?: any) {
+  if (!params) return "";
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== "")
+  );
+  return new URLSearchParams(cleaned as any).toString();
 }
 
 export const systemService = {
-  getConfigs: async () => {
-    return request<SystemConfigListResponse>("/api/system/configs");
+  getConfigs: async (params?: { page?: number; limit?: number }) => {
+    const query = buildQueryString(params);
+    return apiClient<{ status: string; data: { configs: any[]; pagination: any } }>(`/api/system/configs?${query}`);
   },
 
   createConfig: async (key: string, value: string) => {
-    return request<SystemConfigResponse>("/api/system/configs", {
+    return apiClient<any>("/api/system/configs", {
       method: "POST",
       body: JSON.stringify({ key, value }),
     });
   },
 
   updateConfig: async (key: string, value: string) => {
-    return request<SystemConfigResponse>(`/api/system/configs/${key}`, {
+    return apiClient<any>(`/api/system/configs/${key}`, {
       method: "PUT",
       body: JSON.stringify({ value }),
     });
   },
 
   deleteConfigs: async (keys: string[]) => {
-    return request<{ status: "ok"; data: { message: string } }>("/api/system/configs", {
+    return apiClient<{ status: "ok"; data: { message: string } }>("/api/system/configs", {
       method: "DELETE",
       body: JSON.stringify({ keys }),
     });

@@ -1,30 +1,5 @@
 import { KnowledgeListResponse } from "./types";
-import { getStoredAccessToken } from "@/lib/auth";
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers || {});
-  if (!headers.has("Content-Type") && init?.body) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const accessToken = getStoredAccessToken();
-  if (accessToken && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
-
-  const response = await fetch(path, {
-    ...init,
-    headers,
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(payload?.message || "Yêu cầu tới máy chủ không thành công.");
-  }
-
-  return payload as T;
-}
+import { apiClient } from "@/lib/apiClient";
 
 export const knowledgeService = {
   getDocuments: async (params: {
@@ -43,11 +18,11 @@ export const knowledgeService = {
     if (params.search) query.append("search", params.search);
     if (params.active !== undefined) query.append("active", params.active.toString());
 
-    return request<KnowledgeListResponse>(`/api/knowledge?${query.toString()}`);
+    return apiClient<KnowledgeListResponse>(`/api/knowledge?${query.toString()}`);
   },
 
   deleteDocuments: async (ids: string[]) => {
-    return request("/api/knowledge", {
+    return apiClient("/api/knowledge", {
       method: "DELETE",
       body: JSON.stringify({ ids }),
     });
@@ -59,7 +34,7 @@ export const knowledgeService = {
     tags?: string[];
     isActive?: boolean;
   }) => {
-    return request("/api/knowledge", {
+    return apiClient("/api/knowledge", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -71,7 +46,7 @@ export const knowledgeService = {
     tags?: string[];
     isActive?: boolean;
   }) => {
-    return request(`/api/knowledge/${id}`, {
+    return apiClient(`/api/knowledge/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });

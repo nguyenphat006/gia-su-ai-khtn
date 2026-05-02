@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { BattleConfig, UserStats } from "../types";
-import { getStoredAccessToken } from "@/lib/auth";
+import { apiClient } from "@/lib/apiClient";
 import { analyzePerformance } from "@/lib/gemini"; // Chỉ giữ lại phân tích hiệu suất cục bộ/client nếu chưa code server
 
 export function useArenaLogic(studentName: string, addXP: (xp: number) => void) {
@@ -16,25 +16,13 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
 
   const fetchLeaderboard = async () => {
     try {
-      const token = getStoredAccessToken();
-      const headers = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
       // Gọi API lấy Leaderboard
-      const resLeaderboard = await fetch("/api/arena/leaderboard?limit=10", { headers });
-      if (resLeaderboard.ok) {
-        const data = await resLeaderboard.json();
-        setLeaderboard(data.data.leaderboard || []);
-      }
+      const resLeaderboard = await apiClient<any>("/api/arena/leaderboard?limit=10");
+      setLeaderboard(resLeaderboard.data.leaderboard || []);
 
       // Gọi API lấy My Stats
-      const resStats = await fetch("/api/arena/my-stats", { headers });
-      if (resStats.ok) {
-        const data = await resStats.json();
-        setUserStats({ wins: data.data.stats.wins, total: data.data.stats.totalMatches });
-      }
+      const resStats = await apiClient<any>("/api/arena/my-stats");
+      setUserStats({ wins: resStats.data.stats.wins, total: resStats.data.stats.totalMatches });
     } catch (e) {
       console.error("Lỗi khi tải bảng xếp hạng:", e);
     }
@@ -46,13 +34,8 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
 
   const generateBattleQuestions = async (config: BattleConfig) => {
     try {
-      const token = getStoredAccessToken();
-      const res = await fetch("/api/arena/generate-quiz", {
+      const data = await apiClient<any>("/api/arena/generate-quiz", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({
           grade: config.grade || "8",
           topic: config.topic || "KHTN THCS (Vật lý, Hóa học, Sinh học)",
@@ -61,10 +44,6 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || data.status === "error") {
-        throw new Error(data.message || "Lỗi tạo câu hỏi");
-      }
       return data.data.quizzes || [];
     } catch (err: any) {
       throw new Error(err.message || "Lỗi kết nối máy chủ");
@@ -85,7 +64,7 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
     const oppScore = oppId ? result.scores[oppId] : 0;
     const winner = myScore >= oppScore;
 
-    // AI phân tích điểm yếu (tạm thời vẫn dùng client function nếu muốn, hoặc bạn có thể chuyển lên server)
+    // AI phân tích điểm yếu
     if (isAi) {
       try {
         const report = await analyzePerformance(
@@ -105,13 +84,8 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
     if (winner) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
     try {
-      const token = getStoredAccessToken();
-      const res = await fetch("/api/arena/results", {
+      const data = await apiClient<any>("/api/arena/results", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({
           score: myScore,
           mode: isAi ? "AI" : "PVP",
@@ -121,12 +95,9 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        // Server đã cộng XP, ta gọi hàm addXP để cập nhật UI cục bộ
-        if (data.data?.result?.xpEarned) {
-          addXP(data.data.result.xpEarned);
-        }
+      // Server đã cộng XP, ta gọi hàm addXP để cập nhật UI cục bộ
+      if (data.data?.result?.xpEarned) {
+        addXP(data.data.result.xpEarned);
       }
       fetchLeaderboard();
     } catch (err) {
