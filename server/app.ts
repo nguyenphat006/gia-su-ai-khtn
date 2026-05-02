@@ -26,6 +26,10 @@ export async function buildApp() {
     origin: (origin, callback) => {
       // Cho phép requests không có origin (Swagger UI, curl, mobile apps)
       if (!origin) return callback(null, true);
+      // Luôn cho phép chính domain backend và localhost
+      if (origin.includes("onrender.com") || origin.includes("localhost")) {
+        return callback(null, true);
+      }
       // Cho phép tất cả nếu chưa cấu hình ALLOWED_ORIGINS
       if (allowedOrigins.length === 0 || allowedOrigins.includes("*")) {
         return callback(null, true);
@@ -33,6 +37,7 @@ export async function buildApp() {
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+      console.error(`[CORS REJECTED] Origin: '${origin}' không nằm trong ALLOWED_ORIGINS:`, allowedOrigins);
       return callback(new Error("CORS không cho phép origin này."));
     },
     credentials: true 
