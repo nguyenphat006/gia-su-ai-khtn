@@ -77,7 +77,11 @@ export default function FlashcardFormModal({
         isActive: true
       }
 
-      await adminRevisionService.createFlashcard(data)
+      if (isEdit && deck?.id) {
+        await adminRevisionService.updateFlashcard(deck.id, data)
+      } else {
+        await adminRevisionService.createFlashcard(data)
+      }
       
       toast.success(isEdit ? "Cập nhật bộ thẻ thành công!" : "Thêm bộ thẻ mới thành công!")
       onSuccess()

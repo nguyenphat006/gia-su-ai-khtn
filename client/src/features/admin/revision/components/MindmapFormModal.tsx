@@ -66,7 +66,11 @@ export default function MindmapFormModal({
         isActive: true
       }
 
-      await adminRevisionService.createMindmap(data)
+      if (isEdit && mindmap?.id) {
+        await adminRevisionService.updateMindmap(mindmap.id, data)
+      } else {
+        await adminRevisionService.createMindmap(data)
+      }
       
       toast.success(isEdit ? "Cập nhật sơ đồ thành công!" : "Thêm sơ đồ mới thành công!")
       onSuccess()

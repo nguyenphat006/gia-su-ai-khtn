@@ -89,12 +89,8 @@ export default function QuizFormModal({
         isActive: true
       }
 
-      if (isEdit) {
-        // NOTE: Admin service currently missing updateQuestion, using create for now or assume update is same endpoint
-        // For simplicity in this demo, let's assume update is needed. 
-        // I will add updateQuestion to the service later if not already there.
-        // Actually, backend controller createQuestionBank uses req.body directly.
-        await adminRevisionService.createQuestion(data) // Temp: Should be update
+      if (isEdit && quiz?.id) {
+        await adminRevisionService.updateQuestion(quiz.id, data)
       } else {
         await adminRevisionService.createQuestion(data)
       }
