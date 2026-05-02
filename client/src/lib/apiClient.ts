@@ -3,7 +3,7 @@
  * Uses native fetch with HttpOnly cookies.
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com";
 
 // To track if a refresh is already in progress to prevent multiple simultaneous refresh calls
 let isRefreshing = false;
