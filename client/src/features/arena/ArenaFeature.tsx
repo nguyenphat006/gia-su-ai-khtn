@@ -20,28 +20,42 @@ interface ArenaFeatureProps {
 export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatureProps) {
   const { user } = useAuth();
   const grade = user?.studentProfile?.grade?.toString() || user?.class?.grade?.toString() || "8";
-  const sock = useArenaSocket(studentName, grade);
+  const studentCode = user?.studentProfile?.studentCode || "";
+  
+  const sock = useArenaSocket(studentName, grade, studentCode);
   const logic = useArenaLogic(studentName, addXP);
   const [view, setView] = useState<ArenaView>("main");
 
   // Wire socket callbacks to logic
   useEffect(() => {
     sock.onMatchFoundRef.current = async (data: any) => {
+      console.log("[Arena] Match found event received:", data.battleId);
       logic.setIsAiMode(false);
       sock.setBattleData(data);
       try {
         sock.setStatus("matching");
         const quizzes = await logic.generateBattleQuestions({
-          grade: data.config?.grade || "8",
-          topic: data.config?.topic || "KHTN THCS (Vật lý, Hóa học, Sinh học)",
+          grade: data.config?.grade || grade,
+          topic: data.config?.topic || "KHTN THCS",
           type: data.config?.type || "Trắc nghiệm",
           count: data.config?.count || 10,
         });
+        
+        if (!quizzes || quizzes.length === 0) {
+            throw new Error("Không thể tải câu hỏi cho trận đấu này.");
+        }
+
+        console.log("[Arena] PvP questions loaded:", quizzes.length);
         logic.setQuestions(quizzes);
         sock.setScores({ [sock.getSocketId()]: 0, [data.opponent.id]: 0 });
-        sock.setStatus("battle");
-      } catch (err) {
-        alert("Lỗi khi tạo trận đấu. Vui lòng thử lại.");
+        
+        // Use a small delay to ensure React has processed state updates
+        setTimeout(() => {
+            sock.setStatus("battle");
+        }, 100);
+      } catch (err: any) {
+        console.error("[Arena] Match start error:", err);
+        alert(err.message || "Lỗi khi tạo trận đấu. Vui lòng thử lại.");
         sock.getSocket()?.emit("cancel-challenge-flow", { targetId: data.opponent?.id });
         sock.setStatus("lobby");
       }
@@ -52,7 +66,7 @@ export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatu
       sock.setStatus("result");
       await logic.handleBattleFinish(data, sock.getSocketId(), sock.battleData, sock.battleConfig, logic.isAiMode);
     };
-  }, [sock.battleData, sock.battleConfig, logic.isAiMode, logic.questions]);
+  }, [sock.battleData, sock.battleConfig, logic.isAiMode, grade]);
 
   const startAiMatch = () => {
     logic.setIsAiMode(true);
@@ -68,15 +82,27 @@ export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatu
     sock.setBattleData({ battleId: `ai-${Date.now()}`, opponent: aiOpponent });
 
     try {
+      console.log("[Arena] Generating AI questions for topic:", sock.battleConfig.topic);
       const quizzes = await logic.generateBattleQuestions(sock.battleConfig);
+      
+      if (!quizzes || quizzes.length === 0) {
+        throw new Error("AI không thể tạo câu hỏi cho chủ đề này.");
+      }
+
+      console.log("[Arena] AI questions generated successfully:", quizzes.length);
       logic.setQuestions(quizzes);
       sock.setScores({ [sock.getSocketId()]: 0, [aiOpponent.id]: 0 });
-      sock.setStatus("battle");
+      
+      // Chuyển sang màn hình battle
+      setTimeout(() => {
+        sock.setStatus("battle");
+      }, 100);
     } catch (err: any) {
+      console.error("[Arena] AI Battle Error:", err);
       logic.setErrorMsg(err.message || "❗ Không thể khởi tạo trận đấu. Vui lòng thử lại.");
       sock.setStatus("ai-config");
     }
-  }, [sock.battleConfig]);
+  }, [sock.battleConfig, sock.getSocketId, logic.generateBattleQuestions]);
 
   const handleBattleFinishFromUI = async (aiResult?: any) => {
     if (logic.isAiMode && aiResult) {
@@ -92,6 +118,7 @@ export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatu
     sock.setStatus("lobby");
     sock.setBattleResult(null);
     logic.setPerformanceReport(null);
+    logic.setQuestions([]);
   };
 
   // Render based on status
@@ -115,5 +142,5 @@ export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatu
     return <BattleResult battleResult={sock.battleResult} battleData={sock.battleData} socketId={sock.getSocketId()} studentName={studentName} totalXP={totalXP} isAiMode={logic.isAiMode} battleConfig={sock.battleConfig} loadingReport={logic.loadingReport} performanceReport={logic.performanceReport} onBackToLobby={backToLobby} />;
   }
 
-  return <ArenaLobby studentName={studentName} totalXP={totalXP} players={sock.players} leaderboard={logic.leaderboard} userStats={logic.userStats} view={view} setView={setView} challengeTarget={sock.challengeTarget} setChallengeTarget={sock.setChallengeTarget} incomingChallenge={sock.incomingChallenge} setIncomingChallenge={sock.setIncomingChallenge} sendChallenge={sock.sendChallenge} startAiMatch={startAiMatch} getSocket={() => sock.getSocket()} setBattleData={sock.setBattleData} setStatus={sock.setStatus} grade={grade} />;
+  return <ArenaLobby studentName={studentName} totalXP={totalXP} players={sock.players} leaderboard={logic.leaderboard} userStats={logic.userStats} view={view} setView={setView} challengeTarget={sock.challengeTarget} setChallengeTarget={sock.setChallengeTarget} incomingChallenge={sock.incomingChallenge} setIncomingChallenge={sock.setIncomingChallenge} sendChallenge={sock.sendChallenge} startAiMatch={startAiMatch} getSocket={() => sock.getSocket()} setBattleData={sock.setBattleData} setStatus={sock.setStatus} grade={grade} findMatch={sock.findMatch} isMatching={sock.isMatching} />;
 }

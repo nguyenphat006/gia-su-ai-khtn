@@ -3,7 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { ValidationError, NotFoundError } from "../utils/errors.js";
 import { retrieveRelevantContext } from "./knowledge.service.js";
 
-const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 // ========================
 // TYPES
@@ -73,8 +73,9 @@ export async function generateArenaQuiz(config: ArenaQuizConfig) {
     ${difficulty.includes("Vận dụng") ? "- Vận dụng: Bài tập tính toán từ 1 đến 2 phép tính." : ""}
 
     QUY TẮC TẠO ĐỀ:
-    1. Truy xuất dữ liệu (Retrieve): Sử dụng nội dung chính xác trong tài liệu:
-    ${context || "Không có tài liệu cụ thể. Hãy sử dụng kiến thức KHTN chuẩn theo sách Chân trời sáng tạo."}
+    1. Cơ sở tri thức (Knowledge Base): Sử dụng nội dung chính xác trong tài liệu sau:
+    ${context || "Không có tài liệu cụ thể."}
+    TUYỆT ĐỐI chỉ được lấy kiến thức từ bộ sách giáo khoa "Chân trời sáng tạo" môn Khoa học tự nhiên lớp 6, 7, 8, 9.
     2. Phân hóa: Câu hỏi phải có độ khó tăng dần theo mức độ đã yêu cầu.
     3. Nếu tài liệu không có nội dung phù hợp, trả về JSON với trường "error".
 
@@ -232,4 +233,55 @@ export async function getUserArenaStats(userId: string) {
     winRate: total > 0 ? Math.round((wins / total) * 100) : 0,
     totalScore: totalScore._sum.score || 0,
   };
+}
+
+/**
+ * Phân tích hiệu suất của học sinh sau trận đấu AI
+ */
+export async function analyzeArenaPerformance(params: {
+  topic: string;
+  results: any[];
+}) {
+  const { topic, results } = params;
+
+  // Lấy ngữ cảnh từ Knowledge Base
+  const context = await retrieveRelevantContext(topic);
+
+  const prompt = `Bạn là cô Trang, giáo viên KHTN. Hãy phân tích kết quả làm bài của học sinh trong trận đấu trí chủ đề: ${topic}.
+    
+    Dữ liệu bài làm:
+    ${JSON.stringify(results)}
+    
+    Ngữ cảnh tài liệu:
+    ${context || "Kiến thức KHTN chuẩn sách giáo khoa."}
+
+    YÊU CẦU:
+    1. Chấm điểm theo thang điểm 10.
+    2. Phân tích lỗ hổng: Chỉ ra chính xác học sinh đang yếu ở phần kiến thức nào.
+    3. Lời khuyên từ cô Trang: Gợi ý các phần kiến thức cụ thể học sinh nên ôn tập lại.
+    4. Giọng văn: Thân thiện, khích lệ, sư phạm.
+    5. Sử dụng LaTeX ($...$) cho MỌI công thức và ký hiệu khoa học.
+
+    Trả lời duy nhất định dạng JSON:
+    {
+      "score": number,
+      "analysis": "string",
+      "advice": "string"
+    }`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: { responseMimeType: "application/json" },
+    });
+    return safeJSONParse(response.text || "{}");
+  } catch (error: any) {
+    console.error("Gemini Arena Analysis Error:", error);
+    return { 
+      error: "Không thể thực hiện phân tích lúc này.",
+      analysis: "Chúc mừng em đã hoàn thành trận đấu! Hãy tiếp tục phát huy nhé.",
+      advice: "Em hãy xem lại các câu mình đã làm sai để củng cố kiến thức."
+    };
+  }
 }

@@ -5,6 +5,7 @@ import {
   submitResult,
   leaderboard,
   myStats,
+  analyzePerformance,
 } from "../controllers/arena.controller.js";
 
 const router = Router();
@@ -130,5 +131,30 @@ router.get("/leaderboard", leaderboard);
  *         description: Thống kê cá nhân
  */
 router.get("/my-stats", myStats);
+
+/**
+ * @swagger
+ * /api/arena/analyze:
+ *   post:
+ *     summary: Phân tích hiệu suất sau trận đấu AI
+ *     tags: [Arena]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [topic, results]
+ *             properties:
+ *               topic:
+ *                 type: string
+ *               results:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ */
+router.post("/analyze", analyzePerformance);
 
 export default router;

@@ -2,15 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { ArenaStatus, ConfigRole, BattleConfig } from "../types";
 
-export function useArenaSocket(studentName: string, grade: string = "") {
+const SOCKET_URL = import.meta.env.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com";
+
+export function useArenaSocket(studentName: string, grade: string = "", studentCode: string = "") {
   const socketRef = useRef<Socket | null>(null);
   const [players, setPlayers] = useState<any[]>([]);
   const [status, setStatus] = useState<ArenaStatus>("lobby");
+  const [isMatching, setIsMatching] = useState(false);
   const [battleData, setBattleData] = useState<any>(null);
   const [scores, setScores] = useState<any>({});
   const [battleResult, setBattleResult] = useState<any>(null);
   const [configRole, setConfigRole] = useState<ConfigRole>("waiting");
-  const [battleConfig, setBattleConfig] = useState<BattleConfig>({ grade: "", topic: "", type: "Trắc nghiệm", count: 5 });
+  const [battleConfig, setBattleConfig] = useState<BattleConfig>({ grade: grade, topic: "", type: "Trắc nghiệm", count: 5 });
   const [incomingChallenge, setIncomingChallenge] = useState<any>(null);
   const [challengeRejects, setChallengeRejects] = useState(0);
   const [challengeTarget, setChallengeTarget] = useState("");
@@ -20,16 +23,25 @@ export function useArenaSocket(studentName: string, grade: string = "") {
   const onBattleFinishRef = useRef<(data: any) => void>(() => {});
 
   useEffect(() => {
-    const socket = io();
+    // Nếu grade thay đổi, cập nhật config
+    if (grade) {
+        setBattleConfig(prev => ({ ...prev, grade }));
+    }
+  }, [grade]);
+
+  useEffect(() => {
+    const socket = io(SOCKET_URL);
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      socket.emit("join-lobby", { username: studentName, grade });
+      console.log("[ArenaSocket] Connected to server.");
+      socket.emit("join-lobby", { username: studentName, grade, studentCode });
     });
 
     socket.on("players-update", (data) => setPlayers(data));
     
     socket.on("match-found", async (data) => {
+      setIsMatching(false);
       onMatchFoundRef.current(data);
     });
 
@@ -50,6 +62,7 @@ export function useArenaSocket(studentName: string, grade: string = "") {
     socket.on("challenge-error", (data) => {
       alert(data.message);
       setStatus("lobby");
+      setIsMatching(false);
     });
 
     socket.on("challenge-sent", (data) => {
@@ -96,22 +109,25 @@ export function useArenaSocket(studentName: string, grade: string = "") {
       alert("Thách đấu không thành công.");
       setStatus("lobby");
       setBattleData(null);
+      setIsMatching(false);
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [studentName]);
+  }, [studentName, grade, studentCode]);
 
   const getSocket = () => socketRef.current;
   const getSocketId = () => socketRef.current?.id || "";
 
-  const findMatch = () => {
+  const findMatch = (sameGrade: boolean = true) => {
+    setIsMatching(true);
     setStatus("matching");
-    socketRef.current?.emit("find-match");
+    socketRef.current?.emit("find-match", { sameGrade });
   };
 
   const cancelMatch = () => {
+    setIsMatching(false);
     setStatus("lobby");
     if (battleData?.target) {
       socketRef.current?.emit("cancel-challenge-flow", { targetId: battleData.target.id });
@@ -122,7 +138,14 @@ export function useArenaSocket(studentName: string, grade: string = "") {
 
   const sendChallenge = () => {
     if (!challengeTarget.trim()) return;
-    socketRef.current?.emit("send-challenge", { targetUsername: challengeTarget });
+    
+    // Kiểm tra nếu là mã HS (chứa số) hoặc username
+    const isCode = /^\d+$/.test(challengeTarget.trim()) || (challengeTarget.length >= 5 && challengeTarget.toUpperCase().startsWith("HS"));
+    
+    socketRef.current?.emit("send-challenge", { 
+        targetUsername: isCode ? undefined : challengeTarget,
+        targetStudentCode: isCode ? challengeTarget.toUpperCase() : undefined
+    });
   };
 
   return {
@@ -131,6 +154,7 @@ export function useArenaSocket(studentName: string, grade: string = "") {
     getSocketId,
     players,
     status, setStatus,
+    isMatching, setIsMatching,
     battleData, setBattleData,
     scores, setScores,
     battleResult, setBattleResult,

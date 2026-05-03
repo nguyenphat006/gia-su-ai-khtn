@@ -5,6 +5,7 @@ import {
   saveArenaResult,
   getLeaderboard,
   getUserArenaStats,
+  analyzeArenaPerformance,
 } from "../services/arena.service.js";
 import { ValidationError } from "../utils/errors.js";
 
@@ -85,4 +86,18 @@ export const myStats = asyncHandler(async (req: Request, res: Response) => {
 
   const stats = await getUserArenaStats(userId);
   res.json({ status: "ok", data: { stats } });
+});
+
+/**
+ * POST /api/arena/analyze — Phân tích hiệu suất trận đấu
+ */
+export const analyzePerformance = asyncHandler(async (req: Request, res: Response) => {
+  const { topic, results } = req.body;
+
+  if (!topic || !results || !Array.isArray(results)) {
+    throw new ValidationError("Thiếu dữ liệu: topic và results là bắt buộc.");
+  }
+
+  const analysis = await analyzeArenaPerformance({ topic, results });
+  res.json({ status: "ok", data: analysis });
 });

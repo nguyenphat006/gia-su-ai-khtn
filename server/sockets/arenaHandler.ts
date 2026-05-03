@@ -15,14 +15,15 @@ export function setupArenaSockets(io: Server) {
     console.log("⚔️  User connected to Arena:", socket.id);
 
     // ------- THAM GIA LOBBY -------
-    socket.on("join-lobby", (data: { username: string, grade?: string }) => {
-      // Tương thích ngược: Nếu client gửi thẳng chuỗi username
-      const username = typeof data === 'string' ? data : data.username;
-      const grade = typeof data === 'string' ? "Unknown" : data.grade || "Unknown";
+    socket.on("join-lobby", (data: { username: string, grade?: string, studentCode?: string }) => {
+      const username = data.username;
+      const grade = data.grade || "Unknown";
+      const studentCode = data.studentCode || "";
 
       players.set(socket.id, {
         id: socket.id,
         username,
+        studentCode,
         grade,
         score: 0,
         status: "idle",
@@ -30,14 +31,24 @@ export function setupArenaSockets(io: Server) {
       io.emit("players-update", Array.from(players.values()));
     });
 
+    // ------- LẤY DANH SÁCH THEO KHỐI -------
+    socket.on("get-online-by-grade", ({ grade }) => {
+      const filtered = Array.from(players.values()).filter(p => p.grade === grade && p.id !== socket.id);
+      socket.emit("players-by-grade", filtered);
+    });
+
     // ------- GỬI LỜI THÁCH ĐẤU -------
-    socket.on("send-challenge", ({ targetUsername }) => {
+    socket.on("send-challenge", ({ targetUsername, targetStudentCode }) => {
       const challenger = players.get(socket.id);
       if (!challenger || challenger.status !== "idle") return;
 
       const targetPlayer = Array.from(players.values()).find(
-        (p) => p.username === targetUsername
+        (p) => {
+            if (targetStudentCode) return p.studentCode === targetStudentCode;
+            return p.username === targetUsername;
+        }
       );
+
       if (
         targetPlayer &&
         targetPlayer.status === "idle" &&
@@ -128,35 +139,49 @@ export function setupArenaSockets(io: Server) {
     });
 
     // ------- MATCHMAKING TỰ ĐỘNG -------
-    socket.on("find-match", () => {
+    socket.on("find-match", (options: { sameGrade: boolean } = { sameGrade: true }) => {
       const player = players.get(socket.id);
       if (!player || player.status !== "idle") return;
 
       player.status = "matching";
-      matchmakingQueue.push(socket.id);
+      
+      // Tìm đối thủ phù hợp trong hàng đợi
+      const opponentId = matchmakingQueue.find(id => {
+        const p = players.get(id);
+        if (!p || p.status !== "matching") return false;
+        
+        if (options.sameGrade) {
+            return p.grade === player.grade;
+        }
+        return true;
+      });
 
-      if (matchmakingQueue.length >= 2) {
-        const p1Id = matchmakingQueue.shift()!;
-        const p2Id = matchmakingQueue.shift()!;
-        const p1 = players.get(p1Id);
-        const p2 = players.get(p2Id);
+      if (opponentId) {
+        // Xóa đối thủ khỏi hàng đợi
+        const idx = matchmakingQueue.indexOf(opponentId);
+        if (idx !== -1) matchmakingQueue.splice(idx, 1);
+        
+        const p1 = players.get(opponentId);
+        const p2 = player;
 
         if (p1 && p2) {
-          const battleId = `battle-${p1Id}-${p2Id}`;
+          const battleId = `battle-${p1.id}-${p2.id}`;
           p1.status = "in-battle";
           p2.status = "in-battle";
 
           activeBattles.set(battleId, {
             id: battleId,
             players: [p1, p2],
-            scores: { [p1Id]: 0, [p2Id]: 0 },
+            scores: { [p1.id]: 0, [p2.id]: 0 },
             answers: {} as Record<string, any>,
-            finished: { [p1Id]: false, [p2Id]: false },
+            finished: { [p1.id]: false, [p2.id]: false },
           });
 
-          io.to(p1Id).emit("match-found", { battleId, opponent: p2 });
-          io.to(p2Id).emit("match-found", { battleId, opponent: p1 });
+          io.to(p1.id).emit("match-found", { battleId, opponent: p2 });
+          io.to(p2.id).emit("match-found", { battleId, opponent: p1 });
         }
+      } else {
+        matchmakingQueue.push(socket.id);
       }
       io.emit("players-update", Array.from(players.values()));
     });

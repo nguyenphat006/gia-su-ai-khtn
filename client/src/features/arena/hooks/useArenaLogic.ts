@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { BattleConfig, UserStats } from "../types";
 import { apiClient } from "@/lib/apiClient";
-import { analyzePerformance } from "@/lib/gemini"; // Chỉ giữ lại phân tích hiệu suất cục bộ/client nếu chưa code server
+// Removed client-side analyzePerformance
 
 export function useArenaLogic(studentName: string, addXP: (xp: number) => void) {
   const [isAiMode, setIsAiMode] = useState(false);
@@ -37,8 +37,8 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
       const data = await apiClient<any>("/api/arena/generate-quiz", {
         method: "POST",
         body: JSON.stringify({
-          grade: config.grade || "8",
-          topic: config.topic || "KHTN THCS (Vật lý, Hóa học, Sinh học)",
+          grade: config.grade,
+          topic: config.topic,
           type: config.type || "Trắc nghiệm",
           count: config.count || 10,
         }),
@@ -64,18 +64,20 @@ export function useArenaLogic(studentName: string, addXP: (xp: number) => void) 
     const oppScore = oppId ? result.scores[oppId] : 0;
     const winner = myScore >= oppScore;
 
-    // AI phân tích điểm yếu
+    // AI phân tích điểm yếu (Gọi qua Server API)
     if (isAi) {
       try {
-        const report = await analyzePerformance(
-          battleConfig.topic,
-          result.results.map((res: boolean, i: number) => ({
-            question: questions[i]?.question || "Câu hỏi",
-            correct: res,
-          })),
-          "Tài liệu học tập về " + battleConfig.topic
-        );
-        setPerformanceReport(report);
+        const analysisRes = await apiClient<any>("/api/arena/analyze", {
+          method: "POST",
+          body: JSON.stringify({
+            topic: battleConfig.topic,
+            results: result.results.map((res: boolean, i: number) => ({
+              question: questions[i]?.question || "Câu hỏi",
+              correct: res,
+            })),
+          }),
+        });
+        setPerformanceReport(analysisRes.data);
       } catch (e) {
         console.error("AI Analysis Error:", e);
       }
