@@ -1,12 +1,10 @@
 import { 
-  Settings, 
   BookOpen, 
   Users, 
   LayoutDashboard, 
-  FileText,
-  ShieldCheck,
   BrainCircuit,
-  Database
+  Database,
+  School
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -17,7 +15,7 @@ export interface NavSubItem {
 
 export interface NavItem {
   title: string;
-  to?: string; // If has subItems, 'to' might be optional or used as a prefix
+  to?: string;
   icon: LucideIcon;
   subItems?: NavSubItem[];
 }
@@ -32,17 +30,9 @@ export const ADMIN_NAV_CONFIG: NavGroup[] = [
     groupName: "Hệ thống",
     items: [
       {
-        title: "Bảng điều khiển",
-        to: "/admin/dashboard", // Future use
-        icon: LayoutDashboard,
-      },
-      {
         title: "Cấu hình AI",
+        to: "/admin/ai-config",
         icon: BrainCircuit,
-        subItems: [
-          { title: "System Prompt", to: "/admin/ai-config" },
-          { title: "Model Settings", to: "/admin/ai-settings" }, // Future use
-        ]
       }
     ]
   },
@@ -50,17 +40,9 @@ export const ADMIN_NAV_CONFIG: NavGroup[] = [
     groupName: "Dữ liệu & Tri thức",
     items: [
       {
-        title: "Kho tri thức",
+        title: "Kho tri thức RAG",
+        to: "/admin/knowledge",
         icon: Database,
-        subItems: [
-          { title: "Tài liệu RAG", to: "/admin/knowledge" },
-          { title: "Lịch sử nạp", to: "/admin/knowledge/history" }, // Future use
-        ]
-      },
-      {
-        title: "Nội dung bài học",
-        to: "/admin/lessons", // Future use
-        icon: FileText,
       },
       {
         title: "Ngân hàng Ôn tập",
@@ -70,17 +52,17 @@ export const ADMIN_NAV_CONFIG: NavGroup[] = [
     ]
   },
   {
-    groupName: "Người dùng",
+    groupName: "Quản lý Học đường",
     items: [
       {
-        title: "Quản lý người dùng",
-        to: "/admin/users", // Future use
-        icon: Users,
+        title: "Danh sách Lớp học",
+        to: "/admin/classes",
+        icon: School,
       },
       {
-        title: "Quyền hạn",
-        to: "/admin/roles", // Future use
-        icon: ShieldCheck,
+        title: "Người dùng hệ thống",
+        to: "/admin/users",
+        icon: Users,
       }
     ]
   }
