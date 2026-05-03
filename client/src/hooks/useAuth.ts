@@ -52,14 +52,23 @@ export function useAuth() {
     let isMounted = true;
 
     const bootstrapSession = async () => {
+      // Safety timeout: if auth check takes more than 10s, fallback to login
+      const timeoutId = setTimeout(() => {
+        if (isMounted && isLoading) {
+          console.warn("[useAuth] Auth check timed out, falling back to guest state.");
+          setIsLoading(false);
+        }
+      }, 10000);
+
       try {
-        // apiClient sẽ tự động thử /refresh nếu /me trả về 401
+        console.log("[useAuth] Bootstrapping session...");
         const activeUser = await fetchCurrentUser();
         if (isMounted) setUser(activeUser);
-      } catch (error) {
-        console.log("Không có phiên đăng nhập hợp lệ hoặc không thể tự động làm mới.");
+      } catch (error: any) {
+        console.warn("[useAuth] Session bootstrap failed:", error.message);
         if (isMounted) setUser(null);
       } finally {
+        clearTimeout(timeoutId);
         if (isMounted) setIsLoading(false);
       }
     };
