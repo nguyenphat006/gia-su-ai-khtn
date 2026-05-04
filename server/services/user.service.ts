@@ -55,17 +55,17 @@ export async function getUsers(query: ListUsersQuery) {
   const where: Prisma.UserWhereInput = {};
 
   // Lọc theo role
-  if (query.role) {
+  if (query.role && query.role !== "undefined" as any) {
     where.role = query.role;
   }
 
   // Lọc theo status
-  if (query.status) {
+  if (query.status && query.status !== "undefined") {
     where.status = query.status as any;
   }
 
   // Lọc theo lớp
-  if (query.classId) {
+  if (query.classId && query.classId !== "undefined") {
     where.classId = query.classId;
   }
 
@@ -167,10 +167,11 @@ export async function createUser(data: {
   // Validation theo role
   if (data.role === "STUDENT") {
     if (!data.studentCode) {
-      throw new ValidationError("Mã học sinh là bắt buộc.");
+      // Sinh ma hoc sinh ngau nhien neu thieu
+      data.studentCode = `HS${Date.now().toString().slice(-6)}`;
     }
     if (!data.grade || data.grade < 6 || data.grade > 9) {
-      throw new ValidationError("Khối lớp phải từ 6 đến 9.");
+      data.grade = 6; // Default khoi 6 neu thieu hoac sai
     }
   }
 
@@ -182,7 +183,7 @@ export async function createUser(data: {
     }
   }
 
-  const passwordHash = await hashPassword(data.password || "123456abc");
+  const passwordHash = await hashPassword(data.password || "123456");
 
   const user = await prisma.user.create({
     data: {
@@ -367,3 +368,39 @@ export async function updateMyProfile(userId: string, data: {
 
   return stripPassword(updatedUser!);
 }
+
+/**
+ * Import nhiều users cùng lúc (Batch Import)
+ */
+export async function batchImportUsers(usersData: any[]) {
+  const results = {
+    success: 0,
+    errors: [] as { index: number; username: string; reason: string }[],
+  };
+
+  for (let i = 0; i < usersData.length; i++) {
+    const data = usersData[i];
+    try {
+      await createUser({
+        role: data.role || "STUDENT",
+        username: data.username,
+        displayName: data.displayName,
+        password: data.password || "123456",
+        email: data.email,
+        classId: data.classId,
+        studentCode: data.studentCode,
+        grade: data.grade ? Number(data.grade) : undefined,
+      });
+      results.success++;
+    } catch (error: any) {
+      results.errors.push({
+        index: i + 1,
+        username: data.username || "Không xác định",
+        reason: error.message || "Lỗi không xác định",
+      });
+    }
+  }
+
+  return results;
+}
+

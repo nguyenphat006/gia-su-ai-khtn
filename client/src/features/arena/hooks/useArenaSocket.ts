@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { ArenaStatus, ConfigRole, BattleConfig } from "../types";
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com";
+const SOCKET_URL = import.meta.env.DEV 
+  ? "" 
+  : (import.meta.env.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com");
 
 export function useArenaSocket(studentName: string, grade: string = "", studentCode: string = "") {
   const socketRef = useRef<Socket | null>(null);

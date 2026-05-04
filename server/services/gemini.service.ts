@@ -387,3 +387,41 @@ export async function evaluateEssay(
   });
   return safeJSONParse(response.text || "{}");
 }
+
+/**
+ * Sinh danh sách người dùng giả lập (Học sinh)
+ */
+export async function generateMockUsers(count: number, classId?: string, grade?: number) {
+  const prompt = `Bạn là một trợ lý AI tạo dữ liệu giả lập cho hệ thống học tập.
+  Hãy tạo danh sách ${count} học sinh trung học cơ sở Việt Nam (lớp ${grade || "6-9"}).
+  Tạo tên học sinh đa dạng, chân thực, có đủ cả nam và nữ với họ khác nhau.
+  
+  Mỗi học sinh cần có:
+  - username: viết thường không dấu, viết liền (vd: nguyenvanan)
+  - displayName: họ và tên tiếng Việt đầy đủ (vd: Nguyễn Văn An)
+  - studentCode: mã học sinh 8 chữ số (vd: 20241001)${classId ? `\n  - classId: "${classId}"` : ""}${grade ? `\n  - grade: ${grade}` : ""}
+  
+  TRẢ VỀ DUY NHẤT MẢNG JSON (không cần trường password):
+  [
+    {
+      "username": "...",
+      "displayName": "...",
+      "studentCode": "...",
+      ${classId ? `"classId": "${classId}",` : ""}
+      "grade": ${grade || 6}
+    }
+  ]`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: { responseMimeType: "application/json" },
+  });
+  
+  const result = safeJSONParse(response.text || "[]");
+  const users = Array.isArray(result) ? result : [];
+  
+  // Luôn gán password cố định là 123456
+  return users.map((u: any) => ({ ...u, password: "123456" }));
+}
+
