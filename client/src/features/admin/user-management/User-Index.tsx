@@ -9,6 +9,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { toast } from "sonner"
 import { PaginationState } from "@tanstack/react-table"
 import { motion } from "motion/react"
+import UserFormModal from "./components/UserFormModal"
 
 export default function UserIndex() {
   const [data, setData] = React.useState<any[]>([])
@@ -24,6 +25,9 @@ export default function UserIndex() {
   const [totalCount, setTotalCount] = React.useState(0)
   const [pageCount, setPageCount] = React.useState(0)
 
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const [selectedUser, setSelectedUser] = React.useState<any>(undefined)
   const [confirmDelete, setConfirmDelete] = React.useState<{ isOpen: boolean; ids: string[] }>({ isOpen: false, ids: [] })
 
   const fetchData = React.useCallback(async () => {
@@ -49,6 +53,16 @@ export default function UserIndex() {
     const timer = setTimeout(() => fetchData(), 300)
     return () => clearTimeout(timer)
   }, [fetchData])
+
+  const handleAdd = () => {
+    setSelectedUser(undefined)
+    setIsModalOpen(true)
+  }
+
+  const handleEdit = (user: any) => {
+    setSelectedUser(user)
+    setIsModalOpen(true)
+  }
 
   const handleDeleteOne = (id: string) => {
     setConfirmDelete({ isOpen: true, ids: [id] })
@@ -100,7 +114,7 @@ export default function UserIndex() {
           <Button variant="outline" onClick={fetchData} className="h-11 w-11 p-0 rounded-2xl border-slate-200">
             <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
           </Button>
-          <Button className="h-11 px-6 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg transition-all">
+          <Button onClick={handleAdd} className="h-11 px-6 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg transition-all">
             <Plus size={18} /> Thêm người dùng
           </Button>
         </div>
@@ -149,13 +163,20 @@ export default function UserIndex() {
           pagination={{ pageIndex, pageSize }}
           onPaginationChange={setPagination}
           meta={{
-            onEdit: (u: any) => toast.info("Tính năng sửa người dùng đang được hoàn thiện"),
+            onEdit: handleEdit,
             onDelete: handleDeleteOne,
           }}
           onRowSelectionChange={setRowSelection}
           state={{ rowSelection }}
         />
       </div>
+
+      <UserFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchData}
+        userData={selectedUser}
+      />
 
       <ConfirmModal
         isOpen={confirmDelete.isOpen}

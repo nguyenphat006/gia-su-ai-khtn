@@ -8,6 +8,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { toast } from "sonner"
 import { PaginationState } from "@tanstack/react-table"
 import { motion } from "motion/react"
+import ClassFormModal from "./components/ClassFormModal"
 
 export default function ClassIndex() {
   const [data, setData] = React.useState<any[]>([])
@@ -21,6 +22,9 @@ export default function ClassIndex() {
   const [totalCount, setTotalCount] = React.useState(0)
   const [pageCount, setPageCount] = React.useState(0)
 
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const [selectedClass, setSelectedClass] = React.useState<any>(undefined)
   const [confirmDelete, setConfirmDelete] = React.useState<{ isOpen: boolean; ids: string[] }>({ isOpen: false, ids: [] })
 
   const fetchData = React.useCallback(async () => {
@@ -43,6 +47,16 @@ export default function ClassIndex() {
   React.useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  const handleAdd = () => {
+    setSelectedClass(undefined)
+    setIsModalOpen(true)
+  }
+
+  const handleEdit = (cls: any) => {
+    setSelectedClass(cls)
+    setIsModalOpen(true)
+  }
 
   const handleDeleteOne = (id: string) => {
     setConfirmDelete({ isOpen: true, ids: [id] })
@@ -94,7 +108,7 @@ export default function ClassIndex() {
           <Button variant="outline" onClick={fetchData} className="h-11 w-11 p-0 rounded-2xl border-slate-200">
             <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
           </Button>
-          <Button className="h-11 px-6 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg transition-all">
+          <Button onClick={handleAdd} className="h-11 px-6 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg transition-all">
             <Plus size={18} /> Thêm lớp mới
           </Button>
         </div>
@@ -110,13 +124,20 @@ export default function ClassIndex() {
           pagination={{ pageIndex, pageSize }}
           onPaginationChange={setPagination}
           meta={{
-            onEdit: (cls: any) => toast.info("Tính năng sửa lớp đang được hoàn thiện"),
+            onEdit: handleEdit,
             onDelete: handleDeleteOne,
           }}
           onRowSelectionChange={setRowSelection}
           state={{ rowSelection }}
         />
       </div>
+
+      <ClassFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchData}
+        classData={selectedClass}
+      />
 
       <ConfirmModal
         isOpen={confirmDelete.isOpen}
