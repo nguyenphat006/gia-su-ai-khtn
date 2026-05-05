@@ -6,8 +6,8 @@ const scrypt = promisify(nodeScrypt);
 const KEY_LENGTH = 64;
 
 export function validatePasswordStrength(password: string) {
-  if (password.length < 8) {
-    throw new ValidationError("Mật khẩu phải có ít nhất 8 ký tự.");
+  if (password.length < 6) {
+    throw new ValidationError("Mật khẩu phải có ít nhất 6 ký tự.");
   }
 
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
@@ -15,8 +15,10 @@ export function validatePasswordStrength(password: string) {
   }
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  validatePasswordStrength(password);
+export async function hashPassword(password: string, shouldValidate = true): Promise<string> {
+  if (shouldValidate) {
+    validatePasswordStrength(password);
+  }
 
   const salt = randomBytes(16).toString("hex");
   const derivedKey = (await scrypt(password, salt, KEY_LENGTH)) as Buffer;

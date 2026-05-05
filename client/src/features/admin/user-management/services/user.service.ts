@@ -35,6 +35,10 @@ export const adminUserService = {
     });
   },
 
+  getUserDetail: async (id: string) => {
+    return apiClient<any>(`/api/users/${id}`);
+  },
+
   deleteUsers: async (ids: string[]) => {
     return apiClient<any>("/api/users", {
       method: "DELETE",
@@ -73,9 +77,9 @@ export const adminUserService = {
   },
 
   /**
-   * Tải file Excel mẫu (Xuất danh sách người dùng)
+   * Tải file Excel mẫu hoặc Xuất danh sách người dùng
    */
-  exportToExcel: async (params?: { role?: string; classId?: string; search?: string }) => {
+  exportToExcel: async (params?: { role?: string; classId?: string; search?: string; template?: boolean }) => {
     const cleanParams = Object.fromEntries(
       Object.entries(params || {}).filter(([_, v]) => v !== undefined && v !== "")
     );

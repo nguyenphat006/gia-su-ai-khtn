@@ -183,7 +183,8 @@ export async function createUser(data: {
     }
   }
 
-  const passwordHash = await hashPassword(data.password || "123456");
+  const isDefaultPassword = (data.password || "123456") === "123456";
+  const passwordHash = await hashPassword(data.password || "123456", !isDefaultPassword);
 
   const user = await prisma.user.create({
     data: {
@@ -265,7 +266,8 @@ export async function updateUserByAdmin(id: string, data: {
       : { disconnect: true };
   }
   if (data.password) {
-    userUpdate.passwordHash = await hashPassword(data.password);
+    const isDefaultPassword = data.password === "123456";
+    userUpdate.passwordHash = await hashPassword(data.password, !isDefaultPassword);
     userUpdate.mustChangePassword = true;
   }
 

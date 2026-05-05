@@ -34,12 +34,20 @@ export default function ArenaFeature({ studentName, addXP, totalXP }: ArenaFeatu
       sock.setBattleData(data);
       try {
         sock.setStatus("matching");
-        const quizzes = await logic.generateBattleQuestions({
-          grade: data.config?.grade || grade,
-          topic: data.config?.topic || "KHTN THCS",
-          type: data.config?.type || "Trắc nghiệm",
-          count: data.config?.count || 10,
-        });
+        
+        // SỬ DỤNG QUIZZES TỪ SERVER NẾU CÓ
+        let quizzes = data.quizzes;
+
+        // Nếu server chưa gửi (ví dụ mode cũ), mới gọi API
+        if (!quizzes || quizzes.length === 0) {
+            console.log("[Arena] Server didn't send quizzes, falling back to API call...");
+            quizzes = await logic.generateBattleQuestions({
+              grade: data.config?.grade || grade,
+              topic: data.config?.topic || "KHTN THCS",
+              type: data.config?.type || "Trắc nghiệm",
+              count: data.config?.count || 10,
+            });
+        }
         
         if (!quizzes || quizzes.length === 0) {
             throw new Error("Không thể tải câu hỏi cho trận đấu này.");

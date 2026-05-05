@@ -131,7 +131,7 @@ function GenerateMockModal({ isOpen, onClose, onSuccess }: GenerateMockModalProp
                 <li>• Tên học sinh Việt Nam thực tế</li>
                 <li>• Tên đăng nhập không dấu</li>
                 <li>• Mã học sinh 8 chữ số</li>
-                <li>• Mật khẩu ngẫu nhiên dễ nhớ</li>
+                <li>• Mật khẩu mặc định 123456</li>
               </ul>
             </div>
 
@@ -222,6 +222,101 @@ function ImportResultBadge({ result, onClose }: ImportResultProps) {
   )
 }
 
+// ==================== IMPORT EXCEL MODAL ====================
+interface ImportExcelModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: (result: any) => void
+}
+
+function ImportExcelModal({ isOpen, onClose, onSuccess }: ImportExcelModalProps) {
+  const [loading, setLoading] = React.useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  const handleDownloadTemplate = async () => {
+    try {
+      await adminUserService.exportToExcel({ template: true })
+      toast.success("Đã tải file mẫu!")
+    } catch (err) {
+      toast.error("Không thể tải file mẫu")
+    }
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    setLoading(true)
+    try {
+      const res = await adminUserService.importFromExcel(file)
+      onSuccess(res.data)
+      onClose()
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi import file")
+    } finally {
+      setLoading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+      >
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-5 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Upload size={20} />
+            <h3 className="font-bold">Nhập dữ liệu từ Excel</h3>
+          </div>
+          <button onClick={onClose}><X size={18} /></button>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+              <Upload size={24} />
+            </div>
+            <p className="text-sm font-bold text-slate-700 mb-1">Chọn file Excel (.xlsx)</p>
+            <p className="text-xs text-slate-500 mb-4">Dung lượng tối đa 5MB</p>
+            <Button 
+              onClick={() => fileInputRef.current?.click()} 
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700 text-white rounded-xl"
+            >
+              {loading ? <RefreshCcw className="animate-spin mr-2" size={16} /> : null}
+              Chọn file từ máy tính
+            </Button>
+            <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx" onChange={handleFileChange} />
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hướng dẫn & Mẫu</p>
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadTemplate}
+              className="w-full justify-start gap-3 h-12 rounded-xl border-slate-200 text-slate-600 font-bold"
+            >
+              <Download size={18} className="text-green-600" />
+              Tải file Excel mẫu (.xlsx)
+            </Button>
+            <div className="text-[11px] text-slate-500 space-y-1 pl-1">
+              <p>• Sử dụng đúng tên các cột trong file mẫu.</p>
+              <p>• <b>Username</b> và <b>Họ tên</b> là bắt buộc.</p>
+              <p>• Mật khẩu để trống sẽ tự động gán <b>123456</b>.</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 // ==================== MAIN PAGE ====================
 export default function UserIndex() {
   const [data, setData] = React.useState<any[]>([])
@@ -240,6 +335,7 @@ export default function UserIndex() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [isGenerateOpen, setIsGenerateOpen] = React.useState(false)
+  const [isImportOpen, setIsImportOpen] = React.useState(false)
   const [selectedUser, setSelectedUser] = React.useState<any>(undefined)
   const [confirmDelete, setConfirmDelete] = React.useState<{ isOpen: boolean; ids: string[] }>({ isOpen: false, ids: [] })
   const [importResult, setImportResult] = React.useState<any>(null)
@@ -291,26 +387,10 @@ export default function UserIndex() {
     }
   }
 
-  // IMPORT EXCEL
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
-      toast.error("Vui lòng chọn file Excel (.xlsx)")
-      return
-    }
-
-    const loadId = toast.loading(`Đang import "${file.name}"...`)
-    try {
-      const res = await adminUserService.importFromExcel(file)
-      toast.dismiss(loadId)
-      setImportResult(res.data)
-      fetchData()
-    } catch (err: any) {
-      toast.error(err.message || "Lỗi import file", { id: loadId })
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    }
+  // IMPORT EXCEL SUCCESS
+  const handleImportSuccess = (result: any) => {
+    setImportResult(result)
+    fetchData()
   }
 
   // EXPORT EXCEL
@@ -360,12 +440,11 @@ export default function UserIndex() {
           {/* Import Excel */}
           <Button
             variant="outline"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => setIsImportOpen(true)}
             className="h-10 px-4 rounded-2xl border-slate-200 text-xs font-bold gap-2 hover:border-green-400 hover:text-green-700 hover:bg-green-50 transition-colors"
           >
             <Upload size={15} /> Nhập Excel
           </Button>
-          <input type="file" accept=".xlsx,.xls" className="hidden" ref={fileInputRef} onChange={handleImport} />
 
           {/* Export Excel */}
           <Button
@@ -467,6 +546,12 @@ export default function UserIndex() {
         isOpen={isGenerateOpen}
         onClose={() => setIsGenerateOpen(false)}
         onSuccess={fetchData}
+      />
+
+      <ImportExcelModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={handleImportSuccess}
       />
 
       {/* Import Result Toast Overlay */}

@@ -41,6 +41,10 @@ export default function ProfileEditModal({
       setError("Mật khẩu mới phải có ít nhất 6 ký tự.");
       return;
     }
+    if (!/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setError("Mật khẩu mới phải có ít nhất 1 chữ cái và 1 chữ số.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");

@@ -1,4 +1,5 @@
 import { Server, Socket } from "socket.io";
+import { generateArenaQuiz } from "../services/arena.service.js";
 
 // ==================================================
 // IN-MEMORY STATE (Trạng thái lưu trong RAM)
@@ -94,7 +95,7 @@ export function setupArenaSockets(io: Server) {
       });
     });
 
-    socket.on("accept-config", ({ opponentId, config }) => {
+    socket.on("accept-config", async ({ opponentId, config }) => {
       const p1 = players.get(opponentId);
       const p2 = players.get(socket.id);
 
@@ -103,23 +104,43 @@ export function setupArenaSockets(io: Server) {
         p1.status = "in-battle";
         p2.status = "in-battle";
 
+        // TẠO CÂU HỎI TRƯỚC KHI BẮT ĐẦU (Server side)
+        const quizResult = await generateArenaQuiz({
+            grade: config.grade,
+            topic: config.topic,
+            type: config.type || "Trắc nghiệm",
+            count: config.count || 10
+        });
+
+        if (quizResult.error) {
+            p1.status = "idle";
+            p2.status = "idle";
+            io.to(p1.id).emit("challenge-error", { message: quizResult.error });
+            io.to(p2.id).emit("challenge-error", { message: quizResult.error });
+            io.emit("players-update", Array.from(players.values()));
+            return;
+        }
+
         activeBattles.set(battleId, {
           id: battleId,
           players: [p1, p2],
           scores: { [p1.id]: 0, [p2.id]: 0 },
           answers: {} as Record<string, any>,
           finished: { [p1.id]: false, [p2.id]: false },
+          quizzes: quizResult.quizzes
         });
 
         io.to(p1.id).emit("match-found", {
           battleId,
           opponent: p2,
           config,
+          quizzes: quizResult.quizzes
         });
         io.to(p2.id).emit("match-found", {
           battleId,
           opponent: p1,
           config,
+          quizzes: quizResult.quizzes
         });
         io.emit("players-update", Array.from(players.values()));
       }
@@ -139,7 +160,7 @@ export function setupArenaSockets(io: Server) {
     });
 
     // ------- MATCHMAKING TỰ ĐỘNG -------
-    socket.on("find-match", (options: { sameGrade: boolean } = { sameGrade: true }) => {
+    socket.on("find-match", async (options: { sameGrade: boolean } = { sameGrade: true }) => {
       const player = players.get(socket.id);
       if (!player || player.status !== "idle") return;
 
@@ -158,8 +179,8 @@ export function setupArenaSockets(io: Server) {
 
       if (opponentId) {
         // Xóa đối thủ khỏi hàng đợi
-        const idx = matchmakingQueue.indexOf(opponentId);
-        if (idx !== -1) matchmakingQueue.splice(idx, 1);
+        const index = matchmakingQueue.indexOf(opponentId);
+        if (index !== -1) matchmakingQueue.splice(index, 1);
         
         const p1 = players.get(opponentId);
         const p2 = player;
@@ -169,16 +190,44 @@ export function setupArenaSockets(io: Server) {
           p1.status = "in-battle";
           p2.status = "in-battle";
 
+          // Tự động tạo chủ đề dựa trên khối lớp chung
+          const topic = `Ôn tập KHTN Lớp ${p1.grade}`;
+          const quizResult = await generateArenaQuiz({
+             grade: p1.grade,
+             topic: topic,
+             count: 10
+          });
+
+          if (quizResult.error) {
+             p1.status = "idle";
+             p2.status = "idle";
+             io.to(p1.id).emit("challenge-error", { message: quizResult.error });
+             io.to(p2.id).emit("challenge-error", { message: quizResult.error });
+             io.emit("players-update", Array.from(players.values()));
+             return;
+          }
+
           activeBattles.set(battleId, {
             id: battleId,
             players: [p1, p2],
             scores: { [p1.id]: 0, [p2.id]: 0 },
             answers: {} as Record<string, any>,
             finished: { [p1.id]: false, [p2.id]: false },
+            quizzes: quizResult.quizzes
           });
 
-          io.to(p1.id).emit("match-found", { battleId, opponent: p2 });
-          io.to(p2.id).emit("match-found", { battleId, opponent: p1 });
+          io.to(p1.id).emit("match-found", { 
+              battleId, 
+              opponent: p2, 
+              quizzes: quizResult.quizzes,
+              config: { topic, grade: p1.grade }
+          });
+          io.to(p2.id).emit("match-found", { 
+              battleId, 
+              opponent: p1, 
+              quizzes: quizResult.quizzes,
+              config: { topic, grade: p1.grade }
+          });
         }
       } else {
         matchmakingQueue.push(socket.id);

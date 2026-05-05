@@ -42,6 +42,7 @@ export default function UserFormModal({
   
   // Role-specific fields
   const [classId, setClassId] = React.useState("")
+  const [grade, setGrade] = React.useState(0)
   const [studentCode, setStudentCode] = React.useState("")
   const [employeeCode, setEmployeeCode] = React.useState("")
   const [subject, setSubject] = React.useState("")
@@ -50,16 +51,30 @@ export default function UserFormModal({
     if (isOpen) {
       fetchClasses()
       if (userData) {
-        setRole(userData.role)
-        setUsername(userData.username)
-        setDisplayName(userData.displayName)
-        setEmail(userData.email || "")
-        setStatus(userData.status)
-        setClassId(userData.classId || "")
-        setStudentCode(userData.studentProfile?.studentCode || "")
-        setEmployeeCode(userData.teacherProfile?.employeeCode || "")
-        setSubject(userData.teacherProfile?.subject || "")
-        setPassword("") // Don't show hashed password
+        // Fetch detail to get latest data
+        const loadDetail = async () => {
+          setLoading(true)
+          try {
+            const res = await adminUserService.getUserDetail(userData.id)
+            const u = res.data.user
+            setRole(u.role)
+            setUsername(u.username)
+            setDisplayName(u.displayName)
+            setEmail(u.email || "")
+            setStatus(u.status)
+            setClassId(u.classId || "")
+            setGrade(u.studentProfile?.grade || 0)
+            setStudentCode(u.studentProfile?.studentCode || "")
+            setEmployeeCode(u.teacherProfile?.employeeCode || "")
+            setSubject(u.teacherProfile?.subject || "")
+            setPassword("") 
+          } catch (err) {
+            console.error("Lỗi lấy chi tiết:", err)
+          } finally {
+            setLoading(false)
+          }
+        }
+        loadDetail()
       } else {
         setRole("STUDENT")
         setUsername("")
@@ -67,6 +82,7 @@ export default function UserFormModal({
         setEmail("")
         setStatus("ACTIVE")
         setClassId("")
+        setGrade(0)
         setStudentCode("")
         setEmployeeCode("")
         setSubject("")
@@ -74,6 +90,22 @@ export default function UserFormModal({
       }
     }
   }, [isOpen, userData])
+
+  const [classSearch, setClassSearch] = React.useState("")
+  const filteredClasses = React.useMemo(() => {
+    return classes.filter(c => 
+      c.name.toLowerCase().includes(classSearch.toLowerCase()) || 
+      c.code.toLowerCase().includes(classSearch.toLowerCase())
+    )
+  }, [classes, classSearch])
+
+  const handleClassChange = (cid: string) => {
+    setClassId(cid)
+    const selectedClass = classes.find(c => c.id === cid)
+    if (selectedClass) {
+      setGrade(selectedClass.grade)
+    }
+  }
 
   const fetchClasses = async () => {
     setLoadingClasses(true)
@@ -106,6 +138,7 @@ export default function UserFormModal({
       if (role === "STUDENT") {
         payload.classId = classId || null
         payload.studentCode = studentCode.trim() || null
+        payload.grade = grade
       } else if (role === "TEACHER") {
         payload.employeeCode = employeeCode.trim() || null
         payload.subject = subject.trim() || null
@@ -176,7 +209,6 @@ export default function UserFormModal({
                  key={r.id}
                  type="button"
                  onClick={() => setRole(r.id as any)}
-                 disabled={isEdit}
                  className={cn(
                    "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2",
                    role === r.id 
@@ -256,18 +288,26 @@ export default function UserFormModal({
               <Label className="text-sky-700 font-black uppercase tracking-widest text-[10px]">Thông tin Học sinh</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <Label htmlFor="classId" className="text-[10px]">Lớp học</Label>
-                    <select
-                      id="classId"
-                      value={classId}
-                      onChange={(e) => setClassId(e.target.value)}
-                      className="w-full h-11 bg-white border border-sky-200 rounded-xl px-4 font-bold text-slate-700 outline-none focus:border-sky-500"
-                    >
-                      <option value="">-- Chọn lớp --</option>
-                      {classes.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name} ({c.academicYear})</option>
-                      ))}
-                    </select>
+                    <Label htmlFor="classId" className="text-[10px]">Lớp học {grade > 0 && `(Khối ${grade})`}</Label>
+                    <div className="space-y-2">
+                      <Input 
+                        placeholder="Tìm lớp..." 
+                        value={classSearch} 
+                        onChange={(e) => setClassSearch(e.target.value)}
+                        className="h-9 text-xs bg-white/50 border-sky-100"
+                      />
+                      <select
+                        id="classId"
+                        value={classId}
+                        onChange={(e) => handleClassChange(e.target.value)}
+                        className="w-full h-11 bg-white border border-sky-200 rounded-xl px-4 font-bold text-slate-700 outline-none focus:border-sky-500"
+                      >
+                        <option value="">-- Chọn lớp --</option>
+                        {filteredClasses.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name} ({c.academicYear})</option>
+                        ))}
+                      </select>
+                    </div>
                  </div>
                  <div className="space-y-2">
                     <Label htmlFor="studentCode" className="text-[10px]">Mã học sinh</Label>

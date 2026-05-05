@@ -42,75 +42,154 @@ function safeJSONParse(text: string) {
 }
 
 /**
- * Gọi Gemini AI tạo bộ câu hỏi thách đấu
+ * Gọi Gemini AI hoặc lấy từ QuestionBank để tạo bộ câu hỏi thách đấu
  */
 export async function generateArenaQuiz(config: ArenaQuizConfig) {
   const count = Math.min(20, Math.max(1, config.count || 10));
   const type = config.type || "Trắc nghiệm";
   const difficulty = config.difficulty || ["Nhận biết", "Thông hiểu", "Vận dụng"];
+  const gradeNum = config.grade ? Number(config.grade) : null;
 
-  // Lấy ngữ cảnh từ Knowledge Base
-  const context = await retrieveRelevantContext(config.topic);
-
-  const prompt = `Bạn là hệ thống "Đấu Trường Trí Tuệ AI" thuộc dự án Gia sư AI KHTN.
-    Nhiệm vụ: Khởi tạo bộ câu hỏi thách đấu dựa trên thông tin sau:
-    - Khối: ${config.grade || "Chưa xác định"}
-    - Bài học/Chủ đề: ${config.topic}
-    - Dạng bài tập: ${type}
-    - Mức độ: ${difficulty.join(", ")}
-    - Số lượng câu hỏi: ${count} câu
-
-    CHẾ ĐỘ THI & LOẠI CÂU HỎI:
-    ${type === "Trắc nghiệm" ? `- Thử thách phản xạ và độ chính xác (Nhận biết nhanh).
-    - Tập trung vào: Định nghĩa, khái niệm khoa học, nhận diện công thức, đơn vị đo, và các hiện tượng thực tế đơn giản.` : ""}
-    ${type === "Tự luận" ? `- Thử thách khả năng vận dụng và tính toán.
-    - Tập trung vào: Điền khuyết (điền vào chỗ trống), trả lời ngắn, nêu tên các bộ phận/quá trình, bài toán 1-2 phép tính, và đổi đơn vị.` : ""}
-    ${type === "Trắc nghiệm & Tự luận" ? `- Kết hợp 50% Trắc nghiệm và 50% Tự luận dựa trên tổng số ${count} câu.` : ""}
-
-    MỨC ĐỘ CÂU HỎI:
-    ${difficulty.includes("Nhận biết") ? "- Nhận biết: Các câu hỏi ghi nhớ, nhận diện." : ""}
-    ${difficulty.includes("Thông hiểu") ? "- Thông hiểu: Các câu hỏi giải thích, so sánh." : ""}
-    ${difficulty.includes("Vận dụng") ? "- Vận dụng: Bài tập tính toán từ 1 đến 2 phép tính." : ""}
-
-    QUY TẮC TẠO ĐỀ:
-    1. Cơ sở tri thức (Knowledge Base): Sử dụng nội dung chính xác trong tài liệu sau:
-    ${context || "Không có tài liệu cụ thể."}
-    TUYỆT ĐỐI chỉ được lấy kiến thức từ bộ sách giáo khoa "Chân trời sáng tạo" môn Khoa học tự nhiên lớp 6, 7, 8, 9.
-    2. Phân hóa: Câu hỏi phải có độ khó tăng dần theo mức độ đã yêu cầu.
-    3. Nếu tài liệu không có nội dung phù hợp, trả về JSON với trường "error".
-
-    Định dạng: Trình bày công thức bằng $...$ (LaTeX).
-    CẢNH BÁO: Mọi lệnh LaTeX bắt buộc DÙNG 2 DẤU GẠCH CHÉO NGƯỢC trong đầu ra JSON.
-
-    Trả lời DUY NHẤT theo định dạng JSON:
-    {
-      "quizzes": [
-        {
-          "question": "Câu hỏi...",
-          "options": ["A...", "B...", "C...", "D..."],
-          "answerIndex": 0,
-          "hint": "Gợi ý nhỏ...",
-          "difficulty": "Biết" | "Hiểu" | "Vận dụng",
-          "explanation": "Giải thích chi tiết...",
-          "isEssay": false
-        }
-      ]
-    }`;
-
+  // 1. THỬ LẤY TỪ NGÂN HÀNG CÂU HỎI (QuestionBank) TRƯỚC
+  let quizzes: any[] = [];
+  
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: { responseMimeType: "application/json" },
-    });
-    return safeJSONParse(response.text || "{}");
-  } catch (error: any) {
-    console.error("Gemini Arena Quiz Error:", error);
-    if (error?.status === "RESOURCE_EXHAUSTED" || error?.status === 429) {
-      return { error: "Hệ thống AI đang quá tải hoặc đã hết lượt yêu cầu miễn phí hôm nay." };
+    const whereClause: any = {
+      isActive: true,
+    };
+    
+    // Nếu là chủ đề ôn tập chung -> Chỉ lọc theo khối
+    if (config.topic.includes("Ôn tập KHTN")) {
+        if (gradeNum) whereClause.grade = gradeNum;
+    } else {
+        // Nếu là chủ đề cụ thể -> Lọc theo topic + grade
+        whereClause.topic = { contains: config.topic, mode: "insensitive" };
+        if (gradeNum) whereClause.grade = gradeNum;
     }
-    return { error: "Lỗi khi khởi tạo AI. Vui lòng thử lại." };
+
+    if (type !== "Trắc nghiệm & Tự luận") {
+        whereClause.type = type === "Trắc nghiệm" ? "MULTIPLE_CHOICE" : "ESSAY";
+    }
+
+    // Lấy ngẫu nhiên bằng cách dùng skip với một số ngẫu nhiên nếu Bank có nhiều câu
+    const totalInBank = await prisma.questionBank.count({ where: whereClause });
+    const skip = totalInBank > count ? Math.floor(Math.random() * (totalInBank - count)) : 0;
+
+    const bankQuestions = await prisma.questionBank.findMany({
+      where: whereClause,
+      take: count,
+      skip: skip
+    });
+
+    // Map bank questions to Arena format
+    quizzes = bankQuestions.map(q => {
+      const options = q.options as string[] | null;
+      let answerIndex = -1;
+      if (options && q.correctAnswer) {
+        answerIndex = options.indexOf(q.correctAnswer);
+      }
+
+      return {
+        id: q.id,
+        question: q.content,
+        options: options || [],
+        answerIndex: answerIndex,
+        correctAnswer: q.correctAnswer,
+        hint: q.hint,
+        difficulty: q.difficulty,
+        explanation: q.explanation,
+        isEssay: q.type === "ESSAY"
+      };
+    });
+  } catch (err) {
+    console.error("Error fetching from QuestionBank:", err);
   }
+
+  // 2. NẾU THIẾU CÂU HỎI -> GỌI AI BỔ SUNG
+  if (quizzes.length < count) {
+    const remainingCount = count - quizzes.length;
+    const context = await retrieveRelevantContext(config.topic);
+
+    const prompt = `Bạn là hệ thống "Đấu Trường Trí Tuệ AI" thuộc dự án Gia sư AI KHTN.
+      Nhiệm vụ: Khởi tạo bộ câu hỏi thách đấu dựa trên thông tin sau:
+      - Khối: ${config.grade || "Chưa xác định"}
+      - Bài học/Chủ đề: ${config.topic}
+      - Dạng bài tập: ${type}
+      - Mức độ: ${difficulty.join(", ")}
+      - Số lượng câu hỏi: ${remainingCount} câu
+
+      QUY TẮC:
+      - Chỉ lấy kiến thức từ sách giáo khoa "Chân trời sáng tạo" KHTN THCS.
+      - Trình bày công thức bằng $...$ (LaTeX).
+      ${context ? `Dựa trên ngữ cảnh: ${context}` : ""}
+
+      Trả lời DUY NHẤT định dạng JSON:
+      {
+        "quizzes": [
+          {
+            "question": "string",
+            "options": ["string", "string", "string", "string"],
+            "answerIndex": number,
+            "correctAnswer": "string (nội dung đáp án đúng)",
+            "hint": "string",
+            "difficulty": "Biết" | "Hiểu" | "Vận dụng",
+            "explanation": "string",
+            "isEssay": boolean
+          }
+        ]
+      }`;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: { responseMimeType: "application/json" },
+      });
+      const aiResult = safeJSONParse(response.text || "{}");
+      
+      if (aiResult.quizzes && Array.isArray(aiResult.quizzes)) {
+        // Lưu câu hỏi mới vào Bank để lần sau dùng (Async - không đợi)
+        saveAiQuestionsToBank(aiResult.quizzes, config.topic, gradeNum);
+        
+        quizzes = [...quizzes, ...aiResult.quizzes];
+      } else if (aiResult.error && quizzes.length === 0) {
+        return { error: aiResult.error };
+      }
+    } catch (error: any) {
+      console.error("Gemini Arena Quiz Error:", error);
+      if (quizzes.length === 0) {
+        return { error: "Không thể kết nối với AI để tạo câu hỏi." };
+      }
+    }
+  }
+
+  return { quizzes: quizzes.slice(0, count) };
+}
+
+/**
+ * Lưu các câu hỏi AI tạo ra vào ngân hàng (Background)
+ */
+async function saveAiQuestionsToBank(quizzes: any[], topic: string, grade: number | null) {
+    for (const q of quizzes) {
+        try {
+            await prisma.questionBank.create({
+                data: {
+                    grade,
+                    topic,
+                    type: q.isEssay ? "ESSAY" : "MULTIPLE_CHOICE",
+                    difficulty: q.difficulty || "Thông hiểu",
+                    content: q.question,
+                    options: q.options,
+                    correctAnswer: q.correctAnswer || (q.options ? q.options[q.answerIndex] : ""),
+                    explanation: q.explanation,
+                    hint: q.hint,
+                    isActive: true
+                }
+            });
+        } catch (e) {
+            // Ignore duplicate or save errors
+        }
+    }
 }
 
 // ========================
