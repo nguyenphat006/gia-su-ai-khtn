@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { prisma } from "../config/prisma.js";
 import { ValidationError, NotFoundError } from "../utils/errors.js";
 import { retrieveRelevantContext } from "./knowledge.service.js";
+import { addXp } from "./gamification.service.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -229,22 +230,8 @@ export async function saveArenaResult(data: SaveArenaResultDto) {
     },
   });
 
-  // Cộng XP vào UserStats
-  await prisma.userStats.upsert({
-    where: { userId: data.userId },
-    update: { totalXp: { increment: xpEarned } },
-    create: { userId: data.userId, totalXp: xpEarned },
-  });
-
-  // Ghi XpLog
-  await prisma.xpLog.create({
-    data: {
-      userId: data.userId,
-      amount: xpEarned,
-      action: "WIN_ARENA",
-      referenceId: result.id,
-    },
-  });
+  // Cộng XP vào UserStats & Ghi XpLog qua Gamification Service
+  await addXp(data.userId, xpEarned, "WIN_ARENA", result.id);
 
   return { ...result, xpEarned };
 }

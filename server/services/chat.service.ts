@@ -2,6 +2,7 @@ import { prisma } from "../config/prisma.js";
 import { ChatRole, XpAction } from "@prisma/client";
 import { askGemini, GeminiMessage } from "./ai.service.js";
 import { retrieveRelevantContext } from "./knowledge.service.js";
+import { addXp, updateChallengeProgress } from "./gamification.service.js";
 
 /**
  * Lấy danh sách các phiên chat của một user
@@ -82,8 +83,13 @@ export async function processUserMessage(
     data: userMessageData,
   });
 
-  // 3. Cộng 10 EXP cho User vì đã đặt câu hỏi
-  await addXpForChat(userId);
+  // 3. Cộng 10 EXP cho User vì đã đặt câu hỏi & Cập nhật thử thách
+  try {
+    await addXp(userId, 10, XpAction.CHAT_AI);
+    await updateChallengeProgress(userId, "S_GIA_CAU_HOI", 1);
+  } catch (error) {
+    console.error("Lỗi khi cộng EXP cho user:", error);
+  }
 
   // 4. Kéo lịch sử chat gần nhất (10 tin nhắn) để truyền cho AI
   const recentMessages = await prisma.chatMessage.findMany({
@@ -130,30 +136,4 @@ export async function processUserMessage(
     aiMessage,
     addedXp: 10,
   };
-}
-
-/**
- * Cộng 10 EXP cho user khi chat với AI
- */
-async function addXpForChat(userId: string) {
-  try {
-    // 1. Cập nhật tổng điểm
-    await prisma.userStats.upsert({
-      where: { userId },
-      update: { totalXp: { increment: 10 } },
-      create: { userId, totalXp: 10 },
-    });
-
-    // 2. Lưu log lịch sử EXP
-    await prisma.xpLog.create({
-      data: {
-        userId,
-        amount: 10,
-        action: XpAction.CHAT_AI,
-      },
-    });
-  } catch (error) {
-    console.error("Lỗi khi cộng EXP cho user:", error);
-    // Bỏ qua lỗi EXP để không gián đoạn chat
-  }
 }

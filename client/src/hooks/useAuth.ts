@@ -13,6 +13,8 @@ export const SCHOOL_LOGO_URL =
 export interface AppStudentView {
   displayName: string;
   xp: number;
+  weeklyXp: number;
+  points: number;
   level: string;
   streak: number;
   photoURL: string | null;
@@ -21,16 +23,31 @@ export interface AppStudentView {
   className: string | null;
 }
 
+const LEVELS = [
+  { minXp: 0, maxXp: 250, title: "NHÀ KHOA HỌC NHÍ" },
+  { minXp: 250, maxXp: 500, title: "SỨ GIẢ CHÂN LÝ" },
+  { minXp: 500, maxXp: 1000, title: "BẬC THẦY THỰC NGHIỆM" },
+  { minXp: 1000, maxXp: 1500, title: "HÀN LÂM HỌC SĨ" },
+  { minXp: 1500, maxXp: 2000, title: "NHÀ KIẾN TẠO TINH HOA" },
+  { minXp: 2000, maxXp: 2500, title: "Học Giả Tinh Anh" },
+  { minXp: 2500, maxXp: Infinity, title: "Vị Thần Tri Thức" },
+];
+
 function deriveStudentView(user: AuthenticatedUser | null): AppStudentView | null {
   if (!user) {
     return null;
   }
 
+  const xp = user.stats?.totalXp || 0;
+  const levelInfo = LEVELS.find(l => xp >= l.minXp && xp < l.maxXp) || LEVELS[0];
+
   return {
     displayName: user.displayName,
-    xp: 0,
-    level: user.role === "STUDENT" ? "Tập sự" : "Người hướng dẫn",
-    streak: 0,
+    xp: xp,
+    weeklyXp: user.stats?.weeklyXp || 0,
+    points: user.stats?.points || 0,
+    level: levelInfo.title,
+    streak: user.stats?.currentStreak || 0,
     photoURL: user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl || null,
     username: user.username,
     role: user.role,

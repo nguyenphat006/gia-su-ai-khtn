@@ -29,6 +29,7 @@ model User {
 
   arenaResults       ArenaResult[]
   quizHistories      QuizHistory[]
+  challenges         UserChallenge[]
 
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -87,6 +88,8 @@ model UserStats {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   totalXp       Int       @default(0)
+  weeklyXp      Int       @default(0)
+  points        Int       @default(0)
   currentStreak Int       @default(0)
   longestStreak Int       @default(0)
   lastStudyDate DateTime?
@@ -143,6 +146,43 @@ enum XpAction {
   WIN_ARENA
   DAILY_LOGIN
   ADMIN_BONUS
+  QUEST_COMPLETED
+}
+
+model Challenge {
+  id          String   @id @default(uuid())
+  key         String   @unique // Ví dụ: S_GIA_CAU_HOI, CHIEN_BINH_TRI_TUE
+  name        String
+  description String
+  xpReward    Int      @default(0)
+  pointsReward Int     @default(0)
+  goal        Int      @default(1) // Số lần cần thực hiện
+  type        ChallengeType @default(DAILY)
+
+  userChallenges UserChallenge[]
+}
+
+enum ChallengeType {
+  DAILY
+  ONCE
+  WEEKLY
+}
+
+model UserChallenge {
+  id           String    @id @default(uuid())
+  userId       String
+  challengeId  String
+  progress     Int       @default(0)
+  isCompleted  Boolean   @default(false)
+  lastCompletedAt DateTime?
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge    Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, challengeId])
 }
 
 // ========================

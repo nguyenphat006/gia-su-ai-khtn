@@ -6,10 +6,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const RANKS = [
-  { name: "Tập sự Khoa học", min: 0, max: 1000, level: "1-5", perk: "Gợi ý chi tiết" },
-  { name: "Chuyên viên Thí nghiệm", min: 1001, max: 5000, level: "6-15", perk: "Mở khóa STEM & Thực hành ảo" },
-  { name: "Nhà Thông thái KHTN", min: 5001, max: 15000, level: "16-30", perk: "Tham gia Bảng xếp hạng Vàng" },
-  { name: "Phù thủy AI Lab", min: 15001, max: Infinity, level: "31+", perk: "Trợ lý của cô Trang" }
+  { name: "NHÀ KHOA HỌC NHÍ", min: 0, max: 250 },
+  { name: "SỨ GIẢ CHÂN LÝ", min: 251, max: 500 },
+  { name: "BẬC THẦY THỰC NGHIỆM", min: 501, max: 1000 },
+  { name: "HÀN LÂM HỌC SĨ", min: 1001, max: 1500 },
+  { name: "NHÀ KIẾN TẠO TINH HOA", min: 1501, max: 2000 },
+  { name: "Học Giả Tinh Anh", min: 2001, max: 2500 },
+  { name: "Vị Thần Tri Thức", min: 2501, max: Infinity }
 ];
 
 export function getRank(xp: number) {

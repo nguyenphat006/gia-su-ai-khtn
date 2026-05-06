@@ -46,6 +46,14 @@ export interface AuthenticatedUser {
   class: AuthClass | null;
   studentProfile: StudentProfile | null;
   teacherProfile: TeacherProfile | null;
+  stats: {
+    totalXp: number;
+    weeklyXp: number;
+    points: number;
+    currentStreak: number;
+    longestStreak: number;
+    lastStudyDate: string | null;
+  } | null;
 }
 
 export interface AuthState {

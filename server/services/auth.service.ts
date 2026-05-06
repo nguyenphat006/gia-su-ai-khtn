@@ -15,6 +15,7 @@ import {
   getRefreshTokenTtlDays,
   hashToken,
 } from "../utils/token.js";
+import { checkDailyLogin } from "./gamification.service.js";
 
 const publicUserInclude = {
   class: true,
@@ -73,11 +74,13 @@ function mapPublicUser(user: UserWithRelations): PublicUser {
       : null,
     stats: user.stats ? {
       totalXp: user.stats.totalXp,
+      weeklyXp: user.stats.weeklyXp,
+      points: user.stats.points,
       currentStreak: user.stats.currentStreak,
       longestStreak: user.stats.longestStreak,
       lastStudyDate: user.stats.lastStudyDate,
     } : null,
-  } as any; // Cast because PublicUser might need update for stats
+  } as any;
 }
 
 async function createSession(
@@ -147,16 +150,20 @@ export async function loginUnified(
     throw new UnauthorizedError("Mật khẩu không chính xác.");
   }
 
+  // Kiểm tra thưởng đăng nhập hàng ngày (trước khi cập nhật lastLoginAt)
+  await checkDailyLogin(user.id);
+
   // Cập nhật thời gian đăng nhập cuối
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
+    include: publicUserInclude,
   });
 
-  const tokens = await createSession(user, context);
+  const tokens = await createSession(updatedUser, context);
 
   return {
-    user: mapPublicUser(user),
+    user: mapPublicUser(updatedUser),
     tokens,
   };
 }

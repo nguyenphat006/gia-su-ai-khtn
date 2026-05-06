@@ -1,62 +1,66 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Flame, Target, CheckCircle2, Award, Sparkles, Zap } from 'lucide-react';
-import { StudentData } from '@/lib/firebase';
+import { Flame, Target, CheckCircle2, Sparkles, Zap, Star } from 'lucide-react';
+import { AppStudentView } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/apiClient';
 
 interface Challenge {
   id: string;
-  title: string;
+  key: string;
+  name: string;
   description: string;
   xpReward: number;
-  icon: React.ReactNode;
+  pointsReward: number;
+  goal: number;
+  progress: number;
+  isCompleted: boolean;
+  type: string;
 }
 
-const DAILY_CHALLENGES: Challenge[] = [
-  { id: 'chat_3', title: 'Người tò mò', description: 'Gửi 3 câu hỏi cho Gia sư AI', xpReward: 50, icon: <Sparkles size={18} /> },
-  { id: 'quiz_master', title: 'Chủ khảo nhanh', description: 'Hoàn thành 1 bài trắc nghiệm > 80%', xpReward: 100, icon: <Target size={18} /> },
-  { id: 'multi_subject', title: 'Đa tài', description: 'Ôn tập 2 chủ đề khác nhau', xpReward: 75, icon: <Zap size={18} /> },
-];
-
-const BADGE_LIST = [
-  { id: 'pioneer', name: 'Người tiên phong', icon: '🚀', description: 'Tham gia hệ thống những ngày đầu' },
-  { id: 'streak_7', name: 'Bền bỉ', icon: '🔥', description: 'Đạt chuỗi 7 ngày học liên tiếp' },
-  { id: 'top_1', name: 'Quán quân', icon: '🥇', description: 'Đứng đầu bảng xếp hạng tuần' },
-  { id: 'master_atom', name: 'Bác học nguyên tử', icon: '⚛️', description: 'Hoàn thành mọi bài tập về Nguyên tử' },
-];
-
 interface GamificationFeatureProps {
-  studentData: StudentData | null;
+  studentData: AppStudentView | null;
 }
 
 export default function GamificationFeature({ studentData }: GamificationFeatureProps) {
-  const completedIds = studentData?.completedChallenges || [];
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const challengesData = await apiClient<Challenge[]>('/api/gamification/challenges');
+        setChallenges(challengesData);
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu gamification:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
   const streak = studentData?.streak || 0;
 
+  const getChallengeIcon = (key: string) => {
+    switch (key) {
+      case 'S_GIA_CAU_HOI': return <Sparkles size={18} />;
+      case 'CHIEN_BINH_TRI_TUE': return <Target size={18} />;
+      case 'CHIEN_BINH_DA_TAI': return <Zap size={18} />;
+      default: return <Star size={18} />;
+    }
+  };
+
   return (
-    <div className="space-y-6 h-full overflow-y-auto pr-2 custom-scrollbar">
-      {/* Streak Section */}
+    <div className="space-y-6 h-full overflow-y-auto pr-2 custom-scrollbar pb-10">
+      {/* Stats Header - Only Streak */}
       <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 text-white shadow-lg shadow-orange-200">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
-              <Flame size={24} className="fill-white" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Chuỗi học tập</p>
-              <h3 className="text-2xl font-black">{streak} ngày liên tiếp</h3>
-            </div>
-          </div>
-          <motion.div 
-            animate={{ scale: [1, 1.2, 1] }} 
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="text-3xl"
-          >
-            🔥
-          </motion.div>
+        <div className="flex items-center gap-3 mb-2">
+          <Flame size={20} className="fill-white" />
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Chuỗi học tập</p>
         </div>
-        <p className="text-xs opacity-90 leading-relaxed font-medium">
-          Duy trì việc học mỗi ngày để nhận thêm x1.5 EXP và mở khóa danh hiệu hiếm!
-        </p>
+        <h3 className="text-2xl font-black">{streak} ngày liên tiếp</h3>
+        <p className="text-[10px] opacity-80 mt-1 font-medium">Duy trì việc học mỗi ngày để thăng hạng!</p>
       </div>
 
       {/* Daily Challenges */}
@@ -65,63 +69,56 @@ export default function GamificationFeature({ studentData }: GamificationFeature
           <Target size={20} className="text-sky-600" />
           <h3 className="font-bold text-sky-900 text-sm uppercase tracking-tight">Thử thách hôm nay</h3>
         </div>
-        <div className="space-y-4">
-          {DAILY_CHALLENGES.map((challenge) => {
-            const isCompleted = completedIds.includes(challenge.id);
-            return (
+        
+        {isLoading ? (
+          <div className="space-y-4 animate-pulse">
+            {[1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-2xl" />)}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {challenges.map((challenge) => (
               <div 
                 key={challenge.id}
                 className={`p-4 rounded-2xl border transition-all ${
-                  isCompleted ? 'bg-sky-50 border-sky-100 opacity-75' : 'bg-slate-50 border-slate-100 hover:border-sky-200'
+                  challenge.isCompleted ? 'bg-emerald-50 border-emerald-100 opacity-75' : 'bg-slate-50 border-slate-100 hover:border-sky-200'
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-xl ${isCompleted ? 'bg-sky-600 text-white' : 'bg-white text-sky-600 border border-sky-50'}`}>
-                    {isCompleted ? <CheckCircle2 size={18} /> : challenge.icon}
+                  <div className={`p-2 rounded-xl ${challenge.isCompleted ? 'bg-emerald-600 text-white' : 'bg-white text-sky-600 border border-sky-50'}`}>
+                    {challenge.isCompleted ? <CheckCircle2 size={18} /> : getChallengeIcon(challenge.key)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h4 className={`text-sm font-bold ${isCompleted ? 'text-sky-900 line-through' : 'text-slate-800'}`}>
-                        {challenge.title}
+                      <h4 className={`text-sm font-bold ${challenge.isCompleted ? 'text-emerald-900 line-through' : 'text-slate-800'}`}>
+                        {challenge.name}
                       </h4>
                       <span className="text-[10px] font-black text-sky-600">+{challenge.xpReward} EXP</span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">{challenge.description}</p>
+                    {!challenge.isCompleted && (
+                      <div className="mt-3">
+                        <div className="flex justify-between text-[9px] font-bold mb-1">
+                          <span>Tiến độ</span>
+                          <span>{challenge.progress}/{challenge.goal}</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(challenge.progress / challenge.goal) * 100}%` }}
+                            className="h-full bg-sky-500"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Badges Section */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-2 mb-6">
-          <Award size={20} className="text-sky-600" />
-          <h3 className="font-bold text-sky-900 text-sm uppercase tracking-tight">Danh hiệu của em</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {BADGE_LIST.map((badge) => {
-            const hasBadge = studentData?.badges?.includes(badge.id);
-            return (
-              <div 
-                key={badge.id}
-                className={`p-4 rounded-2xl border text-center transition-all ${
-                  hasBadge ? 'bg-sky-50 border-sky-200' : 'bg-slate-50 border-slate-100 grayscale opacity-40'
-                }`}
-              >
-                <div className="text-3xl mb-2">{badge.icon}</div>
-                <h4 className="text-[10px] font-black text-sky-900 uppercase tracking-tighter leading-tight h-8 flex items-center justify-center">
-                  {badge.name}
-                </h4>
-                {hasBadge && (
-                  <p className="text-[9px] text-sky-600 mt-1 font-bold">Đã đạt</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
+            ))}
+            {challenges.length === 0 && (
+              <p className="text-center text-[11px] text-slate-400 py-4 italic">Không có thử thách nào hiện tại.</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

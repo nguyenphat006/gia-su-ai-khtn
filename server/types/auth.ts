@@ -39,6 +39,8 @@ export interface PublicUser {
   } | null;
   stats: {
     totalXp: number;
+    weeklyXp: number;
+    points: number;
     currentStreak: number;
     longestStreak: number;
     lastStudyDate: Date | null;

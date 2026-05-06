@@ -8,8 +8,12 @@ import { swaggerSpec } from "./config/swagger.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import apiRoutes from "./routes/api.routes.js";
 import { setupArenaSockets } from "./sockets/arenaHandler.js";
+import { seedChallenges } from "./services/gamification.service.js";
 
 export async function buildApp() {
+  // Khởi tạo challenges mặc định
+  seedChallenges().catch(err => console.error("Lỗi khi seed challenges:", err));
+
   const app = express();
   const httpServer = createServer(app);
   const io = new Server(httpServer, {

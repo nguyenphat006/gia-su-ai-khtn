@@ -2,6 +2,8 @@ import { prisma } from "../config/prisma.js";
 import { NotFoundError } from "../utils/errors.js";
 import * as geminiService from "./gemini.service.js";
 import { retrieveRelevantContext } from "./knowledge.service.js";
+import { addXp, updateChallengeProgress } from "./gamification.service.js";
+import { XpAction } from "@prisma/client";
 
 /**
  * 1. ADMIN LOGIC: Generate content using AI
@@ -185,22 +187,15 @@ export async function saveQuizResult(data: {
       }
     });
 
-    // 2. Update User Stats
-    await tx.userStats.upsert({
-      where: { userId: data.userId },
-      update: { totalXp: { increment: xpEarned } },
-      create: { userId: data.userId, totalXp: xpEarned }
-    });
+    // 2. Update User Stats & Log XP via Gamification Service
+    await addXp(data.userId, xpEarned, XpAction.COMPLETE_QUIZ, history.id, tx);
 
-    // 3. Log XP
-    await tx.xpLog.create({
-      data: {
-        userId: data.userId,
-        amount: xpEarned,
-        action: "COMPLETE_QUIZ",
-        referenceId: history.id
-      }
-    });
+    // 3. Update Challenges
+    if (data.quizType === "FLASHCARD_QUIZ") {
+      await updateChallengeProgress(data.userId, "CHIEN_BINH_DA_TAI", 1);
+    } else {
+      await updateChallengeProgress(data.userId, "CHIEN_BINH_TRI_TUE", 1);
+    }
 
     return { history, xpEarned };
   });

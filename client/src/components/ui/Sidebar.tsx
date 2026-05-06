@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Trophy, 
@@ -9,12 +9,12 @@ import {
   Swords, 
   LogOut,
   ChevronRight,
-  Award
 } from "lucide-react";
-import { cn, getRank, RANKS } from "@/lib/utils";
+import { cn, getRank } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
 import GamificationFeature from "@/features/gamification/GamificationFeature";
 import { SCHOOL_LOGO_URL } from "@/hooks/useAuth";
+import { apiClient } from "@/lib/apiClient";
 
 interface SidebarProps {
   studentData: any;
@@ -26,14 +26,34 @@ interface SidebarProps {
 
 export default function Sidebar({
   studentData,
-  leaderboard,
   currentUserId,
   onLogout
 }: SidebarProps) {
   const [sidebarTab, setSidebarTab] = useState<"ranking" | "stats">("stats");
+  const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<any[]>([]);
+  const [isLoadingRanking, setIsLoadingRanking] = useState(false);
+  
   const location = useLocation();
   const navigate = useNavigate();
   const activePath = location.pathname;
+
+  useEffect(() => {
+    if (sidebarTab === "ranking") {
+      fetchLeaderboard();
+    }
+  }, [sidebarTab]);
+
+  async function fetchLeaderboard() {
+    setIsLoadingRanking(true);
+    try {
+      const data = await apiClient<any[]>('/api/gamification/leaderboard');
+      setWeeklyLeaderboard(data);
+    } catch (error) {
+      console.error("Lỗi khi tải bảng xếp hạng:", error);
+    } finally {
+      setIsLoadingRanking(false);
+    }
+  }
 
   const navItems = [
     { path: "/chat", label: "Trợ lý AI", icon: MessageSquare, color: "text-sky-500", bg: "bg-sky-50" },
@@ -110,7 +130,7 @@ export default function Sidebar({
           />
         </div>
         <p className="text-[7px] font-bold text-slate-500 uppercase tracking-tighter">
-          {getRank(studentData?.xp || 0).name}
+          {studentData?.level || getRank(studentData?.xp || 0).name}
         </p>
       </div>
 
@@ -161,52 +181,68 @@ export default function Sidebar({
                 exit={{ opacity: 0, x: -5 }}
                 className="h-full flex flex-col pt-2"
               >
-                <div className="space-y-1 overflow-y-auto custom-scrollbar flex-1 pr-0.5">
-                  {leaderboard.slice(0, 10).map((player, i) => {
-                    const isActive = player.id === currentUserId;
-                    const displayName = isActive ? studentData?.displayName || player.displayName : (player.displayName || "Học sinh");
+                {isLoadingRanking ? (
+                  <div className="space-y-2 p-2 animate-pulse">
+                    {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-10 bg-slate-100 rounded-xl" />)}
+                  </div>
+                ) : (
+                  <div className="space-y-1 overflow-y-auto custom-scrollbar flex-1 pr-0.5">
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-2">Xếp hạng tuần này</p>
+                    {weeklyLeaderboard.map((player, i) => {
+                      const isActive = player.userId === currentUserId;
+                      const displayName = player.displayName || "Học sinh";
 
-                    return (
-                      <div
-                        key={player.id}
-                        className={cn(
-                          "flex items-center justify-between p-2 rounded-xl transition-all border",
-                          isActive
-                            ? "bg-sky-50 border-sky-100"
-                            : "bg-white border-transparent hover:bg-slate-50"
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "w-4 text-[8px] font-black text-center",
-                            isActive ? "text-sky-600" : "text-slate-300"
-                          )}>
-                            {i + 1}
-                          </span>
-                          <div className="w-6 h-6 rounded-lg bg-slate-100 border border-white shadow-sm flex items-center justify-center font-black text-[8px] text-slate-700 overflow-hidden shrink-0">
-                            {player.photoURL ? (
-                              <img src={player.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-                            ) : (
-                              displayName[0]?.toUpperCase() || "?"
-                            )}
+                      return (
+                        <div
+                          key={player.userId}
+                          className={cn(
+                            "flex items-center justify-between p-2 rounded-xl transition-all border",
+                            isActive
+                              ? "bg-sky-50 border-sky-100 shadow-sm"
+                              : "bg-white border-transparent hover:bg-slate-50"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "w-4 text-[8px] font-black text-center",
+                              i === 0 ? "text-yellow-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-orange-400" : "text-slate-300"
+                            )}>
+                              {i + 1}
+                            </span>
+                            <div className="w-6 h-6 rounded-lg bg-slate-100 border border-white shadow-sm flex items-center justify-center font-black text-[8px] text-slate-700 overflow-hidden shrink-0">
+                              {player.avatarUrl ? (
+                                <img src={player.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                              ) : (
+                                displayName[0]?.toUpperCase() || "?"
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={cn(
+                                "text-[10px] font-bold truncate max-w-[80px]",
+                                isActive ? "text-sky-900" : "text-slate-600"
+                              )}>
+                                {displayName}
+                              </p>
+                              <p className="text-[7px] text-slate-400 truncate tracking-tight">{player.level}</p>
+                            </div>
                           </div>
-                          <span className={cn(
-                            "text-[10px] font-bold truncate max-w-[60px]",
-                            isActive ? "text-sky-900" : "text-slate-600"
-                          )}>
-                            {displayName}
-                          </span>
+                          <div className="text-right shrink-0">
+                            <p className={cn(
+                              "text-[9px] font-black leading-none",
+                              isActive ? "text-sky-600" : "text-slate-700"
+                            )}>
+                              {player.weeklyXp.toLocaleString()}
+                            </p>
+                            <p className="text-[6px] font-bold text-slate-400 uppercase">EXP</p>
+                          </div>
                         </div>
-                        <span className={cn(
-                          "text-[9px] font-black",
-                          isActive ? "text-sky-600" : "text-slate-400"
-                        )}>
-                          {(player.xp || 0).toLocaleString()}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                    {weeklyLeaderboard.length === 0 && (
+                      <p className="text-center text-[9px] text-slate-400 py-6 italic px-4">Chưa có hoạt động nào trong tuần này.</p>
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
