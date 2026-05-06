@@ -146,7 +146,7 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
   const oppScore = oppScores[opponent.id] || 0;
 
   return (
-    <div className="max-w-5xl mx-auto pb-20">
+    <div className="max-w-5xl mx-auto pb-20 h-[calc(100vh-120px)] overflow-y-auto pr-4 custom-scrollbar">
        <div className="flex items-center justify-between mb-8 bg-white p-8 rounded-[2rem] border border-sky-50 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-32 bg-slate-100 rounded-full" />
           

@@ -11,7 +11,7 @@ import {
   batchImportUsers,
 } from "../services/user.service.js";
 import { generateMockUsers } from "../services/gemini.service.js";
-import { ValidationError, UnauthorizedError } from "../utils/errors.js";
+import { ValidationError, UnauthorizedError, NotFoundError } from "../utils/errors.js";
 import { Role } from "@prisma/client";
 
 // ========================
@@ -34,21 +34,7 @@ export const listUsers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getUser = asyncHandler(async (req: Request, res: Response) => {
-  // Dung truc tiep prisma de lay full thong tin ke ca passwordHash
-  const user = await prisma.user.findUnique({
-    where: { id: req.params.id },
-    include: {
-      class: true,
-      studentProfile: true,
-      teacherProfile: true,
-      stats: true,
-    }
-  });
-  
-  if (!user) {
-    throw new NotFoundError("Khong tim thay nguoi dung.");
-  }
-
+  const user = await getUserById(req.params.id);
   res.json({ status: "ok", data: { user } });
 });
 

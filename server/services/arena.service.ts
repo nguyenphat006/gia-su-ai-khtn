@@ -95,7 +95,6 @@ export async function generateArenaQuiz(config: ArenaQuizConfig) {
         options: options || [],
         answerIndex: answerIndex,
         correctAnswer: q.correctAnswer,
-        hint: q.hint,
         difficulty: q.difficulty,
         explanation: q.explanation,
         isEssay: q.type === "ESSAY"
@@ -139,27 +138,41 @@ export async function generateArenaQuiz(config: ArenaQuizConfig) {
         ]
       }`;
 
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: { responseMimeType: "application/json" },
-      });
-      const aiResult = safeJSONParse(response.text || "{}");
+    let retries = 3;
+    let aiResult: any = {};
+    let lastError: any = null;
+
+    while (retries > 0) {
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: prompt,
+          config: { responseMimeType: "application/json" },
+        });
+        aiResult = safeJSONParse(response.text || "{}");
+        lastError = null;
+        break; // Success
+      } catch (error: any) {
+        lastError = error;
+        console.error(`Gemini Arena Quiz Error (Retries left: ${retries - 1}):`, error.message || error);
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Đợi 2s trước khi thử lại
+        }
+      }
+    }
+
+    if (lastError && quizzes.length === 0) {
+      return { error: "Hệ thống AI đang tạm thời quá tải (Lỗi 503). Vui lòng chờ vài giây rồi nhấn xác nhận lại." };
+    }
+
+    if (aiResult.quizzes && Array.isArray(aiResult.quizzes)) {
+      // Lưu câu hỏi mới vào Bank để lần sau dùng (Async - không đợi)
+      saveAiQuestionsToBank(aiResult.quizzes, config.topic, gradeNum);
       
-      if (aiResult.quizzes && Array.isArray(aiResult.quizzes)) {
-        // Lưu câu hỏi mới vào Bank để lần sau dùng (Async - không đợi)
-        saveAiQuestionsToBank(aiResult.quizzes, config.topic, gradeNum);
-        
-        quizzes = [...quizzes, ...aiResult.quizzes];
-      } else if (aiResult.error && quizzes.length === 0) {
-        return { error: aiResult.error };
-      }
-    } catch (error: any) {
-      console.error("Gemini Arena Quiz Error:", error);
-      if (quizzes.length === 0) {
-        return { error: "Không thể kết nối với AI để tạo câu hỏi." };
-      }
+      quizzes = [...quizzes, ...aiResult.quizzes];
+    } else if (aiResult.error && quizzes.length === 0) {
+      return { error: aiResult.error };
     }
   }
 
@@ -182,7 +195,6 @@ async function saveAiQuestionsToBank(quizzes: any[], topic: string, grade: numbe
                     options: q.options,
                     correctAnswer: q.correctAnswer || (q.options ? q.options[q.answerIndex] : ""),
                     explanation: q.explanation,
-                    hint: q.hint,
                     isActive: true
                 }
             });

@@ -26,11 +26,14 @@ import QuizFormModal from "./components/QuizFormModal"
 import FlashcardFormModal from "./components/FlashcardFormModal"
 import MindmapFormModal from "./components/MindmapFormModal"
 import { PaginationState } from "@tanstack/react-table"
+import DocumentUploadTab from "./components/DocumentUploadTab"
+import { FileText } from "lucide-react"
 
 const TABS = [
   { id: "quiz", label: "Câu hỏi (Quiz)", icon: Zap, color: "text-sky-600", bg: "bg-sky-50" },
   { id: "flashcard", label: "Flashcards", icon: Layers, color: "text-orange-600", bg: "bg-orange-50" },
   { id: "mindmap", label: "Sơ đồ tư duy", icon: Brain, color: "text-indigo-600", bg: "bg-indigo-50" },
+  { id: "document", label: "Upload Sách (AI)", icon: FileText, color: "text-emerald-600", bg: "bg-emerald-50" },
 ]
 
 export default function RevisionIndex() {
@@ -174,96 +177,102 @@ export default function RevisionIndex() {
         ))}
       </div>
 
-      {/* Header Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Tìm kiếm chủ đề/nội dung..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 bg-white border-slate-200 rounded-2xl focus:ring-sky-500/20"
+      {activeTab === "document" ? (
+        <DocumentUploadTab />
+      ) : (
+        <>
+          {/* Header Actions */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-1 items-center gap-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Tìm kiếm chủ đề/nội dung..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 h-11 bg-white border-slate-200 rounded-2xl focus:ring-sky-500/20"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl">
+                <Filter size={14} className="ml-2 text-slate-400" />
+                <select 
+                  value={grade}
+                  onChange={(e) => {
+                    setGrade(e.target.value)
+                    setPagination({ pageIndex: 0, pageSize: 10 })
+                  }}
+                  className="bg-transparent border-none outline-none text-xs font-bold text-slate-600 px-2 pr-4 appearance-none cursor-pointer"
+                >
+                    <option value="all">Tất cả Khối</option>
+                    <option value="6">Lớp 6</option>
+                    <option value="7">Lớp 7</option>
+                    <option value="8">Lớp 8</option>
+                    <option value="9">Lớp 9</option>
+                </select>
+              </div>
+
+              {selectedCount > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-3 bg-slate-100 p-2 pl-4 rounded-2xl border border-slate-200"
+                >
+                  <span className="text-xs font-bold text-slate-600">Đã chọn <span className="text-slate-900">{selectedCount}</span></span>
+                  <div className="h-4 w-px bg-slate-300 mx-1" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    className="h-8 px-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl gap-2"
+                  >
+                    <Trash2 size={14} />
+                    Xóa
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={() => setIsAiModalOpen(true)}
+                className="h-11 px-6 gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-sky-200 hover:scale-105 transition-all"
+              >
+                <Sparkles size={18} />
+                Nhờ AI Soạn thảo
+              </Button>
+              <div className="h-6 w-px bg-slate-200 mx-1" />
+              <Button 
+                onClick={handleAddManual}
+                variant="outline"
+                className="h-11 px-6 gap-2 rounded-2xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all"
+              >
+                <Plus size={18} />
+                Thêm thủ công
+              </Button>
+            </div>
+          </div>
+
+          {/* DataTable */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+            <DataTable
+              columns={getColumns()}
+              data={data}
+              loading={loading}
+              totalCount={totalCount}
+              pageCount={pageCount}
+              pagination={{ pageIndex, pageSize }}
+              onPaginationChange={setPagination}
+              meta={{
+                onEdit: handleEdit,
+                onDelete: handleDeleteOne,
+              }}
+              onRowSelectionChange={setRowSelection}
+              state={{ rowSelection }}
             />
           </div>
-
-          <div className="flex items-center gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl">
-             <Filter size={14} className="ml-2 text-slate-400" />
-             <select 
-               value={grade}
-               onChange={(e) => {
-                 setGrade(e.target.value)
-                 setPagination({ pageIndex: 0, pageSize: 10 })
-               }}
-               className="bg-transparent border-none outline-none text-xs font-bold text-slate-600 px-2 pr-4 appearance-none cursor-pointer"
-             >
-                <option value="all">Tất cả Khối</option>
-                <option value="6">Lớp 6</option>
-                <option value="7">Lớp 7</option>
-                <option value="8">Lớp 8</option>
-                <option value="9">Lớp 9</option>
-             </select>
-          </div>
-
-          {selectedCount > 0 && (
-            <motion.div 
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3 bg-slate-100 p-2 pl-4 rounded-2xl border border-slate-200"
-            >
-              <span className="text-xs font-bold text-slate-600">Đã chọn <span className="text-slate-900">{selectedCount}</span></span>
-              <div className="h-4 w-px bg-slate-300 mx-1" />
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleDeleteSelected}
-                className="h-8 px-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl gap-2"
-              >
-                <Trash2 size={14} />
-                Xóa
-              </Button>
-            </motion.div>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button 
-            onClick={() => setIsAiModalOpen(true)}
-            className="h-11 px-6 gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-sky-200 hover:scale-105 transition-all"
-          >
-            <Sparkles size={18} />
-            Nhờ AI Soạn thảo
-          </Button>
-          <div className="h-6 w-px bg-slate-200 mx-1" />
-          <Button 
-            onClick={handleAddManual}
-            variant="outline"
-            className="h-11 px-6 gap-2 rounded-2xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all"
-          >
-            <Plus size={18} />
-            Thêm thủ công
-          </Button>
-        </div>
-      </div>
-
-      {/* DataTable */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-        <DataTable
-          columns={getColumns()}
-          data={data}
-          loading={loading}
-          totalCount={totalCount}
-          pageCount={pageCount}
-          pagination={{ pageIndex, pageSize }}
-          onPaginationChange={setPagination}
-          meta={{
-            onEdit: handleEdit,
-            onDelete: handleDeleteOne,
-          }}
-          onRowSelectionChange={setRowSelection}
-          state={{ rowSelection }}
-        />
-      </div>
+        </>
+      )}
 
       {/* Confirm Delete Modal */}
       <ConfirmModal

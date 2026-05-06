@@ -89,8 +89,14 @@ export function setupArenaSockets(io: Server) {
 
     // ------- CẤU HÌNH TRẬN ĐẤU -------
     socket.on("send-challenge-config", ({ targetId, config }) => {
+      const proposer = players.get(socket.id);
+      // Đính kèm grade của proposer vào config để đảm bảo luôn có grade
+      const fullConfig = {
+        ...config,
+        grade: config.grade || proposer?.grade || "",
+      };
       io.to(targetId).emit("challenge-config-received", {
-        config,
+        config: fullConfig,
         challengerId: socket.id,
       });
     });
@@ -99,26 +105,37 @@ export function setupArenaSockets(io: Server) {
       const p1 = players.get(opponentId);
       const p2 = players.get(socket.id);
 
-      if (p1 && p2) {
-        const battleId = `battle-${p1.id}-${p2.id}`;
-        p1.status = "in-battle";
-        p2.status = "in-battle";
+      if (!p1 || !p2) {
+        console.error("[Arena] accept-config: player not found", { opponentId, socketId: socket.id });
+        return;
+      }
 
-        // TẠO CÂU HỎI TRƯỚC KHI BẮT ĐẦU (Server side)
-        const quizResult = await generateArenaQuiz({
-            grade: config.grade,
-            topic: config.topic,
-            type: config.type || "Trắc nghiệm",
-            count: config.count || 10
-        });
+      const battleId = `battle-${p1.id}-${p2.id}`;
+      p1.status = "in-battle";
+      p2.status = "in-battle";
 
-        if (quizResult.error) {
-            p1.status = "idle";
-            p2.status = "idle";
-            io.to(p1.id).emit("challenge-error", { message: quizResult.error });
-            io.to(p2.id).emit("challenge-error", { message: quizResult.error });
-            io.emit("players-update", Array.from(players.values()));
-            return;
+      // Đảm bảo config luôn có grade (lấy từ player nếu config thiếu)
+      const finalConfig = {
+        ...config,
+        grade: config.grade || p1.grade || p2.grade || "",
+        type: config.type || "Trắc nghiệm",
+        count: config.count || 10,
+      };
+
+      console.log("[Arena] Generating quiz for config:", finalConfig);
+
+      try {
+        const quizResult = await generateArenaQuiz(finalConfig);
+
+        if (quizResult.error || !quizResult.quizzes || quizResult.quizzes.length === 0) {
+          const errMsg = quizResult.error || "Không tạo được câu hỏi cho chủ đề này.";
+          console.error("[Arena] Quiz generation failed:", errMsg);
+          p1.status = "idle";
+          p2.status = "idle";
+          io.to(p1.id).emit("challenge-error", { message: errMsg });
+          io.to(p2.id).emit("challenge-error", { message: errMsg });
+          io.emit("players-update", Array.from(players.values()));
+          return;
         }
 
         activeBattles.set(battleId, {
@@ -133,15 +150,23 @@ export function setupArenaSockets(io: Server) {
         io.to(p1.id).emit("match-found", {
           battleId,
           opponent: p2,
-          config,
+          config: finalConfig,
           quizzes: quizResult.quizzes
         });
         io.to(p2.id).emit("match-found", {
           battleId,
           opponent: p1,
-          config,
+          config: finalConfig,
           quizzes: quizResult.quizzes
         });
+        io.emit("players-update", Array.from(players.values()));
+      } catch (err: any) {
+        console.error("[Arena] accept-config error:", err);
+        p1.status = "idle";
+        p2.status = "idle";
+        const errMsg = "Lỗi hệ thống khi tạo câu hỏi, vui lòng thử lại.";
+        io.to(p1.id).emit("challenge-error", { message: errMsg });
+        io.to(p2.id).emit("challenge-error", { message: errMsg });
         io.emit("players-update", Array.from(players.values()));
       }
     });

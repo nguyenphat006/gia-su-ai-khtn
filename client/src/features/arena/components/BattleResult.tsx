@@ -31,7 +31,7 @@ export function BattleResult({ battleResult, battleData, socketId, studentName, 
   const winner = myScore >= oppScore;
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4">
+    <div className="max-w-6xl mx-auto py-10 px-4 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-[3.5rem] p-8 md:p-16 border border-sky-50 shadow-2xl relative overflow-hidden">
          <div className="absolute top-0 right-0 p-12 opacity-10"><Trophy size={200} className="text-orange-500" /></div>
          <div className="text-center mb-16 relative z-10">

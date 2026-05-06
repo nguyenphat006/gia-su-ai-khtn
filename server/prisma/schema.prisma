@@ -203,20 +203,49 @@ enum ChatRole {
 
 // Ngân hàng câu hỏi
 model QuestionBank {
-  id            String   @id @default(uuid())
-  grade         Int?     // Khối (6, 7, 8, 9)
-  classId       String?   
-  topic         String   
-  type          String   
-  difficulty    String   
-  content       String   @db.Text
-  options       Json?    
-  correctAnswer String   
-  explanation   String?  @db.Text
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
+  id               String          @id @default(uuid())
+  grade            Int?            // Khối (6, 7, 8, 9)
+  classId          String?   
+  topic            String   
+  type             String   
+  difficulty       String   
+  content          String          @db.Text
+  options          Json?    
+  correctAnswer    String   
+  explanation      String?         @db.Text
+  isActive         Boolean         @default(true)
+  status           QuestionStatus  @default(APPROVED) // PENDING, APPROVED, REJECTED
+  sourceDocumentId String?
+  createdAt        DateTime        @default(now())
 
-  class         Class?    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class            Class?          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sourceDocument   SourceDocument? @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+}
+
+enum QuestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Lịch sử tải sách/tài liệu
+model SourceDocument {
+  id           String         @id @default(uuid())
+  filename     String
+  grade        Int?
+  topic        String?
+  status       DocumentStatus @default(PROCESSING)
+  totalChunks  Int            @default(0)
+  parsedChunks Int            @default(0)
+  createdAt    DateTime       @default(now())
+  
+  questions    QuestionBank[]
+}
+
+enum DocumentStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 // Bộ Flashcard

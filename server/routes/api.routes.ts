@@ -7,6 +7,7 @@ import knowledgeRoutes from "./knowledge.routes.js";
 import chatRoutes from "./chat.routes.js";
 import revisionRoutes from "./revision.routes.js";
 import arenaRoutes from "./arena.routes.js";
+import documentRoutes from "./document.routes.js";
 
 const router = Router();
 
@@ -51,5 +52,6 @@ router.use("/knowledge", knowledgeRoutes);
 router.use("/chat", chatRoutes);
 router.use("/revision", revisionRoutes);
 router.use("/arena", arenaRoutes);
+router.use("/documents", documentRoutes);
 
 export default router;

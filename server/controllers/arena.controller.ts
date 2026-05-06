@@ -43,7 +43,7 @@ export const generateQuiz = asyncHandler(async (req: Request, res: Response) => 
  * POST /api/arena/results — Lưu kết quả trận đấu
  */
 export const submitResult = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
+  const userId = req.auth?.userId;
   if (!userId) throw new ValidationError("Không xác định được người dùng.");
 
   const { score, mode, winner, opponent, topic } = req.body;
@@ -81,7 +81,7 @@ export const leaderboard = asyncHandler(async (req: Request, res: Response) => {
  * GET /api/arena/my-stats — Thống kê cá nhân
  */
 export const myStats = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
+  const userId = req.auth?.userId;
   if (!userId) throw new ValidationError("Không xác định được người dùng.");
 
   const stats = await getUserArenaStats(userId);
