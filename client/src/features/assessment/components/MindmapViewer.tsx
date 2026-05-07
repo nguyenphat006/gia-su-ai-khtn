@@ -46,7 +46,7 @@ function MindmapView({ nodes }: { nodes: MindmapNode[] }) {
             )}>
                <div className={cn("w-3 h-3 rounded-full shrink-0 shadow-inner", colors.dot)} />
                <div className={cn("font-bold text-sm md:text-base leading-snug", colors.text)}>
-                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{processLaTeX(node.label)}</ReactMarkdown>
+                  <FormattedContent content={node.label} isInline />
                </div>
             </div>
             {renderNodes(node.id, depth + 1)}
@@ -69,7 +69,7 @@ function MindmapView({ nodes }: { nodes: MindmapNode[] }) {
               rootColors.bg, rootColors.text, rootColors.border
            )}
          >
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{processLaTeX(root.label)}</ReactMarkdown>
+            <FormattedContent content={root.label} isInline />
          </motion.div>
          {renderNodes(root.id)}
        </div>

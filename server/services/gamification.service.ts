@@ -107,17 +107,21 @@ export async function checkDailyLogin(userId: string) {
         data: { lastLoginAt: now },
       });
 
-      // Cộng 5 điểm
-      await tx.userStats.update({
+      // Cộng 5 điểm (Sử dụng upsert để an toàn nếu chưa có record stats)
+      await tx.userStats.upsert({
         where: { userId },
-        data: { points: { increment: 5 } },
+        update: { points: { increment: 5 } },
+        create: {
+          userId,
+          points: 5,
+        },
       });
 
       // Ghi log
       await tx.xpLog.create({
         data: {
           userId,
-          amount: 0, // Daily login chỉ cộng điểm, có thể cộng EXP nếu muốn
+          amount: 0,
           action: "DAILY_LOGIN",
         },
       });

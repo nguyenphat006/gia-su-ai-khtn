@@ -27,8 +27,8 @@ export async function askGemini(
     context || "Chưa có tài liệu được nạp phù hợp."
   );
 
-  // model: Flash-8B cho xử lý ảnh (rẻ, nhanh), Flash thường cho text
-  const model = image ? "gemini-1.5-flash-8b" : "gemini-3-flash-preview";
+  // model: Flash-1.5 cho xử lý nhanh và hỗ trợ đa phương thức
+  const modelName = image ? "gemini-1.5-flash" : "gemini-1.5-flash";
 
   const parts: any[] = [{ text: message }];
   if (image) {
@@ -41,19 +41,21 @@ export async function askGemini(
   }
 
   try {
-    const response = await ai.models.generateContent({
-      model,
+    const genModel = ai.getGenerativeModel({ model: modelName });
+
+    const response = await genModel.generateContent({
       contents: [
         ...history,
         { role: "user", parts },
       ],
-      config: {
-        systemInstruction,
+      generationConfig: {
         temperature: 0.7,
       },
+      systemInstruction,
     });
 
-    return response.text || "Xin lỗi, tôi không thể tạo phản hồi lúc này.";
+    const result = await response.response;
+    return result.text() || "Xin lỗi, tôi không thể tạo phản hồi lúc này.";
   } catch (error: any) {
     console.error("Gemini API Error in askGemini:", error);
     if (

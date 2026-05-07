@@ -15,6 +15,7 @@ export async function buildApp() {
   seedChallenges().catch(err => console.error("Lỗi khi seed challenges:", err));
 
   const app = express();
+  app.set("trust proxy", 1);
   const httpServer = createServer(app);
   const io = new Server(httpServer, {
     cors: { origin: "*" },

@@ -59,6 +59,23 @@ export default function MessageList({ messages, isLoading }: MessageListProps) {
                   msg.role === "user" ? "prose-slate" : "prose-sky message-content"
                 )} 
               />
+
+              {/* Hiển thị ảnh đính kèm */}
+              {msg.attachments && msg.attachments.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {msg.attachments.map((att, aIdx) => (
+                    att.type === "image" && (
+                      <div key={aIdx} className="rounded-lg overflow-hidden border border-slate-200 max-w-xs sm:max-w-sm">
+                        <img 
+                          src={att.data ? `data:${att.mimeType};base64,${att.data}` : att.url} 
+                          alt="Attachment" 
+                          className="w-full h-auto object-contain max-h-64"
+                        />
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
             </div>
             
             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest px-2">

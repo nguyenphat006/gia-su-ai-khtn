@@ -47,6 +47,7 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
               content: m.content,
               timestamp: new Date(m.createdAt),
               studentId: userId,
+              attachments: m.attachments,
             })));
           }
         }
@@ -70,8 +71,13 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
     const userMsg: Message = {
       studentId: userId,
       role: "user",
-      content: userText || (selectedImage ? "🖼️ Đã gửi hình ảnh" : "📁 Đã gửi tệp"),
-      timestamp: new Date()
+      content: userText || "🖼️ Đã gửi hình ảnh",
+      timestamp: new Date(),
+      attachments: selectedImage ? [{
+        type: "image",
+        mimeType: selectedImage.mimeType,
+        data: selectedImage.data
+      }] : undefined
     };
     
     setMessages(prev => [...prev, userMsg]);

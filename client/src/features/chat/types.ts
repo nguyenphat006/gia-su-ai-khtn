@@ -3,6 +3,12 @@ export interface Message {
   content: string;
   timestamp: any;
   studentId: string;
+  attachments?: {
+    type: string;
+    mimeType: string;
+    data?: string;
+    url?: string;
+  }[];
 }
 
 export interface SelectedFile {

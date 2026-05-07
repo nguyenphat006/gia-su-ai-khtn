@@ -23,10 +23,10 @@ export const chatService = {
   },
 
   // Gửi tin nhắn
-  sendMessage: async (sessionId: string, content: string, attachments?: any[]) => {
+  sendMessage: async (sessionId: string, content: string, imageBase64?: string, mimeType?: string) => {
     const json = await apiClient<any>(`/api/chat/sessions/${sessionId}/messages`, {
       method: "POST",
-      body: JSON.stringify({ content, attachments }),
+      body: JSON.stringify({ content, imageBase64, mimeType }),
     });
     return json.data; // { userMessage, aiMessage }
   },

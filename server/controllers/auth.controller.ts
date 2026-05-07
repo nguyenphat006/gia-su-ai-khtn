@@ -20,27 +20,27 @@ function getRequestContext(req: Request) {
   };
 }
 
-function setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number) {
+function setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number, req?: Request) {
+  // Kiểm tra nếu là localhost
+  const isLocal = req?.hostname === "localhost" || req?.hostname === "127.0.0.1";
+  const secure = isProduction && !isLocal;
+  const sameSite = isProduction && !isLocal ? "none" : "lax";
+
   // Access Token Cookie
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: secure,
+    sameSite: sameSite,
     maxAge: expiresInSeconds * 1000,
   });
 
   // Refresh Token Cookie
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matching getRefreshTokenTtlDays default)
+    secure: secure,
+    sameSite: sameSite,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
-}
-
-function clearAuthCookies(res: Response) {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
 }
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -56,7 +56,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     res, 
     result.tokens.accessToken, 
     result.tokens.refreshToken, 
-    result.tokens.expiresInSeconds
+    result.tokens.expiresInSeconds,
+    req
   );
 
   res.json({
@@ -89,7 +90,8 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     res, 
     result.tokens.accessToken, 
     result.tokens.refreshToken, 
-    result.tokens.expiresInSeconds
+    result.tokens.expiresInSeconds,
+    req
   );
 
   res.json({

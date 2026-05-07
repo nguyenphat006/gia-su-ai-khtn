@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { User as UserIcon, Bot, Loader2, Sparkles, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import FormattedContent from "@/components/ui/FormattedContent";
 
 interface ActiveBattleProps {
   battleId: string;

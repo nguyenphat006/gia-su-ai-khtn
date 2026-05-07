@@ -76,7 +76,7 @@ export async function processUserMessage(
   };
   
   if (image) {
-    userMessageData.attachments = [{ type: "image", mimeType: image.mimeType }];
+    userMessageData.attachments = [{ type: "image", mimeType: image.mimeType, data: image.data }];
   }
 
   const userMessage = await prisma.chatMessage.create({
@@ -102,10 +102,28 @@ export async function processUserMessage(
   const formattedHistory: GeminiMessage[] = recentMessages
     .reverse()
     .filter((m) => m.role !== ChatRole.SYSTEM) // Bỏ qua system msg nếu có
-    .map((m) => ({
-      role: m.role === ChatRole.USER ? "user" : "model",
-      parts: [{ text: m.content }],
-    }));
+    .map((m) => {
+      const parts: any[] = [{ text: m.content }];
+      
+      // Thêm attachments nếu có
+      if (m.attachments && Array.isArray(m.attachments)) {
+        (m.attachments as any[]).forEach((att) => {
+          if (att.type === "image" && att.data) {
+            parts.push({
+              inlineData: {
+                data: att.data,
+                mimeType: att.mimeType,
+              },
+            });
+          }
+        });
+      }
+
+      return {
+        role: m.role === ChatRole.USER ? "user" : "model",
+        parts,
+      };
+    });
 
   // Loại bỏ câu hỏi hiện tại vừa thêm khỏi history vì askGemini đã tự nạp câu hỏi mới
   formattedHistory.pop();
