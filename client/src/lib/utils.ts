@@ -31,7 +31,33 @@ export const getLevel = (xp: number) => {
 
 export const processLaTeX = (text: string) => {
   if (!text) return "";
-  let processed = text.replace(/\\\((.*?)\\\)/gs, '$$$1$$');
-  processed = processed.replace(/\\\[(.*?)\\\]/gs, '$$$$$1$$$$');
+  
+  // 1. Chuyển đổi các dấu bao công thức phổ biến về chuẩn $ và $$
+  let processed = text
+    .replace(/\\\[(.*?)\\\]/gs, '$$$$$1$$$$') // \[ ... \] -> $$...$$
+    .replace(/\\\((.*?)\\\)/gs, '$$$1$$')     // \( ... \) -> $...$
+    .replace(/\\begin\{equation\}(.*?)\\end\{equation\}/gs, '$$$$$1$$$$')
+    .replace(/\\begin\{align\}(.*?)\\end\{align\}/gs, '$$$$$1$$$$');
+
+  // 2. Xử lý các ký tự vật lý phổ biến thường bị AI viết thiếu dấu bao $
+  // Ví dụ: \lambda, \mu, \Omega, \Delta, \pi, \rho, \phi, \sigma, \omega
+  const greekLetters = ['lambda', 'mu', 'Omega', 'Delta', 'pi', 'rho', 'phi', 'sigma', 'omega', 'alpha', 'beta', 'gamma', 'theta'];
+  greekLetters.forEach(letter => {
+    // Chỉ bao lại nếu chưa có dấu $ bao quanh
+    const regex = new RegExp(`(?<![\\$])\\\\${letter}(?![\\$])`, 'g');
+    processed = processed.replace(regex, `$\\${letter}$`);
+  });
+
+  // 3. Xử lý các ký hiệu đơn vị vật lý có số mũ
+  // m/s^2, kg.m/s, ...
+  processed = processed.replace(/(\d+)\s*m\/s\^2(?![^\$]*\$)/g, '$1 $m/s^2$');
+  processed = processed.replace(/(\d+)\s*m\/s(?![^\$]*\$)/g, '$1 $m/s$');
+
+  // 4. Đảm bảo các dấu so sánh không bị Markdown hiểu lầm là tag HTML
+  // (Nhưng phải cẩn thận không làm hỏng LaTeX)
+  // Cách tốt nhất là bọc chúng trong $ $ nếu chúng ở giữa các số
+  processed = processed.replace(/(\d+)\s*<\s*(\d+)/g, '$1 $<$ $2');
+  processed = processed.replace(/(\d+)\s*>\s*(\d+)/g, '$1 $>$ $2');
+
   return processed;
 };

@@ -1,10 +1,8 @@
 import { useRef, useEffect } from "react";
 import { Bot, Loader2, User } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import { cn, processLaTeX } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Message } from "../types";
+import FormattedContent from "@/components/ui/FormattedContent";
 
 interface MessageListProps {
   messages: Message[];
@@ -54,17 +52,13 @@ export default function MessageList({ messages, isLoading }: MessageListProps) {
                 ? "bg-white border-slate-100 text-slate-800 rounded-tr-none shadow-slate-200/50" 
                 : "bg-sky-50/70 border-sky-100 text-sky-950 rounded-tl-none"
             )}>
-              <div className={cn(
-                "markdown-body text-[13px] sm:text-[15px] leading-relaxed font-bold",
-                msg.role === "user" ? "prose-slate" : "prose-sky message-content"
-              )}>
-                <ReactMarkdown 
-                  remarkPlugins={[remarkMath]} 
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {processLaTeX(msg.content)}
-                </ReactMarkdown>
-              </div>
+              <FormattedContent 
+                content={msg.content} 
+                className={cn(
+                  "text-[13px] sm:text-[15px] leading-relaxed font-bold",
+                  msg.role === "user" ? "prose-slate" : "prose-sky message-content"
+                )} 
+              />
             </div>
             
             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest px-2">

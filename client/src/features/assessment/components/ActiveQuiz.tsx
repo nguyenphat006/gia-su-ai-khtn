@@ -2,12 +2,9 @@ import * as React from "react"
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, HelpCircle, CheckCircle2, XCircle, ChevronRight, AlertCircle, Sparkles, Image as ImageIcon, Loader2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import confetti from "canvas-confetti";
-import { cn, processLaTeX } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Quiz, EssayFeedback } from "../types";
+import FormattedContent from "@/components/ui/FormattedContent";
 
 interface ActiveQuizProps {
   topic: string;
@@ -234,9 +231,7 @@ export function ActiveQuiz({
           className="bg-white rounded-[2.5rem] p-10 border border-sky-50 shadow-sm relative overflow-hidden"
         >
            <div className="text-2xl font-display font-black text-sky-900 mb-12 leading-tight tracking-tight">
-             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-               {processLaTeX(questionContent)}
-             </ReactMarkdown>
+             <FormattedContent content={questionContent} />
            </div>
            
            <AnimatePresence>
@@ -298,11 +293,7 @@ export function ActiveQuiz({
                     )}>
                       {String.fromCharCode(65 + idx)}
                     </div>
-                    <span className="flex-1 leading-relaxed">
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {processLaTeX(option)}
-                      </ReactMarkdown>
-                    </span>
+                    <FormattedContent content={option} isInline className="flex-1 leading-relaxed" />
                     <AnimatePresence>
                       {isAnswered && idx === actualAnswerIndex && (
                         <motion.div 
@@ -409,7 +400,7 @@ export function ActiveQuiz({
                       {essayFeedback ? (
                         <>
                           <div className="text-sky-900 leading-relaxed font-semibold italic opacity-90">
-                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{processLaTeX(essayFeedback.feedback)}</ReactMarkdown>
+                            <FormattedContent content={essayFeedback.feedback} />
                           </div>
                           <div className={cn("mt-4 inline-block px-4 py-1.5 rounded-full font-bold", essayFeedback.isPassing ? "bg-sky-100 text-sky-700" : "bg-red-100 text-red-700")}>
                             {essayFeedback.isPassing ? `Đạt Yêu Cầu (${essayFeedback.score}/10)` : `Cần Cố Gắng Hơn (${essayFeedback.score}/10)`}
@@ -417,7 +408,7 @@ export function ActiveQuiz({
                         </>
                       ) : (
                         <div className="text-sky-900 leading-relaxed font-semibold italic opacity-90">
-                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{processLaTeX(current.explanation)}</ReactMarkdown>
+                            <FormattedContent content={current.explanation} />
                         </div>
                       )}
                     </div>

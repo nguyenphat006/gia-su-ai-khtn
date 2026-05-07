@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Layers, Sparkles, Zap, ChevronRight } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import { processLaTeX } from "@/lib/utils";
 import { Flashcard, AssessmentMode } from "../types";
+import FormattedContent from "@/components/ui/FormattedContent";
 
 function FlashcardItem({ card }: { card: Flashcard }) {
   const [flipped, setFlipped] = useState(false);
@@ -34,7 +31,7 @@ function FlashcardItem({ card }: { card: Flashcard }) {
            </div>
            <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-6">MẶT TRƯỚC</p>
            <div className="text-2xl font-display font-black text-orange-900 leading-tight">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{processLaTeX(card.front)}</ReactMarkdown>
+              <FormattedContent content={card.front} />
            </div>
            <div className="mt-12 group-hover:scale-110 transition-transform">
               <div className="bg-orange-100/50 px-4 py-2 rounded-full text-orange-600 font-bold italic text-[10px]">Chạm để xem đáp án...</div>
@@ -51,7 +48,7 @@ function FlashcardItem({ card }: { card: Flashcard }) {
            </div>
            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-6">MẶT SAU</p>
            <div className="text-xl font-bold leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{processLaTeX(card.back)}</ReactMarkdown>
+              <FormattedContent content={card.back} className="prose-invert" />
            </div>
         </div>
       </motion.div>

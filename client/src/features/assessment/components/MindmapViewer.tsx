@@ -1,10 +1,8 @@
 import { motion } from "motion/react";
 import { ArrowLeft, Brain } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import { cn, processLaTeX } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { MindmapNode, AssessmentMode } from "../types";
+import FormattedContent from "@/components/ui/FormattedContent";
 
 function MindmapView({ nodes }: { nodes: MindmapNode[] }) {
   const root = nodes.find(n => !n.parentId);
