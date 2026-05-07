@@ -22,23 +22,15 @@ function getRequestContext(req: Request) {
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number, req?: Request) {
-  // Kiểm tra môi trường an toàn (HTTPS hoặc localhost/mạng nội bộ)
-  const hostname = req?.hostname || "";
-  const isLocal = hostname === "localhost" || 
-                  hostname === "127.0.0.1" || 
-                  hostname === "::1" || 
-                  hostname.startsWith("192.168.") || 
-                  hostname.startsWith("10.") || 
-                  hostname.startsWith("172.");
-  
   // Ưu tiên dùng X-Forwarded-Proto từ proxy nếu có (Render dùng cái này)
   const protocol = req?.get("X-Forwarded-Proto") || req?.protocol || "http";
   const isSecureConnection = protocol === "https";
 
-  // Cấu hình Cookie an toàn nhưng linh hoạt
-  // Nếu là local hoặc không có HTTPS, tuyệt đối KHÔNG dùng secure=true và SameSite=None
-  const secure = isSecureConnection && !isLocal;
-  const sameSite = secure ? "none" : "lax";
+  // Cấu hình Cookie: 
+  // Vì chúng ta đã dùng Proxy (Vercel Rewrites), trình duyệt coi Backend và Frontend là cùng Site.
+  // Do đó, BẮT BUỘC dùng SameSite=Lax để không bị chặn bởi chính sách Third-party cookie.
+  const secure = isSecureConnection;
+  const sameSite = "lax"; // Chuyển từ "none" sang "lax" vì đã có Proxy
 
   const commonOptions = {
     httpOnly: true,
@@ -67,7 +59,7 @@ function clearAuthCookies(res: Response, req?: Request) {
   const options = {
     httpOnly: true,
     secure: isSecureConnection,
-    sameSite: (isSecureConnection ? "none" : "lax") as any,
+    sameSite: "lax" as any, // Đồng bộ với lúc set
     path: "/",
   };
 

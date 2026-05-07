@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://giasu-ai-khtn-api.onrender.com/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://giasu-ai-khtn-api.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

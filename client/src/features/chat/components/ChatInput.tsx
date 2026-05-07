@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { speechService } from "@/lib/speechService";
 import { SelectedImage, SelectedFile } from "../types";
 import { motion, AnimatePresence } from "motion/react";
+import { apiClient } from "@/lib/apiClient";
 
 interface ChatInputProps {
   input: string;
@@ -43,20 +44,19 @@ export default function ChatInput({
       reader.onloadend = async () => {
         const base64 = (reader.result as string);
         try {
-          const response = await fetch("/api/extract-text", {
+          const data = await apiClient<any>("/api/extract-text", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ fileData: base64, fileName: file.name, mimeType: file.type })
           });
-          const data = await response.json();
+          
           if (data.text) {
             setSelectedFile({ name: file.name, content: data.text });
           } else {
             alert(data.error || "Không thể trích xuất văn bản từ tài liệu này.");
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("File upload error:", error);
-          alert("Lỗi kết nối máy chủ khi xử lý tài liệu.");
+          alert(error.message || "Lỗi kết nối máy chủ khi xử lý tài liệu.");
         } finally {
           setIsLoading(false);
         }
