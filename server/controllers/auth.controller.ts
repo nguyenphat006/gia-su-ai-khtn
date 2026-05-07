@@ -43,6 +43,11 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
   });
 }
 
+function clearAuthCookies(res: Response) {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+}
+
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { identifier, password } = req.body;
 
