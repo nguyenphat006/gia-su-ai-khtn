@@ -21,31 +21,51 @@ function getRequestContext(req: Request) {
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number, req?: Request) {
-  // Kiểm tra nếu là localhost
-  const isLocal = req?.hostname === "localhost" || req?.hostname === "127.0.0.1";
-  const secure = isProduction && !isLocal;
-  const sameSite = isProduction && !isLocal ? "none" : "lax";
+  // Kiểm tra môi trường an toàn (HTTPS hoặc localhost)
+  const isLocal = req?.hostname === "localhost" || req?.hostname === "127.0.0.1" || req?.hostname === "::1";
+  
+  // Ưu tiên dùng X-Forwarded-Proto từ proxy nếu có (Render dùng cái này)
+  const protocol = req?.get("X-Forwarded-Proto") || req?.protocol || "http";
+  const isSecureConnection = protocol === "https";
+
+  // Cấu hình Cookie an toàn nhưng linh hoạt
+  // Lưu ý: Nếu SameSite=None thì BẮT BUỘC Secure=true
+  const secure = isSecureConnection;
+  const sameSite = isSecureConnection ? "none" : "lax";
+
+  const commonOptions = {
+    httpOnly: true,
+    secure: secure,
+    sameSite: sameSite as any,
+    path: "/",
+  };
 
   // Access Token Cookie
   res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: secure,
-    sameSite: sameSite,
+    ...commonOptions,
     maxAge: expiresInSeconds * 1000,
   });
 
   // Refresh Token Cookie
   res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: secure,
-    sameSite: sameSite,
+    ...commonOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 }
 
-function clearAuthCookies(res: Response) {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+function clearAuthCookies(res: Response, req?: Request) {
+  const protocol = req?.get("X-Forwarded-Proto") || req?.protocol || "http";
+  const isSecureConnection = protocol === "https";
+
+  const options = {
+    httpOnly: true,
+    secure: isSecureConnection,
+    sameSite: (isSecureConnection ? "none" : "lax") as any,
+    path: "/",
+  };
+
+  res.clearCookie("accessToken", options);
+  res.clearCookie("refreshToken", options);
 }
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -78,7 +98,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     await logoutSession(req.auth.sessionId);
   }
 
-  clearAuthCookies(res);
+  clearAuthCookies(res, req);
   res.json({ status: "ok", message: "Đăng xuất thành công." });
 });
 

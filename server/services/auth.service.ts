@@ -151,7 +151,11 @@ export async function loginUnified(
   }
 
   // Kiểm tra thưởng đăng nhập hàng ngày (trước khi cập nhật lastLoginAt)
-  await checkDailyLogin(user.id);
+  try {
+    await checkDailyLogin(user.id);
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra thưởng đăng nhập hàng ngày:", error);
+  }
 
   // Cập nhật thời gian đăng nhập cuối
   const updatedUser = await prisma.user.update({
