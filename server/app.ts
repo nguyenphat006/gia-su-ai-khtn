@@ -32,7 +32,7 @@ export async function buildApp() {
       // Cho phép requests không có origin (Swagger UI, curl, mobile apps)
       if (!origin) return callback(null, true);
       // Luôn cho phép chính domain backend và localhost
-      if (origin.includes("onrender.com") || origin.includes("localhost")) {
+      if (origin.includes("onrender.com") || origin.includes("localhost") || origin.includes("127.0.0.1") || origin.includes("::1")) {
         return callback(null, true);
       }
       // Cho phép tất cả nếu chưa cấu hình ALLOWED_ORIGINS

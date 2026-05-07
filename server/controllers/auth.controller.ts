@@ -10,6 +10,7 @@ import {
   bootstrapDefaultAccounts,
 } from "../services/auth.service.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
+import { verifyAccessToken } from "../utils/token.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -22,16 +23,18 @@ function getRequestContext(req: Request) {
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number, req?: Request) {
   // Kiểm tra môi trường an toàn (HTTPS hoặc localhost)
-  const isLocal = req?.hostname === "localhost" || req?.hostname === "127.0.0.1" || req?.hostname === "::1";
+  const hostname = req?.hostname || "";
+  const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
   
   // Ưu tiên dùng X-Forwarded-Proto từ proxy nếu có (Render dùng cái này)
   const protocol = req?.get("X-Forwarded-Proto") || req?.protocol || "http";
   const isSecureConnection = protocol === "https";
 
   // Cấu hình Cookie an toàn nhưng linh hoạt
-  // Lưu ý: Nếu SameSite=None thì BẮT BUỘC Secure=true
-  const secure = isSecureConnection;
-  const sameSite = isSecureConnection ? "none" : "lax";
+  // Nếu là localhost, tuyệt đối KHÔNG dùng secure=true và SameSite=None trừ khi dùng HTTPS thật
+  // Vì Chrome sẽ block nếu set SameSite=None mà không có Secure, hoặc set Secure trên HTTP.
+  const secure = isSecureConnection && !isLocal;
+  const sameSite = secure ? "none" : "lax";
 
   const commonOptions = {
     httpOnly: true,
@@ -64,8 +67,13 @@ function clearAuthCookies(res: Response, req?: Request) {
     path: "/",
   };
 
+  // Xóa bằng clearCookie
   res.clearCookie("accessToken", options);
   res.clearCookie("refreshToken", options);
+
+  // Ghi đè bằng giá trị rỗng và maxAge=0 để đảm bảo xóa tuyệt đối trên mọi trình duyệt
+  res.cookie("accessToken", "", { ...options, maxAge: 0 });
+  res.cookie("refreshToken", "", { ...options, maxAge: 0 });
 }
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -94,8 +102,16 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  if (req.auth?.sessionId) {
-    await logoutSession(req.auth.sessionId);
+  const token = req.cookies?.accessToken;
+  
+  // Nếu có token, cố gắng vô hiệu hóa session ở server
+  if (token) {
+    try {
+      const payload = verifyAccessToken(token);
+      await logoutSession(payload.sessionId);
+    } catch (e) {
+      // Token hết hạn hoặc không hợp lệ thì bỏ qua việc revoke session, vẫn tiếp tục xóa cookie
+    }
   }
 
   clearAuthCookies(res, req);

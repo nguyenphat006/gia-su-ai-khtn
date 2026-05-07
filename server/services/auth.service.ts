@@ -164,6 +164,24 @@ export async function loginUnified(
     include: publicUserInclude,
   });
 
+  // Đảm bảo có bản ghi UserStats cho Học sinh
+  if (updatedUser.role === "STUDENT" && !updatedUser.stats) {
+    await prisma.userStats.create({
+      data: { userId: updatedUser.id }
+    }).catch(e => console.error("Lỗi tạo stats bổ sung:", e));
+    
+    // Fetch lại để có stats đầy đủ cho tokens/return
+    const userFinal = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: publicUserInclude
+    });
+    const tokens = await createSession(userFinal!, context);
+    return {
+      user: mapPublicUser(userFinal!),
+      tokens,
+    };
+  }
+
   const tokens = await createSession(updatedUser, context);
 
   return {

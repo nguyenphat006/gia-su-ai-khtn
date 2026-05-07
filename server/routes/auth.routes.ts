@@ -106,13 +106,11 @@ router.post("/login", login);
  *   post:
  *     summary: Đăng xuất khỏi hệ thống
  *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Đã xóa cookie và revoke session
  */
-router.post("/logout", authenticate, logout);
+router.post("/logout", logout);
 
 /**
  * @swagger

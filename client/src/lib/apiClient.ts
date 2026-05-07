@@ -3,10 +3,15 @@
  * Uses native fetch with HttpOnly cookies.
  */
 
-// In development (local), we use an empty string so the browser sends requests to localhost:3000
-// which are then proxied by Vite to localhost:3001.
-// In production, we use VITE_API_URL or fallback to the Render domain.
-const BASE_URL = import.meta.env.DEV 
+// Detect if we are running locally
+const isLocal = typeof window !== "undefined" && 
+  (window.location.hostname === "localhost" || 
+   window.location.hostname === "127.0.0.1" || 
+   window.location.hostname === "::1");
+
+// In development or local access, we use an empty string to use the Vite proxy.
+// This prevents "Blocked due to user preferences" (third-party cookie) errors in Chrome.
+const BASE_URL = isLocal
   ? "" 
   : (import.meta.env.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com");
 
