@@ -3,17 +3,12 @@
  * Uses native fetch with HttpOnly cookies.
  */
 
-// Detect if we are running on the official production domain
-const isProductionHost = typeof window !== "undefined" && 
-  (window.location.hostname.includes("onrender.com") || 
-   window.location.hostname.includes("giasu-ai-khtn"));
-
-// In any other case (localhost, local IP like 192.168.x.x, etc.), 
-// we MUST use an empty string to use the Vite proxy.
-// This ensures "First-party" cookie context which browsers won't block.
-const BASE_URL = !isProductionHost
-  ? "" 
-  : (import.meta.env.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com");
+// We ALWAYS use relative paths (empty BASE_URL).
+// - In development: Vite proxy handles it (localhost:3000 -> localhost:3001)
+// - In production: Vercel rewrites handle it (vercel.app/api -> onrender.com/api)
+// This ensures "First-party" cookie context which browsers won't block, 
+// solving the "Blocked due to user preferences" error in Incognito/Mobile.
+const BASE_URL = ""; 
 
 // To track if a refresh is already in progress to prevent multiple simultaneous refresh calls
 let isRefreshing = false;
