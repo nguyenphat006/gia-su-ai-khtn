@@ -3,15 +3,15 @@
  * Uses native fetch with HttpOnly cookies.
  */
 
-// Detect if we are running locally
-const isLocal = typeof window !== "undefined" && 
-  (window.location.hostname === "localhost" || 
-   window.location.hostname === "127.0.0.1" || 
-   window.location.hostname === "::1");
+// Detect if we are running on the official production domain
+const isProductionHost = typeof window !== "undefined" && 
+  (window.location.hostname.includes("onrender.com") || 
+   window.location.hostname.includes("giasu-ai-khtn"));
 
-// In development or local access, we use an empty string to use the Vite proxy.
-// This prevents "Blocked due to user preferences" (third-party cookie) errors in Chrome.
-const BASE_URL = isLocal
+// In any other case (localhost, local IP like 192.168.x.x, etc.), 
+// we MUST use an empty string to use the Vite proxy.
+// This ensures "First-party" cookie context which browsers won't block.
+const BASE_URL = !isProductionHost
   ? "" 
   : (import.meta.env.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com");
 

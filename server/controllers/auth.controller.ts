@@ -22,17 +22,21 @@ function getRequestContext(req: Request) {
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string, expiresInSeconds: number, req?: Request) {
-  // Kiểm tra môi trường an toàn (HTTPS hoặc localhost)
+  // Kiểm tra môi trường an toàn (HTTPS hoặc localhost/mạng nội bộ)
   const hostname = req?.hostname || "";
-  const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  const isLocal = hostname === "localhost" || 
+                  hostname === "127.0.0.1" || 
+                  hostname === "::1" || 
+                  hostname.startsWith("192.168.") || 
+                  hostname.startsWith("10.") || 
+                  hostname.startsWith("172.");
   
   // Ưu tiên dùng X-Forwarded-Proto từ proxy nếu có (Render dùng cái này)
   const protocol = req?.get("X-Forwarded-Proto") || req?.protocol || "http";
   const isSecureConnection = protocol === "https";
 
   // Cấu hình Cookie an toàn nhưng linh hoạt
-  // Nếu là localhost, tuyệt đối KHÔNG dùng secure=true và SameSite=None trừ khi dùng HTTPS thật
-  // Vì Chrome sẽ block nếu set SameSite=None mà không có Secure, hoặc set Secure trên HTTP.
+  // Nếu là local hoặc không có HTTPS, tuyệt đối KHÔNG dùng secure=true và SameSite=None
   const secure = isSecureConnection && !isLocal;
   const sameSite = secure ? "none" : "lax";
 
