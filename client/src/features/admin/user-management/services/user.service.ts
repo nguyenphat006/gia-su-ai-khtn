@@ -1,10 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
 
-const BASE_URL =
-  typeof import.meta !== "undefined" && import.meta.env?.DEV
-    ? ""
-    : import.meta.env?.VITE_API_URL || "https://giasu-ai-khtn-api.onrender.com";
-
 export const adminUserService = {
   getUsers: async (params?: {
     page?: number;
@@ -53,27 +48,10 @@ export const adminUserService = {
     const formData = new FormData();
     formData.append("file", file);
 
-    // apiClient ko handle FormData tốt nên gọi fetch trực tiếp
-    const { apiClient: _ac, ...rest } = await import("@/lib/apiClient");
-    const url = `${BASE_URL}/api/users/import-excel`;
-
-    // Lấy token từ localStorage nếu có
-    const accessToken = localStorage.getItem("accessToken");
-    const headers: HeadersInit = {};
-    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-
-    const response = await fetch(url, {
+    return apiClient<any>("/api/users/import-excel", {
       method: "POST",
-      headers,
-      credentials: "include",
       body: formData,
     });
-
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error(payload?.message ?? `Import thất bại (${response.status})`);
-    }
-    return payload;
   },
 
   /**
@@ -84,13 +62,10 @@ export const adminUserService = {
       Object.entries(params || {}).filter(([_, v]) => v !== undefined && v !== "")
     );
     const query = new URLSearchParams(cleanParams as any).toString();
-    const url = `${BASE_URL}/api/users/export-excel${query ? `?${query}` : ""}`;
+    const url = `/api/users/export-excel${query ? `?${query}` : ""}`;
 
-    const accessToken = localStorage.getItem("accessToken");
-    const headers: HeadersInit = {};
-    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-
-    const response = await fetch(url, { headers, credentials: "include" });
+    // Đối với export file, dùng fetch trực tiếp để lấy blob nhưng vẫn đảm bảo cookie
+    const response = await fetch(url, { credentials: "include" });
     if (!response.ok) {
       const err = await response.json().catch(() => null);
       throw new Error(err?.message ?? "Xuất file thất bại");

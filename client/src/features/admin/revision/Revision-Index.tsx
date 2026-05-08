@@ -145,116 +145,130 @@ export default function RevisionIndex() {
   const selectedCount = Object.keys(rowSelection).length
 
   return (
-    <div className="space-y-6">
-      {/* Tab Switcher */}
-      <div className="flex p-1.5 bg-slate-100 rounded-[2rem] w-fit border border-slate-200 shadow-inner">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-                setActiveTab(tab.id)
-                setRowSelection({})
-                setData([])
-                setPagination({ pageIndex: 0, pageSize: 10 })
-            }}
-            className={cn(
-              "flex items-center gap-2 px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all relative",
-              activeTab === tab.id 
-                ? "text-slate-900" 
-                : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            {activeTab === tab.id && (
-              <motion.div 
-                layoutId="active-tab"
-                className="absolute inset-0 bg-white rounded-full shadow-md"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-            <tab.icon size={16} className={cn("relative z-10", activeTab === tab.id ? tab.color : "")} />
-            <span className="relative z-10">{tab.label}</span>
-          </button>
-        ))}
+    <div className="space-y-6 pb-10">
+      {/* Tab Switcher - Scrollable on mobile */}
+      <div className="overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex p-1 bg-slate-100 rounded-2xl sm:rounded-[2rem] w-max sm:w-fit border border-slate-200 shadow-inner">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                  setActiveTab(tab.id)
+                  setRowSelection({})
+                  setData([])
+                  setPagination({ pageIndex: 0, pageSize: 10 })
+              }}
+              className={cn(
+                "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all relative whitespace-nowrap",
+                activeTab === tab.id 
+                  ? "text-slate-900" 
+                  : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              {activeTab === tab.id && (
+                <motion.div 
+                  layoutId="active-tab"
+                  className="absolute inset-0 bg-white rounded-xl sm:rounded-full shadow-md"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <tab.icon size={14} className={cn("relative z-10", activeTab === tab.id ? tab.color : "")} />
+              <span className="relative z-10">{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeTab === "document" ? (
-        <DocumentUploadTab />
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 sm:p-0 overflow-hidden">
+          <DocumentUploadTab />
+        </div>
       ) : (
         <>
           {/* Header Actions */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex flex-1 items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+               <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight sm:hidden">
+                 {TABS.find(t => t.id === activeTab)?.label}
+               </h3>
+               <div className="flex items-center gap-2 ml-auto">
+                <Button 
+                  onClick={() => setIsAiModalOpen(true)}
+                  className="h-10 px-4 gap-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-black uppercase tracking-widest text-[9px] sm:text-[10px] shadow-lg shadow-sky-200 hover:scale-105 transition-all"
+                >
+                  <Sparkles size={16} />
+                  <span className="hidden xs:inline">AI Soạn thảo</span>
+                  <span className="xs:hidden">AI</span>
+                </Button>
+                <Button 
+                  onClick={handleAddManual}
+                  variant="outline"
+                  className="h-10 px-4 gap-2 rounded-xl sm:rounded-2xl border-slate-200 font-bold text-slate-600 text-[10px] sm:text-xs hover:bg-slate-50 transition-all"
+                >
+                  <Plus size={16} />
+                  <span className="hidden xs:inline">Thêm thủ công</span>
+                  <span className="xs:hidden">Thêm</span>
+                </Button>
+               </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative w-full sm:flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="Tìm kiếm chủ đề/nội dung..."
+                  placeholder="Tìm kiếm chủ đề..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 h-11 bg-white border-slate-200 rounded-2xl focus:ring-sky-500/20"
+                  className="pl-10 h-10 bg-white border-slate-200 rounded-xl sm:rounded-2xl focus:ring-sky-500/20 text-sm"
                 />
               </div>
 
-              <div className="flex items-center gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl">
-                <Filter size={14} className="ml-2 text-slate-400" />
-                <select 
-                  value={grade}
-                  onChange={(e) => {
-                    setGrade(e.target.value)
-                    setPagination({ pageIndex: 0, pageSize: 10 })
-                  }}
-                  className="bg-transparent border-none outline-none text-xs font-bold text-slate-600 px-2 pr-4 appearance-none cursor-pointer"
-                >
-                    <option value="all">Tất cả Khối</option>
-                    <option value="6">Lớp 6</option>
-                    <option value="7">Lớp 7</option>
-                    <option value="8">Lớp 8</option>
-                    <option value="9">Lớp 9</option>
-                </select>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-xl sm:rounded-2xl h-10">
+                  <Filter size={14} className="ml-2 text-slate-400" />
+                  <select 
+                    value={grade}
+                    onChange={(e) => {
+                      setGrade(e.target.value)
+                      setPagination({ pageIndex: 0, pageSize: 10 })
+                    }}
+                    className="flex-1 sm:flex-none bg-transparent border-none outline-none text-[10px] sm:text-xs font-bold text-slate-600 px-2 pr-4 appearance-none cursor-pointer"
+                  >
+                      <option value="all">Tất cả Khối</option>
+                      <option value="6">Lớp 6</option>
+                      <option value="7">Lớp 7</option>
+                      <option value="8">Lớp 8</option>
+                      <option value="9">Lớp 9</option>
+                  </select>
+                </div>
+                
+                <Button variant="outline" onClick={fetchData} className="h-10 w-10 p-0 rounded-xl border-slate-200 shrink-0">
+                  <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
+                </Button>
               </div>
 
               {selectedCount > 0 && (
                 <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-3 bg-slate-100 p-2 pl-4 rounded-2xl border border-slate-200"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2 bg-red-50 p-1 pl-3 rounded-xl border border-red-100 w-full sm:w-auto"
                 >
-                  <span className="text-xs font-bold text-slate-600">Đã chọn <span className="text-slate-900">{selectedCount}</span></span>
-                  <div className="h-4 w-px bg-slate-300 mx-1" />
+                  <span className="text-[10px] font-bold text-red-600">Đã chọn {selectedCount}</span>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={handleDeleteSelected}
-                    className="h-8 px-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl gap-2"
+                    className="h-8 px-3 text-[10px] font-bold text-red-600 hover:bg-white rounded-lg gap-2 ml-auto"
                   >
-                    <Trash2 size={14} />
-                    Xóa
+                    <Trash2 size={14} /> Xóa
                   </Button>
                 </motion.div>
               )}
             </div>
-            
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => setIsAiModalOpen(true)}
-                className="h-11 px-6 gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-sky-200 hover:scale-105 transition-all"
-              >
-                <Sparkles size={18} />
-                Nhờ AI Soạn thảo
-              </Button>
-              <div className="h-6 w-px bg-slate-200 mx-1" />
-              <Button 
-                onClick={handleAddManual}
-                variant="outline"
-                className="h-11 px-6 gap-2 rounded-2xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all"
-              >
-                <Plus size={18} />
-                Thêm thủ công
-              </Button>
-            </div>
           </div>
 
           {/* DataTable */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
             <DataTable
               columns={getColumns()}
               data={data}

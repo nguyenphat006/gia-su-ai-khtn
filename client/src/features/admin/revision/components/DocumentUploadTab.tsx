@@ -42,15 +42,10 @@ export default function DocumentUploadTab() {
     formData.append("topic", topic)
 
     try {
-      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/documents/upload", {
+      const data = await apiClient<any>("/api/documents/upload", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${document.cookie.replace(/(?:(?:^|.*;\s*)accessToken\s*\=\s*([^;]*).*$)|^.*$/, "$1")}`
-        },
         body: formData
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message)
       
       toast.success(data.message)
       setFile(null)

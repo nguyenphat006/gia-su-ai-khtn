@@ -33,12 +33,12 @@ export function AdminSidebar({ isOpen, setIsOpen, isMobile }: AdminSidebarProps)
           )}
         >
           {/* Logo Section */}
-          <div className="h-20 flex items-center px-6 shrink-0 border-b border-white/5 bg-white/5">
+          <div className="h-20 flex items-center justify-between px-6 shrink-0 border-b border-white/5 bg-white/5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-sky-500/20 shrink-0">
                 <Shield size={22} strokeWidth={2.5} />
               </div>
-              {isOpen && (
+              {(isOpen || isMobile) && (
                 <motion.div 
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -49,6 +49,16 @@ export function AdminSidebar({ isOpen, setIsOpen, isMobile }: AdminSidebarProps)
                 </motion.div>
               )}
             </div>
+
+            {/* Close Button (Mobile Only) */}
+            {isMobile && (
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
 
           {/* Navigation Groups */}

@@ -414,88 +414,89 @@ export default function UserIndex() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-200">
-            <Users size={24} />
+          <div className="p-2 sm:p-3 bg-indigo-600 rounded-xl sm:rounded-2xl text-white shadow-lg shadow-indigo-200">
+            <Users size={20} className="sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Quản lý Người dùng</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Học sinh, Giáo viên & Quản trị viên</p>
+            <h2 className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-tight">Quản lý Người dùng</h2>
+            <p className="hidden xs:block text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Học sinh, Giáo viên & Quản trị viên</p>
+          </div>
+          
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" onClick={fetchData} className="h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl sm:rounded-2xl border-slate-200">
+              <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
+            </Button>
+            <Button onClick={handleAdd} className="h-9 px-3 sm:h-10 sm:px-5 gap-2 rounded-xl sm:rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg transition-all text-xs">
+              <Plus size={16} /> <span className="hidden xs:inline">Thêm mới</span>
+            </Button>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Actions Bar */}
+        <div className="flex flex-wrap items-center gap-2 bg-slate-50/50 p-2 rounded-2xl border border-slate-100">
           {selectedCount > 0 && (
             <Button
               variant="ghost"
               onClick={handleDeleteSelected}
-              className="h-10 px-4 text-xs font-bold text-red-600 hover:bg-red-50 rounded-2xl gap-2 border border-red-200"
+              className="h-9 px-3 text-[10px] font-bold text-red-600 hover:bg-red-50 rounded-xl gap-2 border border-red-200"
             >
-              <Trash2 size={15} /> Xóa {selectedCount}
+              <Trash2 size={14} /> Xóa {selectedCount}
             </Button>
           )}
 
-          {/* Import Excel */}
-          <Button
-            variant="outline"
-            onClick={() => setIsImportOpen(true)}
-            className="h-10 px-4 rounded-2xl border-slate-200 text-xs font-bold gap-2 hover:border-green-400 hover:text-green-700 hover:bg-green-50 transition-colors"
-          >
-            <Upload size={15} /> Nhập Excel
-          </Button>
+          <div className="flex items-center gap-2 ml-auto">
+            {/* Import Excel */}
+            <Button
+              variant="outline"
+              onClick={() => setIsImportOpen(true)}
+              className="h-9 px-3 rounded-xl border-slate-200 text-[10px] font-bold gap-2 hover:border-green-400 hover:text-green-700 hover:bg-green-50 transition-colors"
+            >
+              <Upload size={14} /> <span className="hidden sm:inline">Nhập Excel</span>
+            </Button>
 
-          {/* Export Excel */}
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={isExporting}
-            className="h-10 px-4 rounded-2xl border-slate-200 text-xs font-bold gap-2 hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-          >
-            {isExporting ? <RefreshCcw size={15} className="animate-spin" /> : <Download size={15} />}
-            Xuất Excel
-          </Button>
+            {/* Export Excel */}
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="h-9 px-3 rounded-xl border-slate-200 text-[10px] font-bold gap-2 hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+            >
+              {isExporting ? <RefreshCcw size={14} className="animate-spin" /> : <Download size={14} />}
+              <span className="hidden sm:inline">Xuất Excel</span>
+            </Button>
 
-          {/* AI Generate */}
-          <Button
-            variant="outline"
-            onClick={() => setIsGenerateOpen(true)}
-            className="h-10 px-4 rounded-2xl border-slate-200 text-xs font-bold gap-2 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
-          >
-            <Sparkles size={15} /> Tạo bằng AI
-          </Button>
-
-          {/* Refresh */}
-          <Button variant="outline" onClick={fetchData} className="h-10 w-10 p-0 rounded-2xl border-slate-200">
-            <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
-          </Button>
-
-          {/* Add new */}
-          <Button onClick={handleAdd} className="h-10 px-5 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg transition-all">
-            <Plus size={16} /> Thêm mới
-          </Button>
+            {/* AI Generate */}
+            <Button
+              variant="outline"
+              onClick={() => setIsGenerateOpen(true)}
+              className="h-9 px-3 rounded-xl border-slate-200 text-[10px] font-bold gap-2 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+            >
+              <Sparkles size={14} /> <span className="hidden sm:inline">AI Generate</span>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative w-full sm:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Tìm theo tên, username, email..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })) }}
-            className="pl-10 h-11 bg-white border-slate-200 rounded-2xl focus:ring-sky-500/20 shadow-sm"
+            className="pl-10 h-10 bg-white border-slate-200 rounded-xl sm:rounded-2xl focus:ring-sky-500/20 shadow-sm text-sm"
           />
         </div>
 
-        <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2 w-full sm:w-auto bg-white border border-slate-200 px-3 py-2 rounded-xl sm:rounded-2xl shadow-sm">
           <Filter size={14} className="text-slate-400" />
           <select
             value={roleFilter}
             onChange={(e) => { setRoleFilter(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })) }}
-            className="bg-transparent border-none outline-none text-xs font-bold text-slate-600 pr-4 appearance-none cursor-pointer"
+            className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-600 appearance-none cursor-pointer min-w-[120px]"
           >
             <option value="all">Tất cả vai trò</option>
             <option value="STUDENT">Học sinh</option>
@@ -503,10 +504,12 @@ export default function UserIndex() {
             <option value="ADMIN">Quản trị viên</option>
           </select>
         </div>
+      </div>
 
+      <div className="flex items-center justify-between">
         {/* Stats badges */}
-        <div className="flex items-center gap-2 ml-auto text-xs text-slate-500">
-          <span className="bg-slate-100 rounded-xl px-3 py-1.5 font-semibold">{totalCount} người dùng</span>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span className="bg-slate-100 rounded-xl px-3 py-1.5 font-semibold tracking-tight">Tổng số: <b>{totalCount}</b> thành viên</span>
         </div>
       </div>
 

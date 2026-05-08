@@ -35,13 +35,12 @@ export default function AppLayout({
   const location = useLocation();
 
   return (
-    <div className="flex h-screen w-full bg-[#fcfdfe] font-sans overflow-hidden">
+    <div className="flex h-[100dvh] w-full bg-[#fcfdfe] font-sans overflow-hidden">
       {/* ── Sidebar: Fixed Left ────────────────────────────────── */}
       <Sidebar
         studentData={studentData}
         leaderboard={leaderboard}
         currentUserId={user.id}
-        isAdmin={isAdmin}
         onLogout={() => {
           void onLogout();
         }}
@@ -52,8 +51,8 @@ export default function AppLayout({
         {/* Decorative Background Accents - Hidden on small mobile to avoid noise */}
         <div className="hidden sm:block absolute top-0 right-0 w-[600px] h-[600px] bg-sky-100/20 rounded-full blur-[100px] -mr-64 -mt-64 pointer-events-none"></div>
         
-        {/* Header - Sát lề hơn trên mobile */}
-        <div className="px-4 sm:px-6 py-2 sm:py-4 relative z-40 shrink-0">
+        {/* Header - Sát lề hơn trên mobile, cố định shrink-0 */}
+        <div className="px-3 sm:px-6 py-2 sm:py-4 relative z-40 shrink-0">
            <Header
               user={user}
               studentData={studentData}
@@ -65,8 +64,9 @@ export default function AppLayout({
         </div>
 
         {/* Main Workspace Area: Full-screen on mobile */}
-        <main className="flex-1 px-0 sm:px-6 pb-0 sm:pb-6 relative z-10 min-h-0 flex flex-col">
-          <div className="flex-1 bg-white sm:rounded-[2.5rem] shadow-none sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-t sm:border border-slate-100 overflow-hidden relative flex flex-col">
+        {/* Thêm pb-[76px] trên mobile để không bị MobileNav che khuất (khớp với h-MobileNav) */}
+        <main className="flex-1 px-0 sm:px-6 pb-[76px] sm:pb-6 relative z-10 min-h-0 flex flex-col">
+          <div className="flex-1 bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-[0_-8px_30px_rgba(0,0,0,0.02)] sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-t sm:border border-slate-100 overflow-hidden relative flex flex-col">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={location.pathname}
@@ -76,7 +76,7 @@ export default function AppLayout({
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="absolute inset-0 flex flex-col overflow-hidden"
               >
-                <div className="flex-1 h-full min-h-0 flex flex-col">
+                <div className="flex-1 h-full min-h-0 flex flex-col overflow-y-auto custom-scrollbar pt-0">
                   <Outlet
                     context={{
                       user,
@@ -104,7 +104,7 @@ export default function AppLayout({
         )}
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Nav - Luôn ở trên cùng z-index */}
       <MobileNav isAdmin={isAdmin} />
     </div>
   );

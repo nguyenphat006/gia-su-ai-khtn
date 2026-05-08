@@ -20,12 +20,12 @@ interface SidebarProps {
   studentData: any;
   leaderboard: any[];
   currentUserId: string;
-  isAdmin: boolean;
   onLogout: () => void;
 }
 
 export default function Sidebar({
   studentData,
+  leaderboard,
   currentUserId,
   onLogout
 }: SidebarProps) {

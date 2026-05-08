@@ -79,7 +79,7 @@ export default function AdminLayout({ user, isAdmin, onLogout }: AdminLayoutProp
   }
 
   return (
-    <div className="flex h-screen bg-[#0B1120] w-full overflow-hidden font-sans text-slate-900">
+    <div className="flex h-[100dvh] bg-[#0B1120] w-full overflow-hidden font-sans text-slate-900">
       {/* Sidebar Overlay for Mobile */}
       {isMobile && isSidebarOpen && (
         <div

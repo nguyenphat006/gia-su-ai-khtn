@@ -20,25 +20,26 @@ export function PvPMatchConfig({
   const socket = getSocket();
 
   return (
-    <div className="max-w-4xl mx-auto h-[70vh] flex flex-col justify-center">
+    <div className="max-w-4xl mx-auto flex flex-col justify-start sm:justify-center py-4 sm:py-0 px-3 sm:px-0">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white p-10 md:p-16 rounded-[3.5rem] border border-sky-50 shadow-2xl relative overflow-hidden"
+        className="bg-white p-6 sm:p-10 md:p-16 rounded-[2.5rem] sm:rounded-[3.5rem] border border-sky-50 shadow-2xl relative overflow-hidden"
       >
-         <h3 className="text-3xl font-display font-black text-sky-900 mb-8 uppercase tracking-tight text-center">
-           {configRole === "proposer" ? "Tạo chủ đề thách đấu" : configRole === "waiting" ? "Chờ đối thủ" : "Chủ đề thách đấu"}
+         <h3 className="text-xl sm:text-3xl font-display font-black text-sky-900 mb-6 sm:mb-8 uppercase tracking-tight text-center">
+           {configRole === "proposer" ? "Tạo chủ đề đấu" : configRole === "waiting" ? "Chờ đối thủ" : "Chủ đề đề xuất"}
          </h3>
 
          {configRole === "proposer" ? (
-           <div className="space-y-6">
+           <div className="space-y-4 sm:space-y-6">
               <div>
-                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">📚 Chủ đề đề xuất</label>
+                <label className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">📚 Chủ đề đề xuất</label>
                 <input 
                   type="text" 
                   value={battleConfig.topic}
                   onChange={(e) => setBattleConfig(prev => ({ ...prev, topic: e.target.value }))}
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 outline-none focus:border-sky-500 font-bold text-sky-900 mt-2"
+                  placeholder="Nhập chủ đề thách đấu..."
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-5 outline-none focus:border-sky-500 font-bold text-sky-900 mt-1 sm:mt-2 text-sm sm:text-base"
                 />
               </div>
               <button 
@@ -47,23 +48,23 @@ export function PvPMatchConfig({
                   setConfigRole("waiting");
                 }}
                 disabled={!battleConfig.topic}
-                className="w-full bg-sky-600 text-white font-black py-5 rounded-2xl uppercase tracking-widest hover:bg-sky-700 disabled:opacity-50"
+                className="w-full bg-sky-600 text-white font-black py-4 sm:py-5 rounded-xl sm:rounded-2xl uppercase tracking-widest hover:bg-sky-700 disabled:opacity-50 text-xs sm:text-sm active:scale-95 transition-all"
               >
-                Đề xuất chủ đề
+                Gửi đề xuất
               </button>
            </div>
          ) : configRole === "waiting" ? (
-           <div className="space-y-8 text-center p-8">
-              <div className="w-16 h-16 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin mx-auto mb-6"></div>
-              <p className="text-xl font-black text-sky-900">Đang chờ đối thủ xử lý...</p>
+           <div className="space-y-6 sm:space-y-8 text-center p-4 sm:p-8">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin mx-auto mb-4 sm:mb-6"></div>
+              <p className="text-lg sm:text-xl font-black text-sky-900">Đang chờ đối thủ...</p>
            </div>
          ) : (
-           <div className="space-y-8 text-center">
-              <div className="p-8 bg-sky-50 rounded-3xl border border-sky-100">
-                 <p className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-2">Chủ đề thách đấu:</p>
-                 <p className="text-2xl font-black text-sky-900">{battleConfig.topic || "KHTN THCS"}</p>
+           <div className="space-y-6 sm:space-y-8 text-center">
+              <div className="p-6 sm:p-8 bg-sky-50 rounded-2xl sm:rounded-3xl border border-sky-100">
+                 <p className="text-[9px] sm:text-[10px] font-black text-sky-600 uppercase tracking-widest mb-1 sm:mb-2">Chủ đề thách đấu:</p>
+                 <p className="text-xl sm:text-2xl font-black text-sky-900">{battleConfig.topic || "KHTN THCS"}</p>
               </div>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button 
                   onClick={() => {
                     setChallengeRejects(prev => {
@@ -80,15 +81,15 @@ export function PvPMatchConfig({
                       return next;
                     });
                   }}
-                  className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-slate-200 transition-all"
+                  className="flex-1 py-4 sm:py-5 bg-slate-100 text-slate-500 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-[11px] hover:bg-slate-200 transition-all active:scale-95"
                 >
                   Đề xuất chủ đề khác
                 </button>
                 <button 
                   onClick={() => socket?.emit("accept-config", { opponentId: battleData.opponent.id, config: battleConfig })}
-                  className="flex-1 py-5 bg-sky-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-sky-700 shadow-xl shadow-sky-200 transition-all"
+                  className="flex-1 py-4 sm:py-5 bg-sky-600 text-white rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-[11px] hover:bg-sky-700 shadow-xl shadow-sky-200 transition-all active:scale-95"
                 >
-                  Xác nhận
+                  Xác nhận đấu
                 </button>
               </div>
            </div>

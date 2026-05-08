@@ -65,13 +65,19 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
   const handleSend = async () => {
     if (!sessionId || (!input.trim() && !selectedImage && !selectedFile) || isLoading) return;
 
-    const userText = input;
+    // Chuẩn bị nội dung gửi: Nếu có file đính kèm (đã trích xuất text), nối vào nội dung
+    let finalContent = input;
+    if (selectedFile?.content) {
+      finalContent = `[Nội dung tài liệu đính kèm: ${selectedFile.name}]\n${selectedFile.content}\n\n---\nCâu hỏi của em: ${input || "Dựa vào tài liệu trên, hãy tóm tắt nội dung chính giúp em."}`;
+    }
+
+    const userTextForUI = input || (selectedFile ? `📁 Đã gửi tài liệu: ${selectedFile.name}` : "🖼️ Đã gửi hình ảnh");
     
     // 1. Hiển thị ngay tin nhắn của người dùng (Optimistic UI)
     const userMsg: Message = {
       studentId: userId,
       role: "user",
-      content: userText || "🖼️ Đã gửi hình ảnh",
+      content: userTextForUI,
       timestamp: new Date(),
       attachments: selectedImage ? [{
         type: "image",
@@ -90,10 +96,11 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
       const mimeType = selectedImage?.mimeType;
 
       // Xoá ảnh/tệp đã chọn sau khi chuẩn bị xong payload
+      const fileName = selectedFile?.name;
       setSelectedImage(null);
       setSelectedFile(null);
 
-      const result = await chatService.sendMessage(sessionId, userText, imageBase64, mimeType);
+      const result = await chatService.sendMessage(sessionId, finalContent, imageBase64, mimeType);
       
       // 3. Hiển thị phản hồi từ AI
       const aiMsg: Message = {

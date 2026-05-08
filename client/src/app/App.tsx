@@ -13,7 +13,6 @@ import { Toaster } from "sonner";
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
 const QuizPage = lazy(() => import("@/pages/QuizPage"));
 const ArenaPage = lazy(() => import("@/pages/ArenaPage"));
-const TeacherPage = lazy(() => import("@/pages/TeacherPage"));
 
 const AdminLayout = lazy(() => import("@/app/AdminLayout"));
 const SystemConfigPage = lazy(() => import("@/pages/admin/SystemConfigPage"));
@@ -133,20 +132,6 @@ export default function App() {
                       />
                     }
                   />
-                  {isAdmin && (
-                    <Route
-                      path="/teacher"
-                      element={
-                        <TeacherPage
-                          schoolLogo={schoolLogo}
-                          onLogoUpload={async (e) => {
-                            /* handled in AppLayout */
-                          }}
-                          isUploadingLogo={isUploading}
-                        />
-                      }
-                    />
-                  )}
                   <Route path="*" element={<Navigate to="/chat" replace />} />
                 </Route>
 

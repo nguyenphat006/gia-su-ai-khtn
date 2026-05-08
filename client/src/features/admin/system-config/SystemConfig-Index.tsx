@@ -97,46 +97,47 @@ export default function SystemConfigIndex() {
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="w-full sm:flex-1">
           {selectedCount > 0 && (
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3 bg-slate-100 p-2 pl-4 rounded-2xl border border-slate-200"
+              className="flex items-center justify-between sm:justify-start gap-3 bg-slate-100 p-2 pl-4 rounded-xl sm:rounded-2xl border border-slate-200"
             >
-              <span className="text-xs font-bold text-slate-600">Đã chọn <span className="text-slate-900">{selectedCount}</span> mục</span>
-              <div className="h-4 w-px bg-slate-300 mx-1" />
+              <span className="text-[10px] sm:text-xs font-bold text-slate-600">Đã chọn <span className="text-slate-900">{selectedCount}</span> mục</span>
+              <div className="hidden sm:block h-4 w-px bg-slate-300 mx-1" />
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={handleDeleteSelected}
-                className="h-8 px-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl gap-2"
+                className="h-8 px-3 text-[10px] font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg gap-2 border border-red-100 sm:border-none"
               >
                 <Trash2 size={14} />
-                Xóa các mục đã chọn
+                <span className="hidden xs:inline">Xóa các mục đã chọn</span>
+                <span className="xs:hidden">Xóa</span>
               </Button>
             </motion.div>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ml-auto">
           <Button 
             variant="outline" 
             onClick={fetchData}
-            className="h-11 w-11 p-0 rounded-2xl border-slate-200"
+            className="h-10 w-10 sm:h-11 sm:w-11 p-0 rounded-xl sm:rounded-2xl border border-slate-200"
           >
-            <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
+            <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
           </Button>
           <Button 
             onClick={() => {
               setSelectedConfig(undefined)
               setIsModalOpen(true)
             }}
-            className="h-11 px-6 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all"
+            className="h-10 px-4 sm:h-11 sm:px-6 gap-2 rounded-xl sm:rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all text-xs"
           >
             <Plus size={18} />
-            Thêm cấu hình
+            Thêm <span className="hidden xs:inline">cấu hình</span>
           </Button>
         </div>
       </div>
@@ -173,7 +174,7 @@ export default function SystemConfigIndex() {
         onConfirm={onConfirmDelete}
         title={confirmDelete.title}
         description={confirmDelete.description}
-        confirmText={confirmDelete.keys && confirmDelete.keys.length > 1 ? "Xóa tất cả" : "Xóa cấu hình"}
+        confirmText={confirmDelete.keys && confirmDelete.keys.length > 0 ? (confirmDelete.keys.length > 1 ? "Xóa tất cả" : "Xóa cấu hình") : "Xác nhận"}
       />
     </div>
   )
