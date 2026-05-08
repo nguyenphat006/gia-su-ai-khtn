@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { ValidationError, NotFoundError } from "../utils/errors.js";
 import { retrieveRelevantContext } from "./knowledge.service.js";
 import { addXp } from "./gamification.service.js";
+import { DEFAULT_GEMINI_MODEL } from "./ai.service.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -146,7 +147,7 @@ export async function generateArenaQuiz(config: ArenaQuizConfig) {
     while (retries > 0) {
       try {
         const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
+          model: DEFAULT_GEMINI_MODEL,
           contents: prompt,
           config: { responseMimeType: "application/json" },
         });
@@ -349,7 +350,7 @@ export async function analyzeArenaPerformance(params: {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: DEFAULT_GEMINI_MODEL,
       contents: prompt,
       config: { responseMimeType: "application/json" },
     });

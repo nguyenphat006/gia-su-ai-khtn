@@ -127,9 +127,6 @@ export async function getFlashcardsForStudent(params: {
   return deck;
 }
 
-/**
- * 4. MINDMAP LOGIC
- */
 export async function getMindmapForStudent(params: {
   grade: number;
   topic: string;
@@ -154,14 +151,25 @@ export async function getMindmapForStudent(params: {
         title: `Sơ đồ tư duy: ${topic}`,
         topic,
         grade,
-        nodes: aiResult.mindmap, // Assuming gemini service returns { mindmap: [...] }
+        nodes: aiResult.mindmap,
         isAiGenerated: true
       };
     }
-    throw new NotFoundError("Không thể tạo mindmap cho chủ đề này.");
+    throw new NotFoundError("Không thể tạo sơ đồ tư duy cho chủ đề này.");
   }
 
-  return mindmap;
+  // Chuẩn hóa dữ liệu từ DB (vốn lưu nodes trong trường markdown dưới dạng string JSON)
+  let nodes = [];
+  try {
+    nodes = JSON.parse(mindmap.markdown);
+  } catch (e) {
+    console.error("Lỗi parse markdown mindmap từ DB:", e);
+  }
+
+  return {
+    ...mindmap,
+    nodes
+  };
 }
 
 /**

@@ -4,6 +4,9 @@ import { getSystemConfig } from "./system.service.js";
 // Đảm bảo có API KEY từ biến môi trường
 const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
 
+// Cấu hình model tập trung
+export const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
+
 export interface GeminiMessage {
   role: "user" | "model";
   parts: any[];
@@ -27,8 +30,8 @@ export async function askGemini(
     context || "Chưa có tài liệu được nạp phù hợp."
   );
 
-  // model: gemini-1.5-flash là bản free ổn định nhất hỗ trợ đa phương thức
-  const model = image ? "gemini-3.1-flash-lite-preview" : "gemini-3.1-flash-lite-preview";
+  // model: Lấy từ cấu hình tập trung
+  const model = DEFAULT_GEMINI_MODEL;
 
   const parts: any[] = [{ text: message }];
   if (image) {

@@ -88,6 +88,7 @@ export function useArenaSocket(studentName: string, grade: string = "", studentC
     socket.on("challenge-config-received", (data) => {
       setBattleConfig(data.config);
       setConfigRole("reviewer");
+      setBattleData({ opponent: { id: data.challengerId } });
       setStatus("challenge-config");
     });
 

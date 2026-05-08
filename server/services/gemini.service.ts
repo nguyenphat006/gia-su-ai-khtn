@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { adminDb } from "../config/firebase-admin.js";
+import { DEFAULT_GEMINI_MODEL } from "./ai.service.js";
 
 // Khởi tạo Gemini AI
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
@@ -45,7 +46,7 @@ QUY TẮC TRÌNH BÀY GIAO DIỆN (UI/UX GUIDELINES) BẮT BUỘC:
    - Dàn đều ý tưởng bằng cách phân bổ nội dung theo trình tự: Khái niệm -> Giải thích -> Ví dụ minh họa.
 
 3. TRÌNH BÀY TOÁN HỌC & KHOA HỌC:
-   - Sử dụng ký hiệu Latex (ví dụ: $F = m \\cdot a$) cho các công thức để hiển thị chuẩn xác và chuyên nghiệp. KHÔNG dùng ngoặc đơn hay ngoặc vuông kiểu \\( \\) hay \\[ \\]. BẮT BUỘC sử dụng ký hiệu LaTeX tiêu chuẩn với dấu đô la cho MỌI công thức và ký hiệu khoa học (tức là dùng $...$ cho công thức nằm trong dòng, và $$...$$ cho công thức đứng riêng). Ví dụ: $P = d \\cdot v$ hoặc $$E = mc^2$$.
+   - Sử dụng ký hiệu Latex (ví dụ: $F = m \\cdot a$) cho các công thức để hiển thị chuẩn xác và chuyên nghiệp. KHÔNG dùng ngoặc đơn hay ngoặc vuông kiểu \\( \\) hay \\[ \\]. BẮT BUỰC sử dụng ký hiệu LaTeX tiêu chuẩn với dấu đô la cho MỌI công thức và ký hiệu khoa học (tức là dùng $...$ cho công thức nằm trong dòng, và $$...$$ cho công thức đứng riêng). Ví dụ: $P = d \\cdot v$ hoặc $$E = mc^2$$.
    - Các đơn vị đo lường phải viết rõ ràng, cách con số 1 khoảng trắng (ví dụ: 10 m/s, 100 °C).
 
 4. PHONG CÁCH PHẢN HỒI:
@@ -131,7 +132,7 @@ export async function askGiaSu(
     context || "Chưa có tài liệu được nạp phù hợp."
   );
 
-  const model = image ? "gemini-1.5-flash-8b" : "gemini-3-flash-preview";
+  const model = image ? "gemini-1.5-flash-8b" : DEFAULT_GEMINI_MODEL;
 
   const parts: any[] = [
     {
@@ -221,7 +222,7 @@ export async function generateQuiz(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: DEFAULT_GEMINI_MODEL,
       contents: prompt,
       config: { responseMimeType: "application/json" },
     });
@@ -267,7 +268,7 @@ export async function generateFlashcards(
     }`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: DEFAULT_GEMINI_MODEL,
     contents: prompt,
     config: { responseMimeType: "application/json" },
   });
@@ -302,7 +303,7 @@ export async function generateMindmap(
     }`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: DEFAULT_GEMINI_MODEL,
     contents: prompt,
     config: { responseMimeType: "application/json" },
   });
@@ -340,7 +341,7 @@ export async function analyzePerformance(
     }`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: DEFAULT_GEMINI_MODEL,
     contents: prompt,
     config: { responseMimeType: "application/json" },
   });
@@ -371,7 +372,7 @@ export async function evaluateEssay(
     "score": number
   }`;
 
-  const model = image ? "gemini-1.5-flash-8b" : "gemini-3-flash-preview";
+  const model = image ? "gemini-1.5-flash-8b" : DEFAULT_GEMINI_MODEL;
   const parts: any[] = [{ text: prompt }];
 
   if (image) {
@@ -413,7 +414,7 @@ export async function generateMockUsers(count: number, classId?: string, grade?:
   ]`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: DEFAULT_GEMINI_MODEL,
     contents: prompt,
     config: { responseMimeType: "application/json" },
   });
@@ -424,4 +425,3 @@ export async function generateMockUsers(count: number, classId?: string, grade?:
   // Luôn gán password cố định là 123456
   return users.map((u: any) => ({ ...u, password: "123456" }));
 }
-

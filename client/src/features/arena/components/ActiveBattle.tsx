@@ -180,13 +180,29 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
              </div>
           </div>
 
-          <div className="flex items-center justify-end gap-6 w-1/3 text-right">
-             <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Đối thủ AI</p>
-                <p className="text-3xl font-display font-black text-slate-900">{oppScore}</p>
+          <div className="flex items-center justify-end gap-3 sm:gap-6 w-1/3 text-right">
+             <div className="min-w-0">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">
+                  {isAiMode ? "Đối thủ AI" : "Đối thủ"}
+                </p>
+                <div className="flex items-center justify-end gap-2">
+                   <p className="text-xl sm:text-3xl font-display font-black text-slate-900 truncate max-w-[80px] sm:max-w-none">
+                     {isAiMode ? oppScore : (opponent.displayName || opponent.username)}
+                   </p>
+                   {!isAiMode && <span className="text-[10px] font-black text-sky-600 hidden sm:inline">{oppScore}</span>}
+                </div>
+                {isAiMode === false && (
+                   <div className="flex items-baseline justify-end gap-1 leading-none mt-1">
+                      <p className="text-xl sm:text-2xl font-display font-black text-sky-600">{oppScore}</p>
+                      <span className="text-[8px] font-bold text-sky-400 uppercase">PTS</span>
+                   </div>
+                )}
              </div>
-             <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 font-black border-2 border-orange-100 shadow-sm">
-                <Bot size={32} />
+             <div className={cn(
+               "w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center font-black border-2 shadow-sm shrink-0",
+               isAiMode ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-indigo-50 text-indigo-600 border-indigo-100"
+             )}>
+                {isAiMode ? <Bot size={28} className="sm:w-8 sm:h-8" /> : <UserIcon size={28} className="sm:w-8 sm:h-8" />}
              </div>
           </div>
        </div>

@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, Shield, ChevronDown } from "lucide-react";
+import { ChevronLeft, Shield, ChevronDown, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import { ADMIN_NAV_CONFIG, NavItem } from "./nav-config";
