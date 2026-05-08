@@ -79,8 +79,28 @@ export function useAssessment(userId: string) {
     setIsLoading(true);
     try {
       const response = await assessmentService.getMindmap(Number(grade), topic);
-      setMindmapNodes(response.data.nodes || []);
-      setActiveId(response.data.id || null);
+      
+      // Xử lý dữ liệu mindmap: Có thể ở dạng response.data.nodes (mảng) 
+      // hoặc response.data.markdown (chuỗi JSON mảng nodes)
+      let nodes: MindmapNode[] = [];
+      const data = response.data as any;
+      
+      if (data.nodes && Array.isArray(data.nodes)) {
+        nodes = data.nodes;
+      } else if (data.markdown) {
+        try {
+          // Kiểm tra xem markdown có phải là JSON string không
+          const parsed = JSON.parse(data.markdown);
+          if (Array.isArray(parsed)) {
+            nodes = parsed;
+          }
+        } catch (e) {
+          console.error("Lỗi parse mindmap markdown:", e);
+        }
+      }
+
+      setMindmapNodes(nodes);
+      setActiveId(data.id || null);
       setMode("mindmap");
     } catch (error: any) {
       console.error(error);
