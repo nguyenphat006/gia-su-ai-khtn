@@ -27,8 +27,8 @@ export async function askGemini(
     context || "Chưa có tài liệu được nạp phù hợp."
   );
 
-  // model: Flash-1.5 cho xử lý nhanh và hỗ trợ đa phương thức
-  const model = image ? "gemini-1.5-flash" : "gemini-1.5-flash";
+  // model: gemini-1.5-flash là bản free ổn định nhất hỗ trợ đa phương thức
+  const model = image ? "gemini-3.1-flash-lite-preview" : "gemini-3.1-flash-lite-preview";
 
   const parts: any[] = [{ text: message }];
   if (image) {
