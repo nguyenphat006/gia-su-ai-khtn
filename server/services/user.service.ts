@@ -372,9 +372,147 @@ export async function updateMyProfile(userId: string, data: {
 }
 
 /**
+ * Chuyển đổi tên Tiếng Việt có dấu thành username không dấu, viết liền
+ */
+export function generateUsername(displayName: string) {
+  return displayName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
+/**
+ * Sinh dữ liệu hoạt động giả lập cho User (XP, Streak, Logs, Chat)
+ */
+export async function seedUserActivity(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { studentProfile: true, stats: true }
+  });
+
+  if (!user || user.role !== "STUDENT") return;
+
+  const now = new Date();
+  const randomXP = Math.floor(Math.random() * 3000) + 1000; // 1000 - 4000 XP
+  const randomStreak = Math.floor(Math.random() * 10) + 1; // 1 - 10 days
+  const randomWins = Math.floor(Math.random() * 30) + 10;
+  const randomTotal = randomWins + Math.floor(Math.random() * 15);
+
+  // 1. Cập nhật Stats
+  await prisma.userStats.upsert({
+    where: { userId },
+    create: {
+      userId,
+      totalXp: randomXP,
+      weeklyXp: Math.floor(randomXP * 0.3),
+      currentStreak: randomStreak,
+      longestStreak: randomStreak,
+      lastStudyDate: now,
+    },
+    update: {
+      totalXp: randomXP,
+      weeklyXp: Math.floor(randomXP * 0.3),
+      currentStreak: randomStreak,
+      longestStreak: randomStreak,
+      lastStudyDate: now,
+    }
+  });
+
+  // 2. Tạo XpLog giả (Trải dài trong 14 ngày gần nhất để hiện trên Dashboard)
+  const logsCount = 10 + Math.floor(Math.random() * 15);
+  const logsData = [];
+  for (let i = 0; i < logsCount; i++) {
+    const randomDaysAgo = Math.floor(Math.random() * 14);
+    const logDate = new Date();
+    logDate.setDate(now.getDate() - randomDaysAgo);
+    logDate.setHours(Math.floor(Math.random() * 14) + 7); // Giờ học từ 7h - 21h
+    
+    logsData.push({
+      userId,
+      amount: Math.floor(randomXP / logsCount),
+      action: "COMPLETE_QUIZ",
+      createdAt: logDate
+    });
+  }
+  await prisma.xpLog.createMany({ data: logsData });
+
+  // 3. Tạo Arena Results giả
+  const arenaCount = 5 + Math.floor(Math.random() * 8);
+  const arenaData = [];
+  const topics = ["Động vật", "Thực vật", "Cơ năng", "Nhiệt học", "Hóa học hữu cơ", "Tế bào", "Quang hợp", "Hệ mặt trời"];
+  for (let i = 0; i < arenaCount; i++) {
+    const randomDaysAgo = Math.floor(Math.random() * 10);
+    const matchDate = new Date();
+    matchDate.setDate(now.getDate() - randomDaysAgo);
+    matchDate.setHours(Math.floor(Math.random() * 12) + 8);
+    
+    const mode = Math.random() > 0.5 ? "PVP" : "AI";
+    arenaData.push({
+      userId,
+      topic: topics[Math.floor(Math.random() * topics.length)],
+      mode,
+      opponent: mode === "AI" ? "Gia sư AI" : "Bạn học ẩn danh",
+      score: Math.floor(Math.random() * 150) + 100,
+      winner: Math.random() > 0.3,
+      xpEarned: Math.floor(Math.random() * 50) + 20,
+      createdAt: matchDate
+    });
+  }
+  await prisma.arenaResult.createMany({ data: arenaData });
+
+  // 4. Tạo Chat Sessions & Messages giả (Nội dung tự nhiên hơn)
+  const chatSessionsCount = 3 + Math.floor(Math.random() * 4);
+  const chatContents = [
+    { q: "Cô ơi, lực đẩy Ác-si-mét phụ thuộc vào những yếu tố nào ạ?", a: "Chào em! Lực đẩy Ác-si-mét phụ thuộc vào hai yếu tố chính: trọng lượng riêng của chất lỏng ($d$) và thể tích của phần chất lỏng bị vật chiếm chỗ ($V$). Công thức là $F_A = d.V$ em nhé." },
+    { q: "Em chưa hiểu rõ về cấu tạo của tế bào nhân thực, cô giải thích lại giúp em với.", a: "Tế bào nhân thực rất thú vị! Nó gồm 3 phần chính: màng sinh chất, tế bào chất và quan trọng nhất là nhân có màng bao bọc chứa vật chất di truyền." },
+    { q: "Tại sao lá cây lại có màu xanh lục hả cô?", a: "Đó là nhờ chất diệp lục (chlorophyll) nằm trong lục lạp của tế bào lá đấy. Diệp lục giúp cây hấp thụ năng lượng ánh sáng mặt trời để thực hiện quá trình quang hợp." },
+    { q: "Cho em xin công thức tính công suất điện lớp 9 với ạ.", a: "Công suất điện ($P$) của một đoạn mạch bằng tích của hiệu điện thế ($U$) giữa hai đầu đoạn mạch và cường độ dòng điện ($I$) chạy qua đoạn mạch đó: $P = U.I$. Đơn vị là Oát ($W$)." },
+    { q: "Hiện tượng khúc xạ ánh sáng là gì vậy cô?", a: "Khúc xạ ánh sáng là hiện tượng tia sáng truyền từ môi trường trong suốt này sang môi trường trong suốt khác bị gãy khúc tại mặt phân cách giữa hai môi trường." },
+    { q: "Cô ơi, axit sunfuric đặc có tính chất gì đặc biệt không ạ?", a: "Axit sunfuric đặc ($H_2SO_4$ đặc) có tính háo nước rất mạnh và tính oxy hóa rất mạnh. Em cần hết sức cẩn thận khi làm thí nghiệm với chất này nhé!" },
+    { q: "Làm sao để phân biệt được động vật không xương sống và động vật có xương sống?", a: "Dấu hiệu cơ bản nhất chính là bộ xương trong, mà đặc điểm quan trọng là cột sống chứa tủy sống. Động vật có xương sống luôn có cột sống, còn nhóm kia thì không em nhé." }
+  ];
+
+  for (let i = 0; i < chatSessionsCount; i++) {
+    const sessionDate = new Date(now.getTime() - Math.random() * 86400000 * 10);
+    const session = await prisma.chatSession.create({
+      data: {
+        userId,
+        title: "Trao đổi bài học KHTN",
+        createdAt: sessionDate
+      }
+    });
+
+    // Chọn ngẫu nhiên 1-2 cặp câu hỏi cho mỗi session
+    const numMessages = Math.random() > 0.7 ? 2 : 1;
+    const usedIndices = new Set();
+    
+    for(let j = 0; j < numMessages; j++) {
+      let idx;
+      do { idx = Math.floor(Math.random() * chatContents.length); } while(usedIndices.has(idx));
+      usedIndices.add(idx);
+      
+      const qa = chatContents[idx];
+      const msgTime = new Date(sessionDate.getTime() + j * 60000);
+      
+      await prisma.chatMessage.createMany({
+        data: [
+          { sessionId: session.id, role: "USER", content: qa.q, createdAt: msgTime },
+          { sessionId: session.id, role: "MODEL", content: qa.a, createdAt: new Date(msgTime.getTime() + 15000) }
+        ]
+      });
+    }
+  }
+}
+
+/**
  * Import nhiều users cùng lúc (Batch Import)
  */
-export async function batchImportUsers(usersData: any[]) {
+export async function batchImportUsers(usersData: any[], seedActivity = false) {
   const results = {
     success: 0,
     errors: [] as { index: number; username: string; reason: string }[],
@@ -383,7 +521,7 @@ export async function batchImportUsers(usersData: any[]) {
   for (let i = 0; i < usersData.length; i++) {
     const data = usersData[i];
     try {
-      await createUser({
+      const user = await createUser({
         role: data.role || "STUDENT",
         username: data.username,
         displayName: data.displayName,
@@ -393,6 +531,11 @@ export async function batchImportUsers(usersData: any[]) {
         studentCode: data.studentCode,
         grade: data.grade ? Number(data.grade) : undefined,
       });
+      
+      if (seedActivity && user.role === "STUDENT") {
+        await seedUserActivity(user.id);
+      }
+      
       results.success++;
     } catch (error: any) {
       results.errors.push({

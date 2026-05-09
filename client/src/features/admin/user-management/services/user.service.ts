@@ -44,9 +44,11 @@ export const adminUserService = {
   /**
    * Upload file Excel để import danh sách người dùng
    */
-  importFromExcel: async (file: File) => {
+  importFromExcel: async (file: File, options?: { grade?: string; seedActivity?: boolean }) => {
     const formData = new FormData();
     formData.append("file", file);
+    if (options?.grade) formData.append("grade", options.grade);
+    if (options?.seedActivity) formData.append("seedActivity", "true");
 
     return apiClient<any>("/api/users/import-excel", {
       method: "POST",
@@ -85,10 +87,10 @@ export const adminUserService = {
   /**
    * Import danh sách user từ JSON array (dùng sau khi AI preview)
    */
-  importFromJson: async (users: any[]) => {
+  importFromJson: async (users: any[], seedActivity = true) => {
     return apiClient<any>("/api/users/batch-import", {
       method: "POST",
-      body: JSON.stringify({ users }),
+      body: JSON.stringify({ users, seedActivity }),
     });
   },
 

@@ -171,11 +171,13 @@ export default function AnalyticsIndex() {
     }
   }, [selectedLog]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     setIsExporting(true);
     const toastId = toast.loading("Đang tạo file Excel...");
 
     try {
+      // Dynamic import XLSX for performance
+      const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
 
       // 1. Sheet Tổng quan

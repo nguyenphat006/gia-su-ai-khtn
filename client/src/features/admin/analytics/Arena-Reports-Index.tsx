@@ -22,8 +22,6 @@ import { Input } from "@/components/ui/input"
 import { adminAnalyticsService } from "@/features/admin/analytics/services/analytics.service"
 import { ArenaLog, ArenaLogDetail, ArenaPlayerInfo } from "@/features/admin/analytics/types"
 import { toast } from "sonner"
-import html2canvas from "html2canvas"
-import { jsPDF } from "jspdf"
 import { DataTablePagination } from "@/components/DataTable/DataTablePagination"
 
 // Helper to render player mini-card in list
@@ -126,6 +124,10 @@ export default function ArenaReportsIndex() {
     const toastId = toast.loading("Đang chuẩn bị báo cáo...");
     
     try {
+      // Dynamic imports for PDF generation
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
       const element = reportRef.current;
       const canvas = await html2canvas(element, {
         scale: 2,

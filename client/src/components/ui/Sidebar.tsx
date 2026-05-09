@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Trophy, 
@@ -23,12 +23,12 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-export default function Sidebar({
+const Sidebar = memo(({
   studentData,
   leaderboard,
   currentUserId,
   onLogout
-}: SidebarProps) {
+}: SidebarProps) => {
   const [sidebarTab, setSidebarTab] = useState<"ranking" | "stats">("stats");
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<any[]>([]);
   const [isLoadingRanking, setIsLoadingRanking] = useState(false);
@@ -216,9 +216,9 @@ export default function Sidebar({
                                 displayName[0]?.toUpperCase() || "?"
                               )}
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className={cn(
-                                "text-[9px] font-bold truncate max-w-[60px]",
+                                "text-[9px] font-bold leading-tight break-words",
                                 isActive ? "text-sky-900" : "text-slate-600"
                               )}>
                                 {displayName}
@@ -256,6 +256,8 @@ export default function Sidebar({
       </button>
     </aside>
   );
-}
+});
+
+export default Sidebar;
 
 

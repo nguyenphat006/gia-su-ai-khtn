@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, memo } from "react";
 import { Bot, Loader2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "../types";
@@ -8,6 +8,67 @@ interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
 }
+
+const MessageItem = memo(({ msg }: { msg: Message }) => (
+  <div className={cn(
+    "flex gap-3 sm:gap-4 group animate-in fade-in slide-in-from-bottom-2 duration-300",
+    msg.role === "user" ? "flex-row-reverse" : "flex-row"
+  )}>
+    {/* Avatar Area */}
+    <div className={cn(
+      "w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 border-2 shadow-sm transition-transform",
+      msg.role === "user" 
+        ? "bg-white border-slate-200 text-slate-900" 
+        : "bg-sky-600 border-sky-500 text-white"
+    )}>
+      {msg.role === "user" ? <User size={16} /> : <Bot size={20} />}
+    </div>
+    
+    {/* Content Area */}
+    <div className={cn(
+      "flex flex-col gap-1.5 max-w-[85%]",
+      msg.role === "user" ? "items-end" : "items-start"
+    )}>
+      <div className={cn(
+        "rounded-[1.5rem] p-4 sm:p-5 shadow-sm transition-all border",
+        msg.role === "user" 
+          ? "bg-white border-slate-100 text-slate-800 rounded-tr-none shadow-slate-200/50" 
+          : "bg-sky-50/70 border-sky-100 text-sky-950 rounded-tl-none"
+      )}>
+        <FormattedContent 
+          content={msg.content} 
+          className={cn(
+            "text-[13px] sm:text-[15px] leading-relaxed font-bold",
+            msg.role === "user" ? "prose-slate" : "prose-sky message-content"
+          )} 
+        />
+
+        {/* Hiển thị ảnh đính kèm */}
+        {msg.attachments && msg.attachments.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {msg.attachments.map((att, aIdx) => (
+              att.type === "image" && (
+                <div key={aIdx} className="rounded-lg overflow-hidden border border-slate-200 max-w-xs sm:max-w-sm">
+                  <img 
+                    src={att.data ? `data:${att.mimeType};base64,${att.data}` : att.url} 
+                    alt="Attachment" 
+                    className="w-full h-auto object-contain max-h-64"
+                  />
+                </div>
+              )
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest px-2">
+        {msg.timestamp instanceof Date 
+          ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+          : (msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Vừa xong")}
+      </span>
+    </div>
+  </div>
+));
 
 export default function MessageList({ messages, isLoading }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,64 +88,7 @@ export default function MessageList({ messages, isLoading }: MessageListProps) {
       )}
 
       {messages.map((msg, idx) => (
-        <div key={idx} className={cn(
-          "flex gap-3 sm:gap-4 group animate-in fade-in slide-in-from-bottom-2 duration-300",
-          msg.role === "user" ? "flex-row-reverse" : "flex-row"
-        )}>
-          {/* Avatar Area */}
-          <div className={cn(
-            "w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 border-2 shadow-sm transition-transform",
-            msg.role === "user" 
-              ? "bg-white border-slate-200 text-slate-900" 
-              : "bg-sky-600 border-sky-500 text-white"
-          )}>
-            {msg.role === "user" ? <User size={16} /> : <Bot size={20} />}
-          </div>
-          
-          {/* Content Area */}
-          <div className={cn(
-            "flex flex-col gap-1.5 max-w-[85%]",
-            msg.role === "user" ? "items-end" : "items-start"
-          )}>
-            <div className={cn(
-              "rounded-[1.5rem] p-4 sm:p-5 shadow-sm transition-all border",
-              msg.role === "user" 
-                ? "bg-white border-slate-100 text-slate-800 rounded-tr-none shadow-slate-200/50" 
-                : "bg-sky-50/70 border-sky-100 text-sky-950 rounded-tl-none"
-            )}>
-              <FormattedContent 
-                content={msg.content} 
-                className={cn(
-                  "text-[13px] sm:text-[15px] leading-relaxed font-bold",
-                  msg.role === "user" ? "prose-slate" : "prose-sky message-content"
-                )} 
-              />
-
-              {/* Hiển thị ảnh đính kèm */}
-              {msg.attachments && msg.attachments.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {msg.attachments.map((att, aIdx) => (
-                    att.type === "image" && (
-                      <div key={aIdx} className="rounded-lg overflow-hidden border border-slate-200 max-w-xs sm:max-w-sm">
-                        <img 
-                          src={att.data ? `data:${att.mimeType};base64,${att.data}` : att.url} 
-                          alt="Attachment" 
-                          className="w-full h-auto object-contain max-h-64"
-                        />
-                      </div>
-                    )
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest px-2">
-              {msg.timestamp instanceof Date 
-                ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-                : (msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Vừa xong")}
-            </span>
-          </div>
-        </div>
+        <MessageItem key={idx} msg={msg} />
       ))}
 
       {isLoading && (

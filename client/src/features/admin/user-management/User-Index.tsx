@@ -22,6 +22,7 @@ function GenerateMockModal({ isOpen, onClose, onSuccess }: GenerateMockModalProp
   const [count, setCount] = React.useState(10)
   const [grade, setGrade] = React.useState("")
   const [saveToDb, setSaveToDb] = React.useState(true)
+  const [seedActivity, setSeedActivity] = React.useState(true)
   const [loading, setLoading] = React.useState(false)
   const [preview, setPreview] = React.useState<any[]>([])
   const [step, setStep] = React.useState<"config" | "preview">("config")
@@ -47,8 +48,8 @@ function GenerateMockModal({ isOpen, onClose, onSuccess }: GenerateMockModalProp
     if (preview.length === 0) return
     setLoading(true)
     try {
-      // Gửi đúng data preview đã có vào DB, không gọi AI lần 2
-      const res = await adminUserService.importFromJson(preview)
+      // Gửi đúng data preview đã có vào DB, kèm flag seedActivity
+      const res = await adminUserService.importFromJson(preview, seedActivity)
       const saved = res.data
       toast.success(`Đã tạo thành công ${saved.success} học sinh! ${saved.errors.length > 0 ? `(${saved.errors.length} lỗi)` : ""}`)
       onSuccess()
@@ -123,6 +124,16 @@ function GenerateMockModal({ isOpen, onClose, onSuccess }: GenerateMockModalProp
                 <option value="8">Lớp 8</option>
                 <option value="9">Lớp 9</option>
               </select>
+            </div>
+
+            <div className="flex items-center gap-2 cursor-pointer p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+               <input 
+                 type="checkbox" 
+                 checked={seedActivity} 
+                 onChange={(e) => setSeedActivity(e.target.checked)}
+                 className="w-4 h-4 accent-indigo-600"
+               />
+               <span className="text-[10px] font-bold text-indigo-900 uppercase leading-none">Tự động sinh dữ liệu hoạt động giả</span>
             </div>
 
             <div className="bg-indigo-50 rounded-2xl p-4 text-sm text-indigo-700">
@@ -231,6 +242,8 @@ interface ImportExcelModalProps {
 
 function ImportExcelModal({ isOpen, onClose, onSuccess }: ImportExcelModalProps) {
   const [loading, setLoading] = React.useState(false)
+  const [grade, setGrade] = React.useState("6")
+  const [seedActivity, setSeedActivity] = React.useState(true)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const handleDownloadTemplate = async () => {
@@ -248,7 +261,7 @@ function ImportExcelModal({ isOpen, onClose, onSuccess }: ImportExcelModalProps)
     
     setLoading(true)
     try {
-      const res = await adminUserService.importFromExcel(file)
+      const res = await adminUserService.importFromExcel(file, { grade, seedActivity })
       onSuccess(res.data)
       onClose()
     } catch (err: any) {
@@ -278,19 +291,46 @@ function ImportExcelModal({ isOpen, onClose, onSuccess }: ImportExcelModalProps)
         </div>
         
         <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Khối lớp mặc định</label>
+              <select
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="6">Khối 6</option>
+                <option value="7">Khối 7</option>
+                <option value="8">Khối 8</option>
+                <option value="9">Khối 9</option>
+              </select>
+            </div>
+            <div className="flex flex-col justify-end">
+              <label className="flex items-center gap-2 cursor-pointer p-2 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={seedActivity} 
+                  onChange={(e) => setSeedActivity(e.target.checked)}
+                  className="w-4 h-4 accent-green-600"
+                />
+                <span className="text-[10px] font-bold text-slate-600 uppercase leading-none">Sinh hoạt động giả</span>
+              </label>
+            </div>
+          </div>
+
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
               <Upload size={24} />
             </div>
             <p className="text-sm font-bold text-slate-700 mb-1">Chọn file Excel (.xlsx)</p>
-            <p className="text-xs text-slate-500 mb-4">Dung lượng tối đa 5MB</p>
+            <p className="text-[10px] text-slate-400 mb-4 font-medium italic">Nếu file chỉ có 1 cột Tên, hệ thống tự sinh Username</p>
             <Button 
               onClick={() => fileInputRef.current?.click()} 
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-xl"
+              className="bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 px-6 font-bold"
             >
               {loading ? <RefreshCcw className="animate-spin mr-2" size={16} /> : null}
-              Chọn file từ máy tính
+              Chọn file & Import ngay
             </Button>
             <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx" onChange={handleFileChange} />
           </div>
@@ -305,11 +345,6 @@ function ImportExcelModal({ isOpen, onClose, onSuccess }: ImportExcelModalProps)
               <Download size={18} className="text-green-600" />
               Tải file Excel mẫu (.xlsx)
             </Button>
-            <div className="text-[11px] text-slate-500 space-y-1 pl-1">
-              <p>• Sử dụng đúng tên các cột trong file mẫu.</p>
-              <p>• <b>Username</b> và <b>Họ tên</b> là bắt buộc.</p>
-              <p>• Mật khẩu để trống sẽ tự động gán <b>123456</b>.</p>
-            </div>
           </div>
         </div>
       </motion.div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Message, SelectedImage, SelectedFile } from "../types";
 import { chatService } from "../service";
 
@@ -11,6 +11,12 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   
   const isInitialized = useRef(false);
+
+  // Memoize setters to prevent child re-renders
+  const handleSetInput = useCallback((val: string) => setInput(v => typeof val === 'string' ? val : v), []);
+  const handleSetIsLoading = useCallback((val: boolean) => setIsLoading(val), []);
+  const handleSetSelectedImage = useCallback((val: SelectedImage | null) => setSelectedImage(val), []);
+  const handleSetSelectedFile = useCallback((val: SelectedFile | null) => setSelectedFile(val), []);
 
   // Khởi tạo: Lấy danh sách session, nếu chưa có thì tạo mới
   useEffect(() => {
@@ -62,7 +68,7 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
     }
   }, [userId, studentName]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!sessionId || (!input.trim() && !selectedImage && !selectedFile) || isLoading) return;
 
     // Chuẩn bị nội dung gửi: Nếu có file đính kèm (đã trích xuất text), nối vào nội dung
@@ -96,7 +102,6 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
       const mimeType = selectedImage?.mimeType;
 
       // Xoá ảnh/tệp đã chọn sau khi chuẩn bị xong payload
-      const fileName = selectedFile?.name;
       setSelectedImage(null);
       setSelectedFile(null);
 
@@ -129,18 +134,18 @@ export function useChat(userId: string, studentName: string, addXP: (xp: number)
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sessionId, input, selectedImage, selectedFile, isLoading, userId, addXP]);
 
   return {
     messages,
     input,
-    setInput,
+    setInput: handleSetInput,
     isLoading,
-    setIsLoading,
+    setIsLoading: handleSetIsLoading,
     selectedImage,
-    setSelectedImage,
+    setSelectedImage: handleSetSelectedImage,
     selectedFile,
-    setSelectedFile,
+    setSelectedFile: handleSetSelectedFile,
     handleSend
   };
 }

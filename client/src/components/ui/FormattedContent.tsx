@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -13,8 +13,9 @@ interface FormattedContentProps {
 
 /**
  * Component chung để hiển thị nội dung chứa Markdown và công thức LaTeX (Vật lý, Toán học)
+ * Memoized to prevent expensive re-renders of markdown/katex
  */
-const FormattedContent: React.FC<FormattedContentProps> = ({ content, className, isInline = false }) => {
+const FormattedContent: React.FC<FormattedContentProps> = memo(({ content, className, isInline = false }) => {
   if (!content) return null;
 
   const processed = processLaTeX(content);
@@ -48,6 +49,6 @@ const FormattedContent: React.FC<FormattedContentProps> = ({ content, className,
       </ReactMarkdown>
     </div>
   );
-};
+});
 
 export default FormattedContent;

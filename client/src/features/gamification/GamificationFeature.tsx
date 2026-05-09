@@ -94,6 +94,7 @@ export default function GamificationFeature({ studentData }: GamificationFeature
                       </h4>
                       <span className="text-[8px] font-black text-sky-600 shrink-0">+{challenge.xpReward}E</span>
                     </div>
+                    <p className="text-[8px] text-slate-400 italic leading-tight mt-0.5">{challenge.description}</p>
                     {!challenge.isCompleted && (
                       <div className="mt-2">
                         <div className="flex justify-between text-[7px] font-bold mb-0.5">

@@ -59,7 +59,6 @@ export function useAuth() {
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [schoolLogo] = useState<string | null>(SCHOOL_LOGO_URL);
-  const [leaderboard] = useState<any[]>([]);
 
   const studentData = useMemo(() => deriveStudentView(user), [user]);
   const isAdmin = user?.role === "ADMIN" || user?.role === "TEACHER";
@@ -134,7 +133,6 @@ export function useAuth() {
     studentData,
     isAdmin,
     isLoading,
-    leaderboard,
     addXP,
     schoolLogo,
     login,

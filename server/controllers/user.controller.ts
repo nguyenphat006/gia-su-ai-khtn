@@ -102,7 +102,9 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
  * POST /api/users/batch-import — Import tu JSON array (AI generate preview -> save)
  */
 export const importUsersFromJson = asyncHandler(async (req: Request, res: Response) => {
-  const { users } = req.body;
+  const { users, seedActivity } = req.body;
+  const isSeeding = seedActivity === "true" || seedActivity === true;
+
   if (!Array.isArray(users) || users.length === 0) {
     throw new ValidationError("Du lieu khong hop le. Can truong 'users' la mang.");
   }
@@ -125,7 +127,7 @@ export const importUsersFromJson = asyncHandler(async (req: Request, res: Respon
     throw new ValidationError("Khong co du lieu hop le (can username va displayName).");
   }
 
-  const result = await batchImportUsers(normalized);
+  const result = await batchImportUsers(normalized, isSeeding);
   res.json({ status: "ok", data: result });
 });
 
@@ -137,6 +139,9 @@ export const importUsersFromExcel = asyncHandler(async (req: Request, res: Respo
     throw new ValidationError("Vui long tai len file Excel (.xlsx).");
   }
 
+  const { seedActivity, grade, classId: targetClassId } = req.body;
+  const isSeeding = seedActivity === "true" || seedActivity === true;
+
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(req.file.buffer, { type: "buffer" });
@@ -146,38 +151,70 @@ export const importUsersFromExcel = asyncHandler(async (req: Request, res: Respo
 
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
+  
+  // Doc du lieu: neu khong co header thi dung header: 1 de lay mang cac mang
   const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+  const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
   if (rows.length === 0) {
     throw new ValidationError("File Excel khong co du lieu.");
   }
 
-  // Normalize header mapping (ho tro ca tieng Anh va tieng Viet)
-  const usersToImport = rows.map((row) => {
-    const rawUsername = String(row["username"] || row["Ten dang nhap"] || "").trim();
-    const rawDisplayName = String(row["displayName"] || row["Ho va ten"] || "").trim();
-    const rawPassword = String(row["password"] || row["Mat khau"] || "").trim();
+  // logic thong minh: 
+  // 1. Neu row 1 chi co 1 cot hoac cac header khong khop 'username'/'displayName'
+  // -> Coi nhu day la file chi co ten hoc sinh
+  const firstRow = rows[0];
+  const hasStandardHeader = firstRow["username"] || firstRow["Ten dang nhap"] || firstRow["displayName"] || firstRow["Ho va ten"];
 
-    return {
-      username: rawUsername,
-      displayName: rawDisplayName,
-      password: rawPassword || "123456",
-      email: String(row["email"] || row["Email"] || "").trim() || undefined,
-      studentCode: String(row["studentCode"] || row["Ma hoc sinh"] || "").trim() || undefined,
-      grade: row["grade"] || row["Khoi lop"] || undefined,
-      classId: String(row["classId"] || row["Ma lop"] || "").trim() || undefined,
-      role: String(row["role"] || row["Vai tro"] || "STUDENT").trim().toUpperCase() as Role,
-    };
-  }).filter((u) => u.username && u.displayName);
+  let usersToImport: any[] = [];
+
+  if (!hasStandardHeader) {
+    // Truong hop 1: File chi co danh sach ten (moi dong la 1 ten)
+    // Dung rawRows de dam bao lay dung gia tri o cot dau tien cho moi hang
+    const { generateUsername } = await import("../services/user.service.js");
+    
+    usersToImport = rawRows
+      .map((row) => {
+        const name = String(row[0] || "").trim();
+        if (!name) return null;
+        return {
+          username: generateUsername(name),
+          displayName: name,
+          password: "123456",
+          grade: grade ? Number(grade) : 6, // Mac dinh khoi 6 neu ko chon
+          classId: targetClassId || undefined,
+          role: "STUDENT" as Role,
+        };
+      })
+      .filter(Boolean);
+  } else {
+    // Truong hop 2: File co header tieu chuan
+    usersToImport = rows.map((row) => {
+      const rawUsername = String(row["username"] || row["Ten dang nhap"] || "").trim();
+      const rawDisplayName = String(row["displayName"] || row["Ho va ten"] || "").trim();
+      const rawPassword = String(row["password"] || row["Mat khau"] || "").trim();
+
+      return {
+        username: rawUsername,
+        displayName: rawDisplayName,
+        password: rawPassword || "123456",
+        email: String(row["email"] || row["Email"] || "").trim() || undefined,
+        studentCode: String(row["studentCode"] || row["Ma hoc sinh"] || "").trim() || undefined,
+        grade: row["grade"] || row["Khoi lop"] || grade || undefined,
+        classId: String(row["classId"] || row["Ma lop"] || targetClassId || "").trim() || undefined,
+        role: String(row["role"] || row["Vai tro"] || "STUDENT").trim().toUpperCase() as Role,
+      };
+    }).filter((u) => u.username && u.displayName);
+  }
 
   if (usersToImport.length === 0) {
     throw new ValidationError(
-      "Khong tim thay du lieu hop le. File can co cot 'username' va 'displayName'."
+      "Khong tim thay du lieu hop le. File can co danh sach ten hoac cot 'username' va 'displayName'."
     );
   }
 
-  const result = await batchImportUsers(usersToImport);
-  res.json({ status: "ok", data: { ...result, total: rows.length } });
+  const result = await batchImportUsers(usersToImport, isSeeding);
+  res.json({ status: "ok", data: { ...result, total: usersToImport.length } });
 });
 
 /**
@@ -280,7 +317,8 @@ export const exportUsersToExcel = asyncHandler(async (req: Request, res: Respons
  * POST /api/users/generate-mock — Tao du lieu hoc sinh gia lap bang AI
  */
 export const generateMockData = asyncHandler(async (req: Request, res: Response) => {
-  const { count, classId, grade, saveToDb } = req.body;
+  const { count, classId, grade, saveToDb, seedActivity } = req.body;
+  const isSeeding = seedActivity === "true" || seedActivity === true;
 
   const num = Number(count);
   if (!count || isNaN(num) || num < 1 || num > 50) {
@@ -290,7 +328,7 @@ export const generateMockData = asyncHandler(async (req: Request, res: Response)
   const users = await generateMockUsers(num, classId as string, grade ? Number(grade) : undefined);
 
   if (saveToDb === true) {
-    const result = await batchImportUsers(users);
+    const result = await batchImportUsers(users, isSeeding);
     return res.json({ status: "ok", data: { users, saved: result } });
   }
 

@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { memo } from "react";
 
 interface HeaderProps {
   user: AuthenticatedUser;
@@ -41,12 +42,12 @@ const MODE_NAMES: Record<string, string> = {
   "history": "Lịch sử học tập",
 };
 
-export default function Header({
+const Header = memo(({
   user,
   studentData,
   onProfileEdit,
   onLogout,
-}: HeaderProps) {
+}: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname;
@@ -125,7 +126,7 @@ export default function Header({
             
             {canAccessAdmin && (
               <DropdownMenuItem 
-                onClick={() => navigate("/admin/ai-config")}
+                onClick={() => navigate("/admin/analytics")}
                 className="flex items-center gap-3 p-3 text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors cursor-pointer"
               >
                 <div className="p-2 bg-indigo-50/50 rounded-lg text-indigo-500"><Shield size={16} /></div>
@@ -146,4 +147,6 @@ export default function Header({
       </div>
     </header>
   );
-}
+});
+
+export default Header;

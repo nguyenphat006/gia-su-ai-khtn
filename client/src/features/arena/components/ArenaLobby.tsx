@@ -81,7 +81,7 @@ export function ArenaLobby({
                         {idx + 1}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <p className="font-bold text-sky-900 text-sm sm:text-base uppercase tracking-tight truncate leading-tight">
+                        <p className="font-bold text-sky-900 text-sm sm:text-base uppercase tracking-tight leading-tight break-words">
                           {entry.displayName || entry.username}
                         </p>
                       </div>
@@ -215,7 +215,7 @@ export function ArenaLobby({
                                 {isMe ? <UserRound size={14} /> : p.username?.[0] || "?"}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5"><p className="text-[11px] font-bold text-slate-800 truncate leading-tight uppercase">{p.username}</p>{isMe && <span className="text-[6px] bg-sky-100 text-sky-700 px-1 py-0.5 rounded font-bold uppercase">Bạn</span>}</div>
+                                <div className="flex items-center gap-1.5"><p className="text-[11px] font-bold text-slate-800 leading-tight uppercase break-words">{p.username}</p>{isMe && <span className="text-[6px] bg-sky-100 text-sky-700 px-1 py-0.5 rounded font-bold uppercase">Bạn</span>}</div>
                                 <div className="flex items-center gap-1.5 mt-1">
                                     <p className={cn("text-[7px] font-bold uppercase tracking-widest", p.status === "in-battle" ? "text-orange-500" : "text-green-500")}>
                                         {p.status === "in-battle" ? "Đang đấu" : "Sẵn sàng"}
