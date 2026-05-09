@@ -116,7 +116,7 @@ export default function KnowledgeFormModal({
             type="submit"
             form="knowledge-form"
             disabled={loading}
-            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black h-12 px-8 shadow-lg transition-all"
+            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold h-12 px-8 shadow-lg transition-all"
           >
             {loading ? (
               <Spinner className="mr-2 h-4 w-4" />
@@ -164,7 +164,7 @@ export default function KnowledgeFormModal({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-sky-50 text-sky-600 text-[10px] font-black uppercase border border-sky-100"
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-sky-50 text-sky-600 text-[10px] font-bold uppercase border border-sky-100"
               >
                 {tag}
                 <button

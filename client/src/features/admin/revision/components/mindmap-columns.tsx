@@ -46,10 +46,10 @@ export const mindmapColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex flex-col items-center">
-            <span className="font-black text-slate-800 tracking-tight text-xs uppercase leading-none mb-1">
+            <span className="font-bold text-slate-800 tracking-tight text-xs uppercase leading-tight mb-1">
                 {row.getValue("title")}
             </span>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
                 {row.original.topic}
             </span>
         </div>
@@ -63,7 +63,7 @@ export const mindmapColumns: ColumnDef<any>[] = [
     ),
     cell: ({ row }) => {
       return (
-        <span className="text-xs font-black text-slate-700 bg-slate-100 px-3 py-1 rounded-lg mx-auto">
+        <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg mx-auto">
           Lớp {row.getValue("grade")}
         </span>
       );
@@ -76,7 +76,7 @@ export const mindmapColumns: ColumnDef<any>[] = [
     ),
     cell: ({ row }) => {
       return (
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-black uppercase tracking-wider mx-auto">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider mx-auto">
             <Brain size={10} />
             Mermaid/Markmap
         </div>

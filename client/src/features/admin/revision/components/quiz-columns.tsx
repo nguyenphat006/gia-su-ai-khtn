@@ -48,10 +48,10 @@ export const quizColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex flex-col items-center">
-            <span className="font-black text-slate-800 tracking-tight text-xs uppercase leading-none mb-1">
+            <span className="font-bold text-slate-800 tracking-tight text-xs uppercase leading-tight mb-1">
                 {row.getValue("topic")}
             </span>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
                 {row.original.class?.name || `Khối ${row.original.grade}`}
             </span>
         </div>
@@ -82,7 +82,7 @@ export const quizColumns: ColumnDef<any>[] = [
       const isQuiz = type === "MULTIPLE_CHOICE";
       return (
         <div className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider mx-auto",
+            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider mx-auto",
             isQuiz ? "bg-sky-50 text-sky-600 border-sky-100" : "bg-indigo-50 text-indigo-600 border-indigo-100"
         )}>
             {isQuiz ? <Zap size={10} /> : <HelpCircle size={10} />}
@@ -100,7 +100,7 @@ export const quizColumns: ColumnDef<any>[] = [
       const diff = row.getValue("difficulty") as string;
       const color = diff === "Khó" || diff === "HARD" ? "text-red-500" : (diff === "Trung bình" || diff === "MEDIUM" ? "text-orange-500" : "text-emerald-500");
       return (
-        <span className={cn("text-[10px] font-black uppercase tracking-widest", color)}>
+        <span className={cn("text-[10px] font-bold uppercase tracking-widest", color)}>
           {diff}
         </span>
       );

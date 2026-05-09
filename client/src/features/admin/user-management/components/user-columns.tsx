@@ -42,10 +42,10 @@ export const userColumns: ColumnDef<any>[] = [
       const role = row.original.role;
       return (
         <div className="flex flex-col items-center">
-            <span className="font-black text-slate-800 tracking-tight leading-none mb-1">
+            <span className="font-bold text-slate-800 tracking-tight leading-tight mb-1">
                 {row.getValue("displayName")}
             </span>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
                 @{row.original.username}
             </span>
         </div>
@@ -66,7 +66,7 @@ export const userColumns: ColumnDef<any>[] = [
       };
       const { label, icon: Icon, class: className } = config[role] || config.STUDENT;
       return (
-        <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider mx-auto", className)}>
+        <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider mx-auto", className)}>
             <Icon size={10} />
             {label}
         </div>
@@ -84,8 +84,8 @@ export const userColumns: ColumnDef<any>[] = [
       if (!cls && !grade) return <span className="text-slate-300 italic text-[10px]">Chưa gán</span>;
       return (
         <div className="flex flex-col items-center">
-            {cls && <span className="text-xs font-black text-slate-700 uppercase">{cls.name}</span>}
-            {grade && <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Khối {grade}</span>}
+            {cls && <span className="text-xs font-bold text-slate-700 uppercase">{cls.name}</span>}
+            {grade && <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-tight mt-1">Khối {grade}</span>}
         </div>
       );
     },
@@ -100,7 +100,7 @@ export const userColumns: ColumnDef<any>[] = [
       return (
         <div className="flex items-center gap-2 justify-center">
             <div className={cn("w-1.5 h-1.5 rounded-full", status === "ACTIVE" ? "bg-emerald-500" : "bg-slate-300")} />
-            <span className={cn("text-[10px] font-black uppercase tracking-widest", status === "ACTIVE" ? "text-emerald-600" : "text-slate-400")}>
+            <span className={cn("text-[10px] font-bold uppercase tracking-widest", status === "ACTIVE" ? "text-emerald-600" : "text-slate-400")}>
                 {status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}
             </span>
         </div>

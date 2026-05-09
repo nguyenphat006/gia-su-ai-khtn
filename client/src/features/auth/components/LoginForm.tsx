@@ -35,7 +35,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-3xl font-display font-black text-sky-950 tracking-tight uppercase">
+        <h2 className="text-3xl font-bold text-sky-950 tracking-tight uppercase leading-tight">
           Đăng nhập
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-500 font-medium">Chào mừng bạn quay lại với hệ thống Gia Sư AI KHTN.</p>
@@ -66,7 +66,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         <button
           type="submit"
           disabled={!identifier.trim() || !password.trim() || isSubmitting}
-          className="w-full bg-sky-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-200/50 hover:bg-sky-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] uppercase tracking-widest text-xs"
+          className="w-full bg-sky-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-sky-200/50 hover:bg-sky-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] uppercase tracking-widest text-xs"
         >
           {isSubmitting ? (
             <Loader2 className="animate-spin" size={22} />
@@ -80,7 +80,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       </form>
 
       <div className="mt-8 rounded-[1.5rem] border border-slate-100 bg-slate-50 px-6 py-5 text-left">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2">
           Hướng dẫn nhanh
         </p>
         <p className="text-xs leading-relaxed text-slate-600 font-medium">
@@ -107,7 +107,7 @@ function Field({
 }) {
   return (
     <div className="text-left">
-      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-4">
+      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-4">
         {label}
       </label>
       <input

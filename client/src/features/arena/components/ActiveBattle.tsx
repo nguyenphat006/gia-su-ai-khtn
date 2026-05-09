@@ -147,93 +147,91 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
   const oppScore = oppScores[opponent.id] || 0;
 
   return (
-    <div className="max-w-5xl mx-auto pb-20 h-[calc(100vh-120px)] overflow-y-auto pr-4 custom-scrollbar">
-       <div className="flex items-center justify-between mb-8 bg-white p-8 rounded-[2rem] border border-sky-50 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-32 bg-slate-100 rounded-full" />
+    <div className="max-w-5xl mx-auto pb-6 h-full overflow-y-auto no-scrollbar px-3">
+       <div className="flex items-center justify-between mb-4 sm:mb-6 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-sky-50 shadow-lg relative overflow-hidden shrink-0">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-20 bg-slate-100 rounded-full" />
           
-          <div className="flex items-center gap-6 w-1/3">
-             <div className="w-16 h-16 bg-sky-600 rounded-2xl flex items-center justify-center text-white font-black border-2 border-sky-100 shadow-sm relative">
-                <UserIcon size={32} />
-                <div className="absolute -bottom-2 -right-2 bg-orange-400 text-white px-2 py-0.5 rounded-full text-[8px] font-black shadow-sm">
-                   LV.{Math.floor(totalXP / 500) + 1}
-                </div>
+          <div className="flex items-center gap-3 sm:gap-4 w-1/3">
+             <div className="w-10 h-10 sm:w-14 sm:h-14 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold border border-sky-100 shadow-sm relative shrink-0">
+                <UserIcon size={20} className="sm:w-8 sm:h-8" />
              </div>
-             <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Của em</p>
-                <div className="flex items-baseline gap-2">
-                   <p className="text-3xl font-display font-black text-sky-900">{myScore}</p>
-                   <span className="text-[10px] font-bold text-sky-500">EXP</span>
-                </div>
-             </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-3 w-1/3">
-             <div className="relative">
-                <svg className="w-24 h-24 transform -rotate-90">
-                   <circle cx="48" cy="48" r="40" fill="transparent" stroke="#F1F5F9" strokeWidth="6" />
-                   <circle cx="48" cy="48" r="40" fill="transparent" stroke="#14B8A6" strokeWidth="6" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - timeLeft / 30)} className="transition-all duration-1000" />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                   <span className={cn("text-3xl font-display font-black leading-none", timeLeft < 10 ? "text-red-500 animate-pulse" : "text-sky-900")}>{timeLeft}</span>
-                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Giây</span>
-                </div>
-             </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 sm:gap-6 w-1/3 text-right">
              <div className="min-w-0">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">
-                  {isAiMode ? "Đối thủ AI" : "Đối thủ"}
+                <p className="text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Của em</p>
+                <div className="flex items-baseline gap-1">
+                   <p className="text-xl sm:text-2xl font-bold text-sky-900 leading-tight">{myScore}</p>
+                   <span className="text-[7px] sm:text-[9px] font-bold text-sky-500 uppercase">EXP</span>
+                </div>
+             </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-1 w-1/3 shrink-0">
+             <div className="relative">
+                <svg className="w-16 h-16 sm:w-20 sm:h-20 transform -rotate-90">
+                   <circle cx="32" cy="32" r="28" fill="transparent" stroke="#F1F5F9" strokeWidth="4" />
+                   <circle cx="32" cy="32" r="28" fill="transparent" stroke="#14B8A6" strokeWidth="4" strokeDasharray={175.8} strokeDashoffset={175.8 * (1 - timeLeft / 30)} className="transition-all duration-1000" />
+                </svg>
+                {/* Fallback for smaller SVG viewBox if needed, using 32 as center */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                   <span className={cn("text-xl sm:text-2xl font-bold leading-tight", timeLeft < 10 ? "text-red-500 animate-pulse" : "text-sky-900")}>{timeLeft}</span>
+                </div>
+             </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 w-1/3 text-right">
+             <div className="min-w-0">
+                <p className="text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 truncate">
+                  {isAiMode ? "AI" : "Đối thủ"}
                 </p>
-                <div className="flex items-center justify-end gap-2">
-                   <p className="text-xl sm:text-3xl font-display font-black text-slate-900 truncate max-w-[80px] sm:max-w-none">
+                <div className="flex items-center justify-end gap-1.5">
+                   <p className="text-base sm:text-xl font-bold text-slate-900 truncate max-w-[60px] sm:max-w-none leading-tight">
                      {isAiMode ? oppScore : (opponent.displayName || opponent.username)}
                    </p>
-                   {!isAiMode && <span className="text-[10px] font-black text-sky-600 hidden sm:inline">{oppScore}</span>}
                 </div>
-                {isAiMode === false && (
-                   <div className="flex items-baseline justify-end gap-1 leading-none mt-1">
-                      <p className="text-xl sm:text-2xl font-display font-black text-sky-600">{oppScore}</p>
-                      <span className="text-[8px] font-bold text-sky-400 uppercase">PTS</span>
+                {!isAiMode && (
+                   <div className="flex items-baseline justify-end gap-0.5 leading-tight mt-0.5">
+                      <p className="text-base sm:text-lg font-bold text-sky-600">{oppScore}</p>
+                      <span className="text-[7px] font-bold text-sky-400 uppercase">PTS</span>
                    </div>
                 )}
              </div>
              <div className={cn(
-               "w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center font-black border-2 shadow-sm shrink-0",
+               "w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-bold border shadow-sm shrink-0",
                isAiMode ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-indigo-50 text-indigo-600 border-indigo-100"
              )}>
-                {isAiMode ? <Bot size={28} className="sm:w-8 sm:h-8" /> : <UserIcon size={28} className="sm:w-8 sm:h-8" />}
+                {isAiMode ? <Bot size={20} className="sm:w-8 sm:h-8" /> : <UserIcon size={20} className="sm:w-8 sm:h-8" />}
              </div>
           </div>
        </div>
 
        <motion.div 
          key={currentIdx}
-         initial={{ opacity: 0, x: 50 }}
+         initial={{ opacity: 0, x: 20 }}
          animate={{ opacity: 1, x: 0 }}
-         className="bg-white rounded-[3rem] p-12 border border-sky-50 shadow-2xl relative"
+         className="bg-white rounded-[2rem] p-6 sm:p-10 border border-sky-50 shadow-xl relative"
        >
-          <div className="flex items-center justify-between mb-10">
-             <div className="flex items-center gap-3">
-                <div className="px-4 py-2 bg-sky-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">
+          <div className="flex items-center justify-between mb-6 sm:mb-10">
+             <div className="flex items-center gap-2">
+                <div className="px-3 py-1.5 bg-sky-600 text-white rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-tight">
                    Câu {currentIdx + 1} / {questions.length}
                 </div>
-                <div className="px-3 py-2 bg-slate-100 text-slate-400 rounded-xl font-black text-[9px] uppercase tracking-widest">
-                   Độ khó: {current.difficulty || "Biết"}
+                <div className="px-2 py-1.5 bg-slate-50 text-slate-400 rounded-lg font-bold text-[8px] sm:text-[9px] uppercase tracking-widest border border-slate-100">
+                   {current.difficulty || "Cơ bản"}
                 </div>
              </div>
              {isAnswered && isMultipleChoice && (
-               <div className={cn("px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-md", 
-                 selectedIdx === current.answerIndex ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600")}>
-                 {selectedIdx === current.answerIndex ? "Chính xác" : "Chưa đúng"}
+               <div className={cn("px-3 py-1.5 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-tight", 
+                 selectedIdx === current.answerIndex ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600")}>
+                 {selectedIdx === current.answerIndex ? "Đúng" : "Sai"}
                </div>
              )}
           </div>
 
-          <h3 className="text-2xl md:text-3xl font-display font-black text-sky-900 mb-12 leading-snug">{current.question}</h3>
+          <h3 className="text-lg sm:text-2xl font-bold text-sky-900 mb-8 sm:mb-12 leading-snug uppercase tracking-tight">
+             <FormattedContent content={current.question} isInline />
+          </h3>
           
           {isMultipleChoice ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                {current.options.map((opt: string, i: number) => {
                  const isCorrect = i === current.answerIndex;
                  const isSelected = selectedIdx === i;
@@ -244,47 +242,47 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
                       onClick={() => handleAnswer(i)}
                       disabled={isAnswered || showHint}
                       className={cn(
-                        "group p-8 rounded-[2rem] border-4 text-left transition-all relative overflow-hidden",
+                        "group p-5 sm:p-8 rounded-2xl border-2 sm:border-4 text-left transition-all relative overflow-hidden",
                         !isAnswered && !showHint
-                          ? "bg-white border-slate-50 hover:border-sky-500 hover:shadow-2xl hover:-translate-y-1" 
+                          ? "bg-white border-slate-100 hover:border-sky-500 hover:bg-sky-50/10" 
                           : isCorrect && isAnswered
-                            ? "bg-emerald-50 border-emerald-500 shadow-inner"
+                            ? "bg-emerald-50 border-emerald-500"
                             : isSelected 
                               ? "bg-red-50 border-red-500"
                               : "bg-slate-50 border-transparent opacity-50"
                       )}
                     >
-                      <div className="flex items-center gap-6 relative z-10">
+                      <div className="flex items-center gap-4 sm:gap-6 relative z-10">
                          <span className={cn(
-                           "w-10 h-10 rounded-xl flex items-center justify-center font-display font-black border-2 shadow-sm shrink-0",
+                           "w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center font-bold border shadow-sm shrink-0 text-xs sm:text-sm",
                            !isAnswered 
-                            ? "bg-white border-slate-200 text-slate-400 group-hover:bg-sky-600 group-hover:text-white group-hover:border-sky-400"
-                            : isCorrect ? "bg-emerald-600 text-white border-emerald-400" : "bg-red-600 text-white border-red-400"
+                            ? "bg-white border-slate-200 text-slate-400 group-hover:bg-sky-600 group-hover:text-white"
+                            : isCorrect ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
                          )}>
                             {String.fromCharCode(65 + i)}
                          </span>
-                         <span className={cn("text-lg font-bold", isAnswered && isCorrect ? "text-emerald-900" : "text-slate-800")}>{opt}</span>
+                         <span className={cn("text-sm sm:text-lg font-bold leading-tight", isAnswered && isCorrect ? "text-emerald-900" : "text-slate-800")}>{opt}</span>
                       </div>
                     </button>
                  );
                })}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
                <textarea 
                  value={essayAnswer}
                  onChange={(e) => setEssayAnswer(e.target.value)}
                  disabled={isAnswered}
-                 placeholder="Nhập câu trả lời của em tại đây (AI có khả năng phát hiện copy-paste)..."
-                 className="w-full h-48 bg-slate-50 border-2 border-slate-100 rounded-3xl p-8 outline-none focus:border-sky-500 focus:bg-white transition-all font-medium text-lg leading-relaxed disabled:opacity-50"
+                 placeholder="Nhập câu trả lời..."
+                 className="w-full h-32 sm:h-48 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-8 outline-none focus:border-sky-500 focus:bg-white transition-all font-medium text-sm sm:text-lg leading-relaxed disabled:opacity-50"
                />
                {!isAnswered && (
                  <button 
                    onClick={submitEssay}
                    disabled={!essayAnswer.trim()}
-                   className="w-full bg-sky-600 text-white font-black py-5 rounded-2xl hover:bg-sky-700 transition-all shadow-xl shadow-sky-200/50 flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-widest text-xs"
+                   className="w-full bg-sky-600 text-white font-bold py-4 rounded-xl hover:bg-sky-700 transition-all shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] uppercase tracking-widest text-[10px] sm:text-xs"
                  >
-                    {isGrading ? <Loader2 className="animate-spin" /> : "Gửi câu trả lời"}
+                    {isGrading ? <Loader2 className="animate-spin" size={18} /> : "Gửi câu trả lời"}
                  </button>
                )}
             </div>
@@ -293,26 +291,23 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
           <AnimatePresence>
              {showHint && (
                <motion.div 
-                 initial={{ opacity: 0, scale: 0.9 }}
+                 initial={{ opacity: 0, scale: 0.95 }}
                  animate={{ opacity: 1, scale: 1 }}
-                 className="mt-12 p-8 bg-orange-50 rounded-[2rem] border-2 border-orange-200 relative overflow-hidden"
+                 className="mt-6 p-6 sm:p-8 bg-orange-50 rounded-2xl border-2 border-orange-100 relative overflow-hidden"
                >
-                  <Sparkles className="absolute top-2 right-2 text-orange-500 opacity-20" size={40} />
-                  <div className="flex flex-col md:flex-row gap-6 items-center">
+                  <div className="flex flex-col gap-4">
                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                           <AlertCircle className="text-orange-600" size={20} />
-                           <p className="text-[10px] font-black text-orange-800 uppercase tracking-widest">Quy tắc Gợi ý thông minh:</p>
+                        <div className="flex items-center gap-2 mb-2">
+                           <AlertCircle className="text-orange-600" size={16} />
+                           <p className="text-[8px] sm:text-[9px] font-bold text-orange-800 uppercase tracking-widest">Gợi ý thông minh</p>
                         </div>
-                        <p className="text-sm text-orange-900 font-bold leading-relaxed mb-1">Ồ, suy nghĩ lại một chút nhé! Đây là manh mối cho em:</p>
-                        <p className="text-base text-orange-900 font-black italic">"{current.hint || "Hãy xem lại dữ kiện trong câu hỏi."}"</p>
-                        <p className="text-[9px] text-orange-600 font-black uppercase mt-4">Em còn 1 cơ hội nữa - Tự sửa đúng sẽ được +30 EXP!</p>
+                        <p className="text-[11px] sm:text-sm text-orange-900 font-medium italic">"{current.hint || "Hãy xem lại câu hỏi."}"</p>
                      </div>
                      <button 
                        onClick={() => setShowHint(false)}
-                       className="px-8 py-4 bg-orange-500 text-white rounded-2xl font-black shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all uppercase tracking-widest text-[10px] whitespace-nowrap"
+                       className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold shadow-md hover:bg-orange-600 transition-all uppercase tracking-widest text-[9px] sm:text-[10px]"
                      >
-                       Thử lại lần 2
+                       Thử lại ngay
                      </button>
                   </div>
                </motion.div>
@@ -320,25 +315,21 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
 
              {showExplanation && (
                <motion.div 
-                 initial={{ opacity: 0, y: 20 }}
+                 initial={{ opacity: 0, y: 10 }}
                  animate={{ opacity: 1, y: 0 }}
-                 className="mt-12 p-8 bg-slate-50 rounded-[2rem] border border-slate-100"
+                 className="mt-6 p-6 sm:p-8 bg-slate-50 rounded-2xl border border-slate-100"
                >
-                  <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex flex-col gap-4">
                      <div className="flex-1">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Gia sư AI chấm điểm & giải thích:</p>
-                        <div className="prose prose-slate prose-sm max-w-none">
-                           <p className="text-slate-600 font-medium italic leading-relaxed">{current.explanation}</p>
-                        </div>
+                        <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Giải thích từ AI:</p>
+                        <p className="text-xs sm:text-sm text-slate-600 font-medium italic leading-relaxed">{current.explanation}</p>
                      </div>
-                     <div className="flex flex-col gap-3 justify-end">
-                        <button 
-                          onClick={nextQuestion}
-                          className="px-8 py-4 bg-sky-600 text-white rounded-2xl font-black shadow-lg shadow-sky-100 hover:bg-sky-700 transition-all uppercase tracking-widest text-[10px] whitespace-nowrap"
-                        >
-                          {currentIdx < questions.length - 1 ? "Câu tiếp theo" : "Xem kết quả"}
-                        </button>
-                     </div>
+                     <button 
+                       onClick={nextQuestion}
+                       className="w-full py-3 bg-sky-600 text-white rounded-xl font-bold shadow-md hover:bg-sky-700 transition-all uppercase tracking-widest text-[9px] sm:text-[10px]"
+                     >
+                       {currentIdx < questions.length - 1 ? "Câu tiếp theo" : "Xem kết quả"}
+                     </button>
                   </div>
                </motion.div>
              )}

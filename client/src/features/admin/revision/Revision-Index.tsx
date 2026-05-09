@@ -159,7 +159,7 @@ export default function RevisionIndex() {
                   setPagination({ pageIndex: 0, pageSize: 10 })
               }}
               className={cn(
-                "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all relative whitespace-nowrap",
+                "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all relative whitespace-nowrap",
                 activeTab === tab.id 
                   ? "text-slate-900" 
                   : "text-slate-400 hover:text-slate-600"
@@ -188,13 +188,13 @@ export default function RevisionIndex() {
           {/* Header Actions */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
-               <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight sm:hidden">
+               <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight sm:hidden">
                  {TABS.find(t => t.id === activeTab)?.label}
                </h3>
                <div className="flex items-center gap-2 ml-auto">
                 <Button 
                   onClick={() => setIsAiModalOpen(true)}
-                  className="h-10 px-4 gap-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-black uppercase tracking-widest text-[9px] sm:text-[10px] shadow-lg shadow-sky-200 hover:scale-105 transition-all"
+                  className="h-10 px-4 gap-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-bold uppercase tracking-widest text-[9px] sm:text-[10px] shadow-lg shadow-sky-200 hover:scale-105 transition-all"
                 >
                   <Sparkles size={16} />
                   <span className="hidden xs:inline">AI Soạn thảo</span>

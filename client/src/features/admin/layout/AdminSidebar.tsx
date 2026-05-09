@@ -44,7 +44,7 @@ export function AdminSidebar({ isOpen, setIsOpen, isMobile }: AdminSidebarProps)
                   animate={{ opacity: 1, x: 0 }}
                   className="flex flex-col leading-tight"
                 >
-                  <span className="font-black text-white text-base tracking-tight uppercase">Gia Sư AI</span>
+                  <span className="font-bold text-white text-base tracking-tight uppercase">Gia Sư AI</span>
                   <span className="text-[10px] font-bold text-sky-400 tracking-[0.1em] uppercase opacity-70 whitespace-nowrap">Console Quản trị</span>
                 </motion.div>
               )}
@@ -66,7 +66,7 @@ export function AdminSidebar({ isOpen, setIsOpen, isMobile }: AdminSidebarProps)
             {ADMIN_NAV_CONFIG.map((group, idx) => (
               <div key={idx} className="space-y-3">
                 {isOpen && (
-                  <h4 className="px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                  <h4 className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
                     {group.groupName}
                   </h4>
                 )}

@@ -149,14 +149,6 @@ export function ActiveQuiz({
       setAttempts(0);
       setShowHint(false);
     } else {
-      if (score + (results[currentIdx] ? 1 : 0) >= quizzes.length / 2) {
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ["#0d9488", "#14b8a6", "#5eead4"]
-        });
-      }
       onFinish();
     }
   };
@@ -168,12 +160,12 @@ export function ActiveQuiz({
             <HelpCircle size={40} className="opacity-20" />
          </div>
          <div className="text-center">
-            <p className="text-lg font-black text-slate-600 uppercase tracking-tight">Không tìm thấy câu hỏi</p>
+            <p className="text-lg font-bold text-slate-600 uppercase tracking-tight">Không tìm thấy câu hỏi</p>
             <p className="text-sm font-medium">Cô Trang chưa chuẩn bị kịp nội dung cho phần này.</p>
          </div>
          <button 
            onClick={() => onFinish()}
-           className="px-8 py-3 bg-sky-600 text-white rounded-xl font-black shadow-lg hover:bg-sky-700 transition-all uppercase tracking-widest text-[10px]"
+           className="px-8 py-3 bg-sky-600 text-white rounded-xl font-bold shadow-lg hover:bg-sky-700 transition-all uppercase tracking-widest text-[10px]"
          >
            Quay lại Menu
          </button>
@@ -182,37 +174,37 @@ export function ActiveQuiz({
   }
 
   return (
-    <div className="max-w-2xl mx-auto h-full flex flex-col custom-scrollbar">
-      <div className="flex items-center justify-between mb-8 bg-white p-5 rounded-[1.5rem] border border-sky-50 shadow-sm">
-         <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-sky-600 rounded-2xl flex items-center justify-center text-white font-black shadow-lg">
+    <div className="max-w-2xl mx-auto h-full flex flex-col custom-scrollbar px-3 sm:px-0">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-sky-50 shadow-sm shrink-0">
+         <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
                {currentIdx + 1}
             </div>
             <div>
-               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] leading-none mb-1.5 focus:outline-none">Tiến trình em học</p>
-               <p className="text-base font-black text-sky-900 leading-none">{currentIdx + 1} / {quizzes.length}</p>
+               <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em] leading-tight mb-1 focus:outline-none">Tiến trình em học</p>
+               <p className="text-sm font-bold text-sky-900 leading-tight">{currentIdx + 1} / {quizzes.length}</p>
             </div>
          </div>
-         <div className="text-right flex items-center gap-6">
+         <div className="text-right flex items-center gap-4 sm:gap-6">
             <div className={cn(
               "flex flex-col items-end transition-colors",
               timeLeft <= 10 ? "text-red-500" : "text-sky-600"
             )}>
-               <p className="text-[10px] font-bold uppercase tracking-[0.2em] leading-none mb-1.5 opacity-40">Thời gian</p>
-               <div className="flex items-center gap-2">
-                  <Clock size={16} className={timeLeft <= 10 ? "animate-pulse" : ""} />
-                  <p className="text-base font-black leading-none">{timeLeft}s</p>
+               <p className="text-[8px] font-bold uppercase tracking-[0.2em] leading-tight mb-1 opacity-40">Thời gian</p>
+               <div className="flex items-center gap-1.5">
+                  <Clock size={14} className={timeLeft <= 10 ? "animate-pulse" : ""} />
+                  <p className="text-sm font-bold leading-tight">{timeLeft}s</p>
                </div>
             </div>
             <div>
-               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] Wood mb-1.5 ">Phần thưởng</p>
-               <p className="text-base font-black text-orange-600 leading-none">+{score * 10} EXP</p>
+               <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-1">Thưởng</p>
+               <p className="text-sm font-bold text-orange-600 leading-tight">+{score * 10} EXP</p>
             </div>
          </div>
       </div>
 
       {!isAnswered && (
-        <div className="w-full h-1.5 bg-slate-100 rounded-full mb-8 overflow-hidden shadow-inner">
+        <div className="w-full h-1 bg-slate-100 rounded-full mb-4 sm:mb-6 overflow-hidden shadow-inner shrink-0">
            <motion.div 
              initial={{ width: "100%" }}
              animate={{ width: `${(timeLeft / 45) * 100}%` }}
@@ -224,13 +216,13 @@ export function ActiveQuiz({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-8">
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-6">
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-[2.5rem] p-10 border border-sky-50 shadow-sm relative overflow-hidden"
+          className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 border border-sky-50 shadow-sm relative overflow-hidden"
         >
-           <div className="text-2xl font-display font-black text-sky-900 mb-12 leading-tight tracking-tight">
+           <div className="text-lg sm:text-xl font-bold text-sky-900 mb-6 sm:mb-10 leading-snug tracking-tight">
              <FormattedContent content={questionContent} />
            </div>
            
@@ -240,22 +232,21 @@ export function ActiveQuiz({
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="mb-8 p-6 bg-orange-50 border-2 border-orange-200 rounded-3xl relative overflow-hidden"
+                  className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-2xl relative overflow-hidden"
                 >
-                   <Sparkles className="absolute top-2 right-2 text-orange-500 opacity-20" size={40} />
-                   <div className="flex flex-col md:flex-row gap-6 items-center">
+                   <div className="flex flex-col gap-3">
                       <div className="flex-1">
-                         <div className="flex items-center gap-2 mb-2">
-                            <AlertCircle className="text-orange-600" size={16} />
-                            <p className="text-[9px] font-black text-orange-800 uppercase tracking-widest leading-none">Quy tắc Gợi ý thông minh</p>
+                         <div className="flex items-center gap-2 mb-1">
+                            <AlertCircle className="text-orange-600" size={14} />
+                            <p className="text-[8px] font-bold text-orange-800 uppercase tracking-widest leading-tight">Gợi ý thông minh</p>
                          </div>
-                         <p className="text-xs text-orange-900 font-bold leading-relaxed mb-1 italic">"{current.hint || "Hãy xem lại câu hỏi kỹ hơn nhé!"}"</p>
+                         <p className="text-xs text-orange-900 font-bold leading-relaxed italic">"{current.hint || "Hãy xem lại câu hỏi kỹ hơn nhé!"}"</p>
                       </div>
                       <button 
                         onClick={() => setShowHint(false)}
-                        className="px-6 py-3 bg-orange-500 text-white rounded-xl font-black shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all uppercase tracking-widest text-[9px] shrink-0"
+                        className="w-full py-2 bg-orange-500 text-white rounded-lg font-bold shadow-md uppercase tracking-widest text-[8px]"
                       >
-                        Thử lại
+                        Thử lại ngay
                       </button>
                    </div>
                 </motion.div>
@@ -263,80 +254,57 @@ export function ActiveQuiz({
            </AnimatePresence>
 
            {isMultipleChoice ? (
-             <div className="space-y-4">
+             <div className="space-y-3 sm:space-y-4">
                 {current.options!.map((option, idx) => (
                   <motion.button
                     key={idx}
                     onClick={() => handleAnswer(idx)}
-                    whileHover={!isAnswered ? { scale: 1.01, x: 5 } : {}}
+                    whileHover={!isAnswered ? { scale: 1.01, x: 2 } : {}}
                     whileTap={!isAnswered ? { scale: 0.99 } : {}}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
                     className={cn(
-                      "w-full p-6 rounded-[1.5rem] flex items-center gap-6 border-2 transition-all text-left font-bold text-sm relative group",
+                      "w-full p-4 sm:p-5 rounded-xl sm:rounded-2xl flex items-center gap-4 sm:gap-6 border-2 transition-all text-left font-bold text-xs sm:text-sm relative group",
                       selectedIdx === idx 
                         ? (idx === actualAnswerIndex 
-                            ? "bg-sky-50 border-sky-500 text-sky-700 shadow-lg shadow-sky-100 ring-4 ring-sky-50/50" 
-                            : "bg-red-50 border-red-500 text-red-700 shadow-lg shadow-red-100 ring-4 ring-red-50/50")
+                            ? "bg-sky-50 border-sky-500 text-sky-700 shadow-md ring-4 ring-sky-50/50" 
+                            : "bg-red-50 border-red-500 text-red-700 shadow-md ring-4 ring-red-50/50")
                         : (isAnswered && idx === actualAnswerIndex 
-                            ? "bg-sky-50 border-sky-500 text-sky-700 shadow-md animate-pulse" 
+                            ? "bg-sky-50 border-sky-500 text-sky-700 animate-pulse" 
                             : "bg-white border-slate-100 text-slate-600 hover:border-sky-200 hover:bg-sky-50/10")
                     )}
                     disabled={isAnswered}
                   >
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-display font-black text-sm border shadow-sm transition-all duration-300",
+                      "w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 font-bold text-xs sm:text-sm border shadow-sm transition-all duration-300",
                       selectedIdx === idx 
                         ? (idx === actualAnswerIndex ? "bg-sky-500 text-white border-sky-400 rotate-[360deg]" : "bg-red-500 text-white border-red-400")
-                        : (isAnswered && idx === actualAnswerIndex ? "bg-sky-500 text-white border-sky-400" : "bg-white text-sky-600 border-sky-100 group-hover:bg-sky-50 shadow-inner")
+                        : (isAnswered && idx === actualAnswerIndex ? "bg-sky-500 text-white border-sky-400" : "bg-white text-sky-600 border-sky-100 shadow-inner")
                     )}>
                       {String.fromCharCode(65 + idx)}
                     </div>
                     <FormattedContent content={option} isInline className="flex-1 leading-relaxed" />
-                    <AnimatePresence>
-                      {isAnswered && idx === actualAnswerIndex && (
-                        <motion.div 
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0, opacity: 0 }}
-                        >
-                          <CheckCircle2 size={28} className="text-sky-500 shrink-0" />
-                        </motion.div>
-                      )}
-                      {isAnswered && selectedIdx === idx && idx !== actualAnswerIndex && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0, opacity: 0 }}
-                        >
-                          <XCircle size={28} className="text-red-500 shrink-0" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </motion.button>
                 ))}
              </div>
            ) : (
-             <div className="space-y-6">
+             <div className="space-y-4">
                 <div className="relative">
                   <textarea 
                     value={essayAnswer}
                     onChange={(e) => setEssayAnswer(e.target.value)}
                     disabled={isAnswered}
-                    placeholder="Nhập câu trả lời của em tại đây (hoặc đính kèm ảnh bài làm)..."
-                    className="w-full h-48 bg-slate-50 border-2 border-slate-100 rounded-3xl p-8 outline-none focus:border-sky-500 focus:bg-white transition-all font-medium text-lg leading-relaxed disabled:opacity-50"
+                    placeholder="Nhập câu trả lời của em tại đây..."
+                    className="w-full h-32 sm:h-40 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-6 outline-none focus:border-sky-500 focus:bg-white transition-all font-medium text-sm sm:text-base leading-relaxed disabled:opacity-50"
                   />
                   
                   {essayImage && (
-                    <div className="absolute bottom-4 left-4 w-20 h-20 rounded-xl overflow-hidden shadow-md border-2 border-white">
+                    <div className="absolute bottom-4 left-4 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shadow-md border-2 border-white">
                       <img src={`data:${essayImage.mimeType};base64,${essayImage.data}`} className="w-full h-full object-cover" />
                       {!isAnswered && (
                         <button 
                           onClick={() => setEssayImage(null)} 
                           className="absolute top-1 right-1 bg-white rounded-full text-red-500 shadow-sm hover:scale-110 transition-transform"
                         >
-                          <XCircle size={14} />
+                          <XCircle size={12} />
                         </button>
                       )}
                     </div>
@@ -345,10 +313,9 @@ export function ActiveQuiz({
                   {!isAnswered && (
                     <button 
                       onClick={() => imageInputRef.current?.click()}
-                      className="absolute bottom-4 right-4 p-3 bg-sky-100 text-sky-600 rounded-xl hover:bg-sky-200 transition-colors shadow-sm cursor-pointer"
-                      title="Đính kèm ảnh"
+                      className="absolute bottom-4 right-4 p-2.5 bg-sky-100 text-sky-600 rounded-xl hover:bg-sky-200 transition-colors shadow-sm cursor-pointer"
                     >
-                      <ImageIcon size={20} />
+                      <ImageIcon size={18} />
                     </button>
                   )}
                   <input 
@@ -374,9 +341,9 @@ export function ActiveQuiz({
                   <button 
                     onClick={submitEssay}
                     disabled={(!essayAnswer.trim() && !essayImage) || isGrading}
-                    className="w-full bg-sky-600 text-white font-black py-5 rounded-2xl hover:bg-sky-700 transition-all shadow-xl shadow-sky-200/50 flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-widest text-[11px]"
+                    className="w-full bg-sky-600 text-white font-bold py-4 rounded-xl hover:bg-sky-700 transition-all shadow-lg shadow-sky-200/50 flex items-center justify-center gap-2 active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px]"
                   >
-                     {isGrading ? <Loader2 className="animate-spin" /> : "Gửi câu trả lời"}
+                     {isGrading ? <Loader2 className="animate-spin" size={18} /> : "Gửi câu trả lời"}
                   </button>
                 )}
              </div>
@@ -387,27 +354,27 @@ export function ActiveQuiz({
                <motion.div 
                  initial={{ opacity: 0, height: 0 }}
                  animate={{ opacity: 1, height: "auto" }}
-                 className="mt-12 overflow-hidden"
+                 className="mt-8 overflow-hidden"
                >
-                  <div className="p-8 bg-sky-50/50 rounded-[2rem] border border-sky-100 relative shadow-inner">
-                    <div className="flex items-center gap-3 mb-4 text-sky-800 font-black uppercase tracking-[0.2em] text-[10px]">
-                       <div className="w-6 h-6 bg-sky-200 rounded-full flex items-center justify-center">
-                         <HelpCircle size={14} className="text-sky-700" />
+                  <div className="p-5 sm:p-8 bg-sky-50/50 rounded-2xl sm:rounded-[2rem] border border-sky-100 relative shadow-inner">
+                    <div className="flex items-center gap-2 mb-3 text-sky-800 font-bold uppercase tracking-[0.2em] text-[8px] sm:text-[9px]">
+                       <div className="w-5 h-5 bg-sky-200 rounded-full flex items-center justify-center">
+                         <HelpCircle size={12} className="text-sky-700" />
                        </div>
-                       Gia sư AI chấm điểm & giải thích
+                       Gia sư AI chấm điểm
                     </div>
-                    <div className="prose prose-slate prose-sm max-w-none markdown-body">
+                    <div className="prose prose-slate prose-xs sm:prose-sm max-w-none markdown-body">
                       {essayFeedback ? (
                         <>
-                          <div className="text-sky-900 leading-relaxed font-semibold italic opacity-90">
+                          <div className="text-sky-900 leading-relaxed font-semibold italic opacity-90 text-xs sm:text-sm">
                             <FormattedContent content={essayFeedback.feedback} />
                           </div>
-                          <div className={cn("mt-4 inline-block px-4 py-1.5 rounded-full font-bold", essayFeedback.isPassing ? "bg-sky-100 text-sky-700" : "bg-red-100 text-red-700")}>
+                          <div className={cn("mt-3 inline-block px-3 py-1 rounded-full font-bold text-[9px] sm:text-[10px]", essayFeedback.isPassing ? "bg-sky-100 text-sky-700" : "bg-red-100 text-red-700")}>
                             {essayFeedback.isPassing ? `Đạt Yêu Cầu (${essayFeedback.score}/10)` : `Cần Cố Gắng Hơn (${essayFeedback.score}/10)`}
                           </div>
                         </>
                       ) : (
-                        <div className="text-sky-900 leading-relaxed font-semibold italic opacity-90">
+                        <div className="text-sky-900 leading-relaxed font-semibold italic opacity-90 text-xs sm:text-sm">
                             <FormattedContent content={current.explanation} />
                         </div>
                       )}
@@ -415,10 +382,10 @@ export function ActiveQuiz({
                     
                     <button 
                       onClick={nextQuestion}
-                      className="w-full mt-10 bg-sky-600 text-white font-black py-5 rounded-2xl hover:bg-sky-700 transition-all shadow-xl shadow-sky-200/50 flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-widest text-[11px]"
+                      className="w-full mt-6 bg-sky-600 text-white font-bold py-4 rounded-xl hover:bg-sky-700 transition-all shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px]"
                     >
                       {currentIdx < quizzes.length - 1 ? "Tiếp tục thử thách" : "Hoàn thành & Nhận EXP"}
-                      <ChevronRight size={20} />
+                      <ChevronRight size={16} />
                     </button>
                   </div>
                </motion.div>

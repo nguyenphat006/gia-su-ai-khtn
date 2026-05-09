@@ -105,7 +105,7 @@ function GenerateMockModal({ isOpen, onClose, onSuccess }: GenerateMockModalProp
                   onChange={(e) => setCount(Number(e.target.value))}
                   className="flex-1 accent-indigo-600"
                 />
-                <span className="text-2xl font-black text-indigo-600 w-10 text-center">{count}</span>
+                <span className="text-2xl font-bold text-indigo-600 w-10 text-center">{count}</span>
               </div>
               <p className="text-xs text-slate-400 mt-1">Tối đa 50 học sinh mỗi lần</p>
             </div>
@@ -296,7 +296,7 @@ function ImportExcelModal({ isOpen, onClose, onSuccess }: ImportExcelModalProps)
           </div>
 
           <div className="space-y-3">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hướng dẫn & Mẫu</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hướng dẫn & Mẫu</p>
             <Button 
               variant="outline" 
               onClick={handleDownloadTemplate}
@@ -420,7 +420,7 @@ export default function UserIndex() {
             <Users size={20} className="sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h2 className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-tight">Quản lý Người dùng</h2>
+            <h2 className="text-base sm:text-xl font-bold text-slate-800 uppercase tracking-tight">Quản lý Người dùng</h2>
             <p className="hidden xs:block text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Học sinh, Giáo viên & Quản trị viên</p>
           </div>
           

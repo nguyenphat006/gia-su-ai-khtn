@@ -181,7 +181,7 @@ export default function UserFormModal({
             type="submit"
             form="user-form"
             disabled={loading}
-            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black h-12 px-8 shadow-lg transition-all"
+            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold h-12 px-8 shadow-lg transition-all"
           >
             {loading ? (
               <Spinner className="mr-2 h-4 w-4" />
@@ -217,7 +217,7 @@ export default function UserFormModal({
                  )}
                >
                  <r.icon size={20} />
-                 <span className="text-[10px] font-black uppercase tracking-widest">{r.label}</span>
+                 <span className="text-[10px] font-bold uppercase tracking-widest">{r.label}</span>
                </button>
              ))}
           </div>
@@ -285,7 +285,7 @@ export default function UserFormModal({
               exit={{ opacity: 0, height: 0 }}
               className="space-y-4 p-6 bg-sky-50/50 rounded-[2rem] border border-sky-100"
             >
-              <Label className="text-sky-700 font-black uppercase tracking-widest text-[10px]">Thông tin Học sinh</Label>
+              <Label className="text-sky-700 font-bold uppercase tracking-widest text-[10px]">Thông tin Học sinh</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label htmlFor="classId" className="text-[10px]">Lớp học {grade > 0 && `(Khối ${grade})`}</Label>
@@ -331,7 +331,7 @@ export default function UserFormModal({
               exit={{ opacity: 0, height: 0 }}
               className="space-y-4 p-6 bg-orange-50/50 rounded-[2rem] border border-orange-100"
             >
-              <Label className="text-orange-700 font-black uppercase tracking-widest text-[10px]">Thông tin Giáo viên</Label>
+              <Label className="text-orange-700 font-bold uppercase tracking-widest text-[10px]">Thông tin Giáo viên</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label htmlFor="employeeCode" className="text-[10px]">Mã nhân viên</Label>

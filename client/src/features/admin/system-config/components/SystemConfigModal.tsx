@@ -87,7 +87,7 @@ export default function SystemConfigModal({
             type="submit"
             form="system-config-form"
             disabled={loading}
-            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black h-12 px-8 shadow-lg transition-all"
+            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold h-12 px-8 shadow-lg transition-all"
           >
             {loading ? (
               <Spinner className="mr-2 h-4 w-4" />
@@ -110,7 +110,7 @@ export default function SystemConfigModal({
             value={key}
             onChange={(e) => setKey(e.target.value)}
             disabled={isEdit}
-            className="h-12 bg-slate-50/50 border-slate-200 rounded-xl font-black uppercase tracking-widest text-xs"
+            className="h-12 bg-slate-50/50 border-slate-200 rounded-xl font-bold uppercase tracking-widest text-xs"
             required
           />
         </div>

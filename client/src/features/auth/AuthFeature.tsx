@@ -33,7 +33,7 @@ export default function AuthFeature({
               />
             </div>
 
-            <h1 className="text-4xl font-display font-black tracking-tight leading-none mb-4 uppercase">
+            <h1 className="text-4xl font-bold tracking-tight leading-tight mb-4 uppercase">
               Gia Sư AI KHTN
             </h1>
             

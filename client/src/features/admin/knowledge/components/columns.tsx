@@ -88,7 +88,7 @@ export const columns: ColumnDef<KnowledgeDocument>[] = [
     cell: ({ row }) => {
       const isActive = row.getValue("isActive");
       return (
-        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
           isActive 
             ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
             : "bg-slate-50 text-slate-400 border-slate-100"
@@ -127,7 +127,7 @@ export const columns: ColumnDef<KnowledgeDocument>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 p-2 rounded-2xl shadow-xl border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hành động</DropdownMenuLabel>
+            <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hành động</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-slate-50" />
             <DropdownMenuItem 
               onClick={() => meta?.onEdit?.(doc)}

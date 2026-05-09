@@ -150,7 +150,7 @@ export default function QuizFormModal({
             type="submit"
             form="quiz-form"
             disabled={loading}
-            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black h-12 px-8 shadow-lg transition-all"
+            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold h-12 px-8 shadow-lg transition-all"
           >
             {loading ? <Spinner className="mr-2 h-4 w-4" /> : isEdit ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
             {isEdit ? "Cập nhật" : "Lưu vào Bank"}
@@ -239,17 +239,17 @@ export default function QuizFormModal({
 
         {type === "MULTIPLE_CHOICE" && (
           <div className="space-y-4 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
-            <Label className="text-sky-700 font-black uppercase tracking-widest text-[10px]">Các phương án lựa chọn & Đáp án đúng</Label>
+            <Label className="text-sky-700 font-bold uppercase tracking-widest text-[10px]">Các phương án lựa chọn & Đáp án đúng</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {options.map((opt, i) => (
                 <div key={i} className="space-y-1 relative group">
                    <div className="flex items-center justify-between ml-2">
-                      <Label className="text-[9px] font-black text-slate-400">Phương án {String.fromCharCode(65+i)}</Label>
+                      <Label className="text-[9px] font-bold text-slate-400">Phương án {String.fromCharCode(65+i)}</Label>
                       <button
                         type="button"
                         onClick={() => handleSelectCorrect(i)}
                         className={cn(
-                          "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter transition-all",
+                          "px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter transition-all",
                           selectedIndex === i 
                             ? "bg-emerald-500 text-white shadow-md" 
                             : "bg-slate-200 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600"

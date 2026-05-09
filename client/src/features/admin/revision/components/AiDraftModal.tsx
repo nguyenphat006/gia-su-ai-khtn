@@ -131,7 +131,7 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
             <Button 
               onClick={handleGenerate} 
               disabled={loading || !topic.trim()}
-              className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black px-8 h-12 shadow-lg transition-all gap-2"
+              className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold px-8 h-12 shadow-lg transition-all gap-2"
             >
               {loading ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Bắt đầu soạn thảo
@@ -140,7 +140,7 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
             <Button 
               onClick={handleSave}
               disabled={saving}
-              className="bg-sky-600 text-white hover:bg-sky-700 rounded-xl font-black px-10 h-12 shadow-lg shadow-sky-100 transition-all gap-2"
+              className="bg-sky-600 text-white hover:bg-sky-700 rounded-xl font-bold px-10 h-12 shadow-lg shadow-sky-100 transition-all gap-2"
             >
               {saving ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Lưu vào Ngân hàng
@@ -156,7 +156,7 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
               <div className="w-16 h-16 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mx-auto border border-sky-100 shadow-sm animate-pulse">
                 <Sparkles size={32} />
               </div>
-              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">AI Soạn thảo nội dung</h3>
+              <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">AI Soạn thảo nội dung</h3>
               <p className="text-sm text-slate-500 font-medium">Nhập chủ đề để AI tự động soạn câu hỏi & tài liệu ôn tập.</p>
             </div>
 
@@ -177,14 +177,14 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
                       )}
                     >
                       <t.icon size={20} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">{t.label}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">{t.label}</span>
                     </button>
                   ))}
                </div>
 
                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Khối lớp</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Khối lớp</Label>
                     <select 
                       value={grade}
                       onChange={(e) => setGrade(e.target.value)}
@@ -197,7 +197,7 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Số lượng (Dự kiến)</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Số lượng (Dự kiến)</Label>
                     <Input 
                       type="number" 
                       value={count} 
@@ -208,7 +208,7 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
                </div>
 
                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Chủ đề bài học</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chủ đề bài học</Label>
                   <Input 
                     placeholder="VD: Các thành phần của tế bào, Lực ma sát..."
                     value={topic}
@@ -222,19 +222,19 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
           <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">
                <div>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Kiểm duyệt nội dung nháp</h3>
+                  <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">Kiểm duyệt nội dung nháp</h3>
                   <p className="text-xs text-slate-500 font-medium italic">Nội dung được sinh dựa trên bộ sách "Chân trời sáng tạo".</p>
                </div>
                <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-full border border-emerald-100 flex items-center gap-2">
                   <CheckCircle2 size={16} />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center">AI đã hoàn tất</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-center">AI đã hoàn tất</span>
                </div>
             </div>
 
             <div className="max-h-[50vh] overflow-y-auto custom-scrollbar pr-2 space-y-4">
                {type === "QUIZ" && draftData?.quizzes?.map((q: any, i: number) => (
                  <div key={i} className="p-6 bg-slate-50 rounded-3xl border border-slate-200 relative group">
-                    <div className="absolute -left-3 top-6 w-8 h-8 bg-white border-2 border-slate-200 rounded-full flex items-center justify-center font-black text-xs text-slate-400 shadow-sm">
+                    <div className="absolute -left-3 top-6 w-8 h-8 bg-white border-2 border-slate-200 rounded-full flex items-center justify-center font-bold text-xs text-slate-400 shadow-sm">
                         {i + 1}
                     </div>
                     <p className="font-bold text-slate-800 mb-4 ml-2">{q.question}</p>
@@ -249,7 +249,7 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
                         ))}
                     </div>
                     <div className="mt-4 p-3 bg-white/50 rounded-xl border border-slate-100 text-[10px] text-slate-500 italic ml-2">
-                        <span className="font-black uppercase tracking-widest text-sky-600 mr-2">Giải thích:</span>
+                        <span className="font-bold uppercase tracking-widest text-sky-600 mr-2">Giải thích:</span>
                         {q.explanation}
                     </div>
                  </div>
@@ -258,11 +258,11 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
                {type === "FLASHCARD" && draftData?.flashcards?.map((f: any, i: number) => (
                  <div key={i} className="grid grid-cols-2 gap-4 p-4 bg-orange-50/30 rounded-2xl border border-orange-100">
                     <div className="space-y-1">
-                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">Mặt trước</span>
+                        <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">Mặt trước</span>
                         <p className="text-xs font-bold text-slate-700">{f.front}</p>
                     </div>
                     <div className="space-y-1">
-                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">Mặt sau</span>
+                        <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">Mặt sau</span>
                         <p className="text-xs font-bold text-orange-700">{f.back}</p>
                     </div>
                  </div>
@@ -272,7 +272,7 @@ export default function AiDraftModal({ isOpen, onClose, onSuccess }: AiDraftModa
                  <div className="p-6 bg-indigo-50/30 rounded-3xl border border-indigo-100">
                     <div className="flex items-center gap-3 mb-4">
                         <Brain className="text-indigo-600" />
-                        <span className="text-sm font-black text-indigo-900 uppercase">Cấu trúc sơ đồ tư duy</span>
+                        <span className="text-sm font-bold text-indigo-900 uppercase">Cấu trúc sơ đồ tư duy</span>
                     </div>
                     <pre className="text-[10px] font-mono text-slate-600 bg-white p-4 rounded-xl overflow-x-auto">
                         {JSON.stringify(draftData.mindmap, null, 2)}

@@ -5,7 +5,8 @@ import {
   Bell,
   ChevronRight,
   Home,
-  Shield
+  Shield,
+  ChevronDown
 } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { type AuthenticatedUser } from "@/features/auth/types";
@@ -76,21 +77,14 @@ export default function Header({
       </nav>
 
       {/* ── Right: User Info & Actions ────────────────────────── */}
-      <div className="flex items-center gap-2 sm:gap-4 ml-2 sm:ml-auto shrink-0">
-        <button className="relative p-2 text-slate-400 hover:text-sky-500 hover:bg-slate-50 rounded-xl transition-all border border-transparent sm:p-2.5">
-          <Bell size={18} className="sm:w-5 sm:h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
-
-        <div className="w-px h-5 bg-slate-100 hidden xs:block"></div>
-
+      <div className="flex items-center gap-3 sm:gap-4 ml-auto shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <motion.div
               whileHover={{ y: -1 }}
-              className="flex items-center gap-2 p-1 bg-slate-50 rounded-lg sm:rounded-xl border border-slate-100 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all pr-2 sm:pr-4 sm:gap-3 sm:p-1.5 outline-none"
+              className="flex items-center gap-2.5 p-1.5 sm:p-2 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all pr-3 sm:pr-5 outline-none"
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-sky-100 rounded-md sm:rounded-lg border border-sky-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 bg-sky-100 rounded-lg sm:rounded-xl border border-sky-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner">
                 {studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl ? (
                   <img
                     src={studentData?.photoURL || user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl || ""}
@@ -98,19 +92,20 @@ export default function Header({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-sky-600 font-bold text-xs sm:text-base uppercase">
+                  <div className="text-sky-600 font-bold text-sm sm:text-lg uppercase">
                     {(studentData?.displayName || user.displayName)?.[0]}
                   </div>
                 )}
               </div>
-              <div className="hidden xs:block">
-                <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1 sm:mb-1.5">
+              <div className="text-left min-w-0">
+                <p className="text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-tight mb-0.5">
                   {user.role === "STUDENT" ? "Học sinh" : (user.role === "TEACHER" ? "Giáo viên" : "Quản trị viên")}
                 </p>
-                <p className="text-[11px] sm:text-sm font-bold text-slate-900 leading-none truncate max-w-[80px] sm:max-w-none">
+                <p className="text-[11px] sm:text-sm font-bold text-slate-900 leading-tight truncate max-w-[100px] sm:max-w-none">
                   {studentData?.displayName || user.displayName}
                 </p>
               </div>
+              <ChevronDown size={14} className="text-slate-300 ml-1 shrink-0 hidden xs:block" />
             </motion.div>
           </DropdownMenuTrigger>
           

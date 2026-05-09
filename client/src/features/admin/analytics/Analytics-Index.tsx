@@ -54,9 +54,9 @@ function StatsCard({ label, value, icon: Icon, color, trend }: any) {
           <Icon size={22} />
         </div>
         <div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">{label}</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight mb-1.5">{label}</p>
           <div className="flex items-baseline gap-2">
-            <h4 className="text-2xl font-black text-slate-900 leading-none">{value}</h4>
+            <h4 className="text-2xl font-bold text-slate-900 leading-tight">{value}</h4>
             {trend && <span className="text-[10px] font-bold text-emerald-500">+{trend}%</span>}
           </div>
         </div>
@@ -253,7 +253,7 @@ export default function AnalyticsIndex() {
             <LayoutDashboard size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight leading-none mb-1.5">Báo cáo & Phân tích</h2>
+            <h2 className="text-xl font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1.5">Báo cáo & Phân tích</h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Giám sát hoạt động và sự tiến bộ của học sinh</p>
           </div>
         </div>
@@ -284,7 +284,7 @@ export default function AnalyticsIndex() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative",
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all relative",
                   activeTab === tab.id ? "text-sky-600" : "text-slate-400 hover:text-slate-600"
                 )}
               >
@@ -324,7 +324,7 @@ export default function AnalyticsIndex() {
                       <Clock size={20} />
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Ma trận thời điểm học tập</h3>
+                      <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Ma trận thời điểm học tập</h3>
                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phân tích hoạt động theo Thứ và Giờ</p>
                     </div>
                   </div>
@@ -348,7 +348,7 @@ export default function AnalyticsIndex() {
                     {/* Hour Labels */}
                     <div className="flex ml-16 mb-2">
                        {Array.from({ length: 24 }).map((_, h) => (
-                         <div key={h} className="flex-1 text-center text-[8px] font-black text-slate-400 uppercase tracking-tighter">
+                         <div key={h} className="flex-1 text-center text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
                            {h}h
                          </div>
                        ))}
@@ -358,7 +358,7 @@ export default function AnalyticsIndex() {
                     {Array.from({ length: 7 }).map((_, day) => (
                       <div key={day} className="flex items-center gap-2">
                          <div className="w-14 text-right pr-2">
-                           <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight">{DAYS[day]}</span>
+                           <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">{DAYS[day]}</span>
                          </div>
                          <div className="flex-1 flex gap-1 h-8 sm:h-10">
                             {Array.from({ length: 24 }).map((_, hour) => {
@@ -395,9 +395,9 @@ export default function AnalyticsIndex() {
                                          exit={{ opacity: 0, y: -10, scale: 0.9 }}
                                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 text-white p-2 rounded-lg z-50 shadow-2xl min-w-[120px] pointer-events-none text-center"
                                        >
-                                         <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{DAYS[day]}, {hour}:00</p>
+                                         <p className="text-[8px] font-bold text-slate-400 uppercase mb-1">{DAYS[day]}, {hour}:00</p>
                                          <div className="flex items-center justify-center gap-2">
-                                            <span className="text-xs font-black">{count}</span>
+                                            <span className="text-xs font-bold">{count}</span>
                                             <span className="text-[7px] font-bold text-sky-400 uppercase tracking-widest">Tương tác</span>
                                          </div>
                                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 w-2 h-2 bg-slate-900 rotate-45"></div>
@@ -423,7 +423,7 @@ export default function AnalyticsIndex() {
                         <Zap size={20} />
                       </div>
                       <div>
-                        <h3 className="text-base font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Phân phối danh hiệu</h3>
+                        <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Phân phối danh hiệu</h3>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tỉ lệ trình độ học sinh</p>
                       </div>
                     </div>
@@ -431,7 +431,7 @@ export default function AnalyticsIndex() {
                        {engagement?.rankDistribution?.map((rank, idx) => (
                          <div key={idx} className="space-y-1.5">
                             <div className="flex justify-between items-end">
-                              <p className="text-[10px] font-black text-slate-600 uppercase tracking-tight">{rank.rank}</p>
+                              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{rank.rank}</p>
                               <p className="text-[10px] font-bold text-slate-400"><b>{rank.count}</b> học sinh</p>
                             </div>
                             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner">
@@ -456,7 +456,7 @@ export default function AnalyticsIndex() {
                         <Flame size={20} />
                       </div>
                       <div>
-                        <h3 className="text-base font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Thống kê Chuyên cần</h3>
+                        <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Thống kê Chuyên cần</h3>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Hiệu suất rèn luyện trung bình</p>
                       </div>
                     </div>
@@ -464,8 +464,8 @@ export default function AnalyticsIndex() {
                        <div className="relative">
                           <div className="w-32 h-32 rounded-full border-8 border-slate-50 flex items-center justify-center relative z-10">
                              <div className="text-center">
-                                <span className="text-3xl font-black text-slate-900">84%</span>
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Active Rate</p>
+                                <span className="text-3xl font-bold text-slate-900">84%</span>
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Active Rate</p>
                              </div>
                           </div>
                           <svg className="absolute inset-0 w-32 h-32 -rotate-90 z-20 pointer-events-none">
@@ -587,7 +587,7 @@ export default function AnalyticsIndex() {
                   <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 border border-amber-100 shadow-sm">
                     <Trophy size={20} />
                   </div>
-                  <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Vinh danh Tháng {new Date().getMonth() + 1}</h3>
+                  <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight">Vinh danh Tháng {new Date().getMonth() + 1}</h3>
                 </div>
                 <Calendar size={18} className="text-slate-300" />
               </div>
@@ -599,17 +599,17 @@ export default function AnalyticsIndex() {
                     idx === 0 ? "bg-amber-50 border-amber-200 shadow-md shadow-amber-100" : "bg-white border-slate-100 hover:bg-slate-50"
                   )}>
                     <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs",
+                      "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs",
                       idx === 0 ? "bg-amber-400 text-white" : (idx === 1 ? "bg-slate-300 text-white" : (idx === 2 ? "bg-orange-300 text-white" : "bg-slate-50 text-slate-400"))
                     )}>
                       {idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tight">{s.displayName}</p>
-                      <p className="text-[9px] text-slate-400 font-bold leading-none mt-0.5 uppercase">{s.rank}</p>
+                      <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight">{s.displayName}</p>
+                      <p className="text-[9px] text-slate-400 font-bold leading-tight mt-0.5 uppercase">{s.rank}</p>
                     </div>
                     <div className="text-right">
-                       <p className="text-sm font-black text-sky-600 leading-none">{(s.xp || 0).toLocaleString()}</p>
+                       <p className="text-sm font-bold text-sky-600 leading-tight">{(s.xp || 0).toLocaleString()}</p>
                        <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">EXP Tháng</p>
                     </div>
                   </div>
@@ -623,7 +623,7 @@ export default function AnalyticsIndex() {
                     <Flame size={20} />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Kỷ luật & Chuyên cần</h3>
+                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Kỷ luật & Chuyên cần</h3>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Những học sinh chăm chỉ nhất</p>
                   </div>
                 </div>
@@ -632,17 +632,17 @@ export default function AnalyticsIndex() {
                    {engagement?.topStreaks?.slice(0, 20).map((streak, idx) => (
                      <div key={idx} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100 group">
                         <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 text-xs font-black">
+                           <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 text-xs font-bold">
                               {idx + 1}
                            </div>
                            <div className="min-w-0">
-                              <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tight leading-none mb-1">{streak.user?.displayName || "Học sinh"}</p>
+                              <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight leading-tight mb-1">{streak.user?.displayName || "Học sinh"}</p>
                               <p className="text-[9px] text-slate-400 font-bold uppercase">@{streak.user?.username}</p>
                            </div>
                         </div>
                         <div className="flex items-center gap-2 px-3 py-1 bg-orange-50 rounded-full border border-orange-100">
                            <Flame size={12} className="text-orange-500 fill-orange-500" />
-                           <span className="text-xs font-black text-orange-700">{streak.longestStreak} ngày</span>
+                           <span className="text-xs font-bold text-orange-700">{streak.longestStreak} ngày</span>
                         </div>
                      </div>
                    ))}
@@ -663,18 +663,18 @@ export default function AnalyticsIndex() {
           <div className="space-y-6">
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-sky-600 font-black uppercase">
+                 <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-sky-600 font-bold uppercase">
                    {selectedLog.session?.user?.displayName?.[0] || "?"}
                  </div>
                  <div>
-                   <p className="text-sm font-black text-slate-900">{selectedLog.session?.user?.displayName || "Ẩn danh"}</p>
+                   <p className="text-sm font-bold text-slate-900">{selectedLog.session?.user?.displayName || "Ẩn danh"}</p>
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                      @{selectedLog.session?.user?.username || "unknown"}
                    </p>
                  </div>
                </div>
                <div className="text-right">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thời gian</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thời gian</p>
                  <p className="text-xs font-bold text-slate-600">
                    {selectedLog.createdAt ? new Date(selectedLog.createdAt).toLocaleString() : "---"}
                  </p>
@@ -685,7 +685,7 @@ export default function AnalyticsIndex() {
                {isLoadingSession ? (
                  <div className="flex flex-col items-center justify-center py-20 gap-4">
                    <div className="w-12 h-12 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin" />
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang trích xuất toàn bộ hội thoại...</p>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Đang trích xuất toàn bộ hội thoại...</p>
                  </div>
                ) : sessionMessages.length > 0 ? (
                  <div className="space-y-4">
@@ -695,7 +695,7 @@ export default function AnalyticsIndex() {
                        msg.role === "USER" ? "ml-auto items-end" : "mr-auto items-start"
                      )}>
                         <div className={cn(
-                          "flex items-center gap-2 text-[8px] font-black uppercase tracking-widest px-1",
+                          "flex items-center gap-2 text-[8px] font-bold uppercase tracking-widest px-1",
                           msg.role === "USER" ? "text-slate-400" : "text-sky-500"
                         )}>
                           {msg.role === "USER" ? <UserIcon size={10} /> : <Zap size={10} className="text-orange-400" />}
@@ -715,7 +715,7 @@ export default function AnalyticsIndex() {
                ) : (
                  <div className="space-y-6">
                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
                         <UserIcon size={12} /> Học sinh hỏi
                       </div>
                       <div className="bg-sky-50 p-5 rounded-2xl rounded-tl-none border border-sky-100 text-sky-900 text-sm font-bold italic leading-relaxed shadow-sm">
@@ -724,7 +724,7 @@ export default function AnalyticsIndex() {
                    </div>
 
                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
                         <Zap size={12} className="text-orange-400" /> Trợ lý AI trả lời
                       </div>
                       <div className="bg-white p-6 rounded-2xl rounded-tr-none border border-slate-100 shadow-sm text-slate-700 text-sm leading-relaxed prose prose-slate max-w-none">
@@ -736,12 +736,11 @@ export default function AnalyticsIndex() {
             </div>
             
             <div className="flex justify-end pt-4 border-t border-slate-100">
-               <Button onClick={() => setSelectedLog(null)} className="rounded-xl px-10 h-11 font-black uppercase tracking-[0.2em] text-[10px] bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xl active:scale-95">Đóng cửa sổ</Button>
+               <Button onClick={() => setSelectedLog(null)} className="rounded-xl px-10 h-11 font-bold uppercase tracking-[0.2em] text-[10px] bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xl active:scale-95">Đóng cửa sổ</Button>
             </div>
           </div>
         )}
       </ResponsiveModal>
     </div>
   )
-}
 }

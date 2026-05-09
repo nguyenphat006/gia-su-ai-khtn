@@ -65,8 +65,8 @@ export default function AppLayout({
 
         {/* Main Workspace Area: Full-screen on mobile */}
         {/* Thêm pb-[76px] trên mobile để không bị MobileNav che khuất (khớp với h-MobileNav) */}
-        <main className="flex-1 px-0 sm:px-6 pb-[76px] sm:pb-6 relative z-10 min-h-0 flex flex-col">
-          <div className="flex-1 bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-[0_-8px_30px_rgba(0,0,0,0.02)] sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-t sm:border border-slate-100 overflow-hidden relative flex flex-col">
+        <main className="flex-1 px-0 sm:px-6 pb-[76px] sm:pb-6 relative z-10 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-[0_-8px_30px_rgba(0,0,0,0.02)] sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-t sm:border border-slate-100 overflow-hidden relative flex flex-col min-h-0">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={location.pathname}

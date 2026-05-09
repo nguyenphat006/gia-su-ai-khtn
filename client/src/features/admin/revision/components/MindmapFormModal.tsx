@@ -98,7 +98,7 @@ export default function MindmapFormModal({
             type="submit"
             form="mindmap-form"
             disabled={loading}
-            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black h-12 px-8 shadow-lg transition-all"
+            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold h-12 px-8 shadow-lg transition-all"
           >
             {loading ? <Spinner className="mr-2 h-4 w-4" /> : isEdit ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
             {isEdit ? "Cập nhật" : "Lưu sơ đồ"}

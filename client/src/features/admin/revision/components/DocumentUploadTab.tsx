@@ -123,7 +123,7 @@ export default function DocumentUploadTab() {
             <Button 
               onClick={handleUpload} 
               disabled={!file || uploading}
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black uppercase tracking-widest gap-2"
+              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold uppercase tracking-widest gap-2"
             >
               {uploading ? <RefreshCw className="animate-spin" size={18} /> : <UploadCloud size={18} />}
               Bắt đầu Phân tích
@@ -166,7 +166,7 @@ export default function DocumentUploadTab() {
 
                 <div className="flex items-center gap-3">
                   <div className="text-center px-4 border-l border-slate-100">
-                    <p className="text-2xl font-black text-sky-600">{doc._count.questions}</p>
+                    <p className="text-2xl font-bold text-sky-600">{doc._count.questions}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Câu hỏi Pending</p>
                   </div>
                   

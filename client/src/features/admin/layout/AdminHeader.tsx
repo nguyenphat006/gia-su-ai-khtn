@@ -124,16 +124,16 @@ export function AdminHeader({ user, onLogout, toggleSidebar, isSidebarOpen }: Ad
                 {user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl ? (
                   <img src={user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl || ""} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="text-slate-500 font-black text-xs sm:text-base uppercase">
+                  <div className="text-slate-500 font-bold text-xs sm:text-base uppercase">
                     {(user.displayName || user.email)?.[0]}
                   </div>
                 )}
               </div>
               <div className="hidden md:block">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight mb-1.5">
                   {user.role}
                 </p>
-                <p className="text-sm font-black text-slate-900 leading-none">
+                <p className="text-sm font-bold text-slate-900 leading-tight">
                   {user.displayName || "Quản trị viên"}
                 </p>
               </div>
@@ -144,7 +144,7 @@ export function AdminHeader({ user, onLogout, toggleSidebar, isSidebarOpen }: Ad
           <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-2xl border-slate-100 mt-2">
             <DropdownMenuLabel className="p-3">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Đang đăng nhập</p>
-              <p className="text-xs font-black text-slate-800 truncate">{user.email}</p>
+              <p className="text-xs font-bold text-slate-800 truncate">{user.email}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem 

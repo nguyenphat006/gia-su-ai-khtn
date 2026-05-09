@@ -109,7 +109,7 @@ export default function FlashcardFormModal({
             type="submit"
             form="flashcard-form"
             disabled={loading}
-            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black h-12 px-8 shadow-lg transition-all"
+            className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold h-12 px-8 shadow-lg transition-all"
           >
             {loading ? <Spinner className="mr-2 h-4 w-4" /> : isEdit ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
             {isEdit ? "Cập nhật" : "Lưu bộ thẻ"}
@@ -159,7 +159,7 @@ export default function FlashcardFormModal({
 
         <div className="space-y-4">
            <div className="flex items-center justify-between">
-              <Label className="text-orange-600 font-black uppercase tracking-widest text-[10px]">Danh sách các thẻ ({cards.length})</Label>
+              <Label className="text-orange-600 font-bold uppercase tracking-widest text-[10px]">Danh sách các thẻ ({cards.length})</Label>
               <Button type="button" onClick={addCard} variant="outline" size="sm" className="h-8 rounded-lg border-orange-200 text-orange-600 font-bold text-[10px] uppercase">
                 <Plus size={14} className="mr-1" /> Thêm thẻ mới
               </Button>
@@ -169,7 +169,7 @@ export default function FlashcardFormModal({
               {cards.map((card, i) => (
                 <div key={i} className="group relative flex flex-col md:flex-row gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:border-orange-200">
                     <div className="flex-1 space-y-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Mặt trước (Hỏi)</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Mặt trước (Hỏi)</span>
                         <Input 
                           value={card.front}
                           onChange={(e) => updateCard(i, "front", e.target.value)}
@@ -178,7 +178,7 @@ export default function FlashcardFormModal({
                         />
                     </div>
                     <div className="flex-1 space-y-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Mặt sau (Trả lời)</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Mặt sau (Trả lời)</span>
                         <Input 
                           value={card.back}
                           onChange={(e) => updateCard(i, "back", e.target.value)}

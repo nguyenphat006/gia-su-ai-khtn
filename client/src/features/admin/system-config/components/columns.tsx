@@ -44,7 +44,7 @@ export const columns: ColumnDef<SystemConfig>[] = [
     ),
     cell: ({ row }) => {
       return (
-        <span className="font-black text-slate-800 tracking-tight text-xs uppercase">
+        <span className="font-bold text-slate-800 tracking-tight text-xs uppercase">
           {row.getValue("key")}
         </span>
       );
@@ -106,7 +106,7 @@ export const columns: ColumnDef<SystemConfig>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 p-2 rounded-2xl shadow-xl border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hành động</DropdownMenuLabel>
+            <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hành động</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-slate-50" />
             <DropdownMenuItem 
               onClick={() => meta?.onEdit?.(config)}

@@ -28,7 +28,7 @@ export function AiMatchConfig({ battleConfig, setBattleConfig, errorMsg, onCance
                 <Bot size={24} className="sm:w-8 sm:h-8" />
              </div>
              <div>
-                <h3 className="text-xl sm:text-3xl font-display font-black text-orange-900 tracking-tight uppercase leading-none">Cấu hình đấu AI</h3>
+                <h3 className="text-xl sm:text-3xl font-bold text-orange-900 tracking-tight uppercase leading-tight">Cấu hình đấu AI</h3>
                 <p className="text-orange-800/60 font-bold text-[10px] sm:text-xs uppercase tracking-widest mt-1">Sẵn sàng chưa? Hãy nhập chủ đề em muốn đấu nhé!</p>
              </div>
           </div>
@@ -41,7 +41,7 @@ export function AiMatchConfig({ battleConfig, setBattleConfig, errorMsg, onCance
 
           <div className="grid grid-cols-1 gap-4 sm:gap-8 mb-8 sm:mb-12">
              <div className="space-y-2">
-                <label className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">📚 Chủ đề thách đấu</label>
+                <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">📚 Chủ đề thách đấu</label>
                 <input 
                   type="text" 
                   value={battleConfig.topic}
@@ -53,7 +53,7 @@ export function AiMatchConfig({ battleConfig, setBattleConfig, errorMsg, onCance
              
              <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
-                  <label className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">📦 Khối lớp</label>
+                  <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">📦 Khối lớp</label>
                   <select 
                     value={battleConfig.grade}
                     onChange={(e) => setBattleConfig(prev => ({ ...prev, grade: e.target.value }))}
@@ -67,7 +67,7 @@ export function AiMatchConfig({ battleConfig, setBattleConfig, errorMsg, onCance
                   </select>
                </div>
                <div className="space-y-2">
-                  <label className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">🔢 Số câu</label>
+                  <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">🔢 Số câu</label>
                   <input 
                     type="number" 
                     min="1"
@@ -80,7 +80,7 @@ export function AiMatchConfig({ battleConfig, setBattleConfig, errorMsg, onCance
              </div>
 
              <div className="space-y-2">
-                <label className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">📝 Dạng bài thách đấu</label>
+                <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">📝 Dạng bài thách đấu</label>
                 <select 
                   value={battleConfig.type}
                   onChange={(e) => setBattleConfig(prev => ({ ...prev, type: e.target.value }))}
@@ -98,7 +98,7 @@ export function AiMatchConfig({ battleConfig, setBattleConfig, errorMsg, onCance
                       <Zap size={16} className="sm:w-5 sm:h-5" />
                    </div>
                    <div>
-                      <p className="text-[10px] font-black text-orange-800 uppercase tracking-widest mb-0.5 sm:mb-1">Chế độ thi:</p>
+                      <p className="text-[10px] font-bold text-orange-800 uppercase tracking-widest mb-0.5 sm:mb-1">Chế độ thi:</p>
                       <p className="text-[10px] sm:text-xs text-orange-900/70 font-medium leading-relaxed italic">
                          {battleConfig.type === "Trắc nghiệm" && "Thử thách phản xạ và độ chính xác cao."}
                          {battleConfig.type === "Tự luận" && "Thử thách khả năng diễn đạt và hiểu sâu kiến thức."}
@@ -112,14 +112,14 @@ export function AiMatchConfig({ battleConfig, setBattleConfig, errorMsg, onCance
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button 
               onClick={onCancel}
-              className="flex-1 py-4 sm:py-5 rounded-xl sm:rounded-2xl font-black text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-widest text-[10px] sm:text-[11px]"
+              className="flex-1 py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-widest text-[10px] sm:text-[11px]"
             >
               Hủy bỏ
             </button>
             <button 
               onClick={onConfirm}
               disabled={!battleConfig.topic || !battleConfig.grade}
-              className="flex-[2] bg-orange-600 text-white font-black py-4 sm:py-6 rounded-xl sm:rounded-[2rem] shadow-xl shadow-orange-200 hover:bg-orange-700 disabled:opacity-50 transition-all text-xs sm:text-sm uppercase tracking-[0.2em] transform active:scale-95"
+              className="flex-[2] bg-orange-600 text-white font-bold py-4 sm:py-6 rounded-xl sm:rounded-[2rem] shadow-xl shadow-orange-200 hover:bg-orange-700 disabled:opacity-50 transition-all text-xs sm:text-sm uppercase tracking-[0.2em] transform active:scale-95"
             >
               BẮT ĐẦU TRẬN ĐẤU
             </button>

@@ -73,7 +73,7 @@ export const classColumns: ColumnDef<any>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-slate-100">
-            <DropdownMenuLabel className="text-[10px] uppercase font-black text-slate-400">Hành động</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-[10px] uppercase font-bold text-slate-400">Hành động</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => meta?.onEdit?.(cls)} className="flex items-center gap-2 cursor-pointer">
               <Pencil size={14} /> Chỉnh sửa
             </DropdownMenuItem>

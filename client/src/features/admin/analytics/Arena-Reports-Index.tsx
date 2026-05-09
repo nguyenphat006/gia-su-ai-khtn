@@ -46,7 +46,7 @@ function PlayerMiniCard({ player, isRight = false }: { player: ArenaPlayerInfo, 
             {player.displayName}
           </p>
           <div className={cn("flex items-center gap-1.5", isRight ? "justify-end" : "justify-start")}>
-             <span className="text-[10px] font-bold text-sky-600 leading-none">{player.score ?? 0}</span>
+             <span className="text-[10px] font-bold text-sky-600 leading-tight">{player.score ?? 0}</span>
              {player.winner ? (
                <CheckCircle2 size={10} className="text-emerald-500" />
              ) : (
@@ -329,7 +329,7 @@ export default function ArenaReportsIndex() {
                         {selectedMatch.player1.displayName?.[0] || "?"}
                       </div>
                       <p className="text-sm font-bold text-slate-900 uppercase">{selectedMatch.player1.displayName}</p>
-                      <div className="text-4xl font-bold text-emerald-600 leading-none">{selectedMatch.player1.score ?? 0}</div>
+                      <div className="text-4xl font-bold text-emerald-600 leading-tight">{selectedMatch.player1.score ?? 0}</div>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Điểm đạt được</p>
                       <div className="mt-2 text-[10px] font-bold text-slate-500">+{selectedMatch.player1.xpEarned} EXP</div>
                    </div>
@@ -350,7 +350,7 @@ export default function ArenaReportsIndex() {
                         {selectedMatch.player2.id === null ? <Bot size={32} /> : (selectedMatch.player2.displayName?.[0] || "?")}
                       </div>
                       <p className="text-sm font-bold text-slate-900 uppercase">{selectedMatch.player2.displayName}</p>
-                      <div className="text-4xl font-bold text-emerald-600 leading-none">{selectedMatch.player2.score ?? 0}</div>
+                      <div className="text-4xl font-bold text-emerald-600 leading-tight">{selectedMatch.player2.score ?? 0}</div>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Điểm đạt được</p>
                       <div className="mt-2 text-[10px] font-bold text-slate-500">+{selectedMatch.player2.xpEarned} EXP</div>
                    </div>
@@ -359,15 +359,15 @@ export default function ArenaReportsIndex() {
                 <div className="bg-slate-50 rounded-[2rem] p-6 sm:p-8 space-y-6">
                    <div className="flex items-center gap-3">
                       <Zap size={20} className="text-sky-500" />
-                      <h4 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-none">Thông tin chủ đề</h4>
+                      <h4 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight">Thông tin chủ đề</h4>
                    </div>
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1">
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">Chủ đề thách đấu</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight mb-1.5">Chủ đề thách đấu</p>
                          <p className="text-sm font-bold text-slate-700 uppercase">{selectedMatch.topic}</p>
                       </div>
                       <div className="space-y-1">
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">Chế độ</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight mb-1.5">Chế độ</p>
                          <p className={cn(
                            "text-sm font-bold",
                            selectedMatch.mode === "PVP" ? "text-indigo-600" : "text-orange-600"
