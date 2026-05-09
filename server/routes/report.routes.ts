@@ -158,6 +158,20 @@ router.get("/arena-logs/:id", reportController.getArenaLogDetail);
 
 /**
  * @swagger
+ * /api/reports/arena-export:
+ *   get:
+ *     summary: Xuất danh sách nhật ký Arena ra file Excel
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Trả về file Excel (.xlsx)
+ */
+router.get("/arena-export", reportController.exportArenaLogsExcel);
+
+/**
+ * @swagger
  * /api/reports/user-engagement:
  *   get:
  *     summary: Lấy thống kê chuyên cần và phân bổ bậc danh hiệu

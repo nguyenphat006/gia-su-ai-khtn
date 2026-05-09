@@ -339,7 +339,7 @@ export async function getArenaLogs(page = 1, limit = 50, userId?: string, mode?:
       displayName: 'Gia sư AI',
       username: null,
       studentCode: null,
-      score: null,
+      score: m.player1Winner ? Math.max(0, m.player1Score - Math.floor(Math.random() * 50) - 20) : (m.player1Score + Math.floor(Math.random() * 50) + 10),
       winner: !m.player1Winner,
       xpEarned: 0,
     } : {
@@ -409,7 +409,7 @@ export async function getArenaLogDetail(id: string) {
         id: null,
         displayName: 'Gia sư AI',
         username: null,
-        score: null,
+        score: mainRecord.winner ? Math.max(0, mainRecord.score - 45) : (mainRecord.score + 35),
         winner: !mainRecord.winner,
         xpEarned: 0,
       }

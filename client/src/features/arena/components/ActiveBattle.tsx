@@ -29,28 +29,32 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
   const [attempts, setAttempts] = useState(0);
   const [results, setResults] = useState<boolean[]>([]);
 
+  // AI simulation - Cải tiến để mượt mà hơn
   useEffect(() => {
-    setOppScores(scores);
-  }, [scores]);
+    if (!isAiMode || isAnswered || showExplanation) return;
 
-  // AI simulation
+    // AI suy nghĩ từ 3-7 giây (nhanh hơn trước)
+    const aiThinkingTime = Math.random() * 4000 + 3000;
+    const timer = setTimeout(() => {
+      const correct = Math.random() > 0.3; // Tỉ lệ AI đúng cao hơn (70%)
+      if (correct) {
+        const aiPoints = 15 + Math.floor(timeLeft / 2);
+        setOppScores((prev: any) => ({
+          ...prev,
+          [opponent.id]: (prev[opponent.id] || 0) + aiPoints
+        }));
+      }
+    }, aiThinkingTime);
+
+    return () => clearTimeout(timer);
+  }, [currentIdx, isAnswered, showExplanation, isAiMode, opponent.id]);
+
+  // Đồng bộ scores từ props chỉ khi ở chế độ PVP (vì PVP do server quản lý scores)
   useEffect(() => {
-    if (isAnswered) return;
-    if (isAiMode && !isAnswered) {
-      const aiThinkingTime = Math.random() * 5000 + 4000;
-      const timer = setTimeout(() => {
-        const correct = Math.random() > 0.35;
-        if (correct) {
-          const aiPoints = 10 + Math.floor((30 - aiThinkingTime / 1000));
-          setOppScores((prev: any) => ({
-            ...prev,
-            [opponent.id]: (prev[opponent.id] || 0) + Math.max(0, aiPoints)
-          }));
-        }
-      }, aiThinkingTime);
-      return () => clearTimeout(timer);
+    if (!isAiMode) {
+      setOppScores(scores);
     }
-  }, [currentIdx, isAnswered]);
+  }, [scores, isAiMode]);
 
   // Timer
   useEffect(() => {
@@ -158,8 +162,8 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
              <div className="min-w-0">
                 <p className="text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Của em</p>
                 <div className="flex items-baseline gap-1">
-                   <p className="text-xl sm:text-2xl font-bold text-sky-900 leading-tight">{myScore}</p>
-                   <span className="text-[7px] sm:text-[9px] font-bold text-sky-500 uppercase">EXP</span>
+                   <p className="text-xl sm:text-2xl font-bold text-sky-900 leading-none">{myScore}</p>
+                   <span className="text-[7px] sm:text-[9px] font-bold text-sky-50 uppercase">EXP</span>
                 </div>
              </div>
           </div>
@@ -172,7 +176,7 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
                 </svg>
                 {/* Fallback for smaller SVG viewBox if needed, using 32 as center */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                   <span className={cn("text-xl sm:text-2xl font-bold leading-tight", timeLeft < 10 ? "text-red-500 animate-pulse" : "text-sky-900")}>{timeLeft}</span>
+                   <span className={cn("text-xl sm:text-2xl font-bold leading-none", timeLeft < 10 ? "text-red-500 animate-pulse" : "text-sky-900")}>{timeLeft}</span>
                 </div>
              </div>
           </div>
@@ -183,12 +187,12 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
                   {isAiMode ? "AI" : "Đối thủ"}
                 </p>
                 <div className="flex items-center justify-end gap-1.5">
-                   <p className="text-base sm:text-xl font-bold text-slate-900 truncate max-w-[60px] sm:max-w-none leading-tight">
+                   <p className="text-base sm:text-xl font-bold text-slate-900 truncate max-w-[60px] sm:max-w-none leading-none">
                      {isAiMode ? oppScore : (opponent.displayName || opponent.username)}
                    </p>
                 </div>
                 {!isAiMode && (
-                   <div className="flex items-baseline justify-end gap-0.5 leading-tight mt-0.5">
+                   <div className="flex items-baseline justify-end gap-0.5 leading-none mt-0.5">
                       <p className="text-base sm:text-lg font-bold text-sky-600">{oppScore}</p>
                       <span className="text-[7px] font-bold text-sky-400 uppercase">PTS</span>
                    </div>

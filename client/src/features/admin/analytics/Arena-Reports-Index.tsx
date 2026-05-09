@@ -72,7 +72,6 @@ export default function ArenaReportsIndex() {
   const [totalLogs, setTotalLogs] = React.useState(0);
 
   const [isExporting, setIsExporting] = React.useState(false);
-  const reportRef = React.useRef<HTMLDivElement>(null);
   const searchTimeoutRef = React.useRef<any>(null);
 
   const fetchData = React.useCallback(async () => {
@@ -118,36 +117,24 @@ export default function ArenaReportsIndex() {
     }
   };
 
-  const handleExportPDF = async () => {
-    if (!reportRef.current) return;
+  const handleExportExcel = async () => {
     setIsExporting(true);
-    const toastId = toast.loading("Đang chuẩn bị báo cáo...");
+    const toastId = toast.loading("Đang chuẩn bị file Excel...");
     
     try {
-      // Dynamic imports for PDF generation
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
+      const response = await fetch("/api/reports/arena-export");
+      if (!response.ok) throw new Error("Lỗi khi tải file");
 
-      const element = reportRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#fcfdfe",
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
-      });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bao_cao_arena_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
       
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "px",
-        format: [canvas.width / 2, canvas.height / 2]
-      });
-      
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
-      pdf.save(`bao_cao_arena_${new Date().toISOString().slice(0, 10)}.pdf`);
-      toast.success("Đã xuất báo cáo thành công!", { id: toastId });
+      toast.success("Đã xuất báo cáo Excel thành công!", { id: toastId });
     } catch (error) {
       console.error("Export error:", error);
       toast.error("Lỗi khi xuất báo cáo.");
@@ -157,7 +144,7 @@ export default function ArenaReportsIndex() {
   };
 
   return (
-    <div className="space-y-6" ref={reportRef}>
+    <div className="space-y-6">
       <AnimatePresence mode="wait">
         {view === "list" ? (
           <motion.div
@@ -182,12 +169,12 @@ export default function ArenaReportsIndex() {
               <div className="flex items-center gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={handleExportPDF}
+                  onClick={handleExportExcel}
                   disabled={isExporting || loading}
                   className="rounded-xl border-slate-200 h-10 px-4 gap-2 text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
                 >
                   {isExporting ? <RefreshCcw size={14} className="animate-spin" /> : <Download size={14} />}
-                  <span>Xuất PDF</span>
+                  <span>Xuất Excel</span>
                 </Button>
                 <Button variant="outline" onClick={() => { setPagination(p => ({ ...p, pageIndex: 0 })); fetchData(); }} className="h-10 w-10 p-0 rounded-xl border-slate-200">
                   <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
