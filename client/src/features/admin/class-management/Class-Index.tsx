@@ -90,7 +90,7 @@ export default function ClassIndex() {
                 <School size={24} />
             </div>
             <div>
-                <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Quản lý Lớp học</h2>
+                <h2 className="text-xl font-bold text-slate-800 uppercase tracking-tight">Quản lý Lớp học</h2>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Danh sách các lớp trong hệ thống</p>
             </div>
         </div>

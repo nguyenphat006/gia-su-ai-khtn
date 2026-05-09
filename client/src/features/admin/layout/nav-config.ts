@@ -4,7 +4,8 @@ import {
   LayoutDashboard, 
   BrainCircuit,
   Database,
-  School
+  School,
+  Swords
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -26,6 +27,21 @@ export interface NavGroup {
 }
 
 export const ADMIN_NAV_CONFIG: NavGroup[] = [
+  {
+    groupName: "Giám sát & Báo cáo",
+    items: [
+      {
+        title: "Báo cáo & Thống kê",
+        to: "/admin/analytics",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Báo cáo Đấu trường",
+        to: "/admin/arena-reports",
+        icon: Swords,
+      }
+    ]
+  },
   {
     groupName: "Hệ thống",
     items: [

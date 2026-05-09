@@ -59,7 +59,7 @@ export function ResponsiveModal({
         ) : (title || description) ? (
           <DialogHeader className="p-6 pb-4 text-left border-b border-slate-50 shrink-0">
             {title && (
-              <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <DialogTitle className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 {title}
               </DialogTitle>
             )}

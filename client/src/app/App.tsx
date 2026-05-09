@@ -18,6 +18,8 @@ const AdminLayout = lazy(() => import("@/app/AdminLayout"));
 const SystemConfigPage = lazy(() => import("@/pages/admin/SystemConfigPage"));
 const KnowledgeBasePage = lazy(() => import("@/pages/admin/KnowledgeBasePage"));
 const RevisionPage = lazy(() => import("@/pages/admin/RevisionPage"));
+const AnalyticsPage = lazy(() => import("@/pages/admin/AnalyticsPage"));
+const ArenaReportsPage = lazy(() => import("@/pages/admin/ArenaReportsPage"));
 const UserManagementPage = lazy(() => import("@/pages/admin/UserManagementPage"));
 const ClassManagementPage = lazy(() => import("@/pages/admin/ClassManagementPage"));
 
@@ -141,10 +143,11 @@ export default function App() {
                     path="/admin"
                     element={<AdminLayout user={user} isAdmin={isAdmin} onLogout={async () => { await logout(); }} />}
                   >
-                    <Route index element={<Navigate to="/admin/ai-config" replace />} />
+                    <Route index element={<Navigate to="/admin/analytics" replace />} />
                     <Route path="ai-config" element={<SystemConfigPage />} />
-                    <Route path="knowledge" element={<KnowledgeBasePage />} />
-                    <Route path="revision" element={<RevisionPage />} />
+                    <Route path="analytics" element={<AnalyticsPage />} />
+                    <Route path="arena-reports" element={<ArenaReportsPage />} />
+                    <Route path="knowledge" element={<KnowledgeBasePage />} />                    <Route path="revision" element={<RevisionPage />} />
                     <Route path="users" element={<UserManagementPage />} />
                     <Route path="classes" element={<ClassManagementPage />} />
                     {/* Catch-all for undefined admin routes to keep user inside AdminLayout */}

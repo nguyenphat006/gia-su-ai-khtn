@@ -91,7 +91,7 @@ export default function ProfileEditModal({
           className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl border border-sky-50 max-h-[90vh] overflow-y-auto custom-scrollbar"
         >
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-display font-black text-sky-900 tracking-tight">
+            <h3 className="text-xl font-bold text-sky-900 tracking-tight">
               {isForcePasswordChange ? "Đổi mật khẩu bắt buộc" : "Thông tin tài khoản"}
             </h3>
             {!isForcePasswordChange && (
@@ -131,7 +131,7 @@ export default function ProfileEditModal({
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-2">
-                  <p className="text-[10px] font-black text-black uppercase tracking-widest">
+                  <p className="text-[10px] font-bold text-black uppercase tracking-widest">
                     Mã định danh hệ thống
                   </p>
                   <div className="flex items-center justify-between gap-2 overflow-hidden">
@@ -237,7 +237,7 @@ export default function ProfileEditModal({
                 <button
                   type="submit"
                   disabled={isSubmitting || !oldPassword || !newPassword || !confirmPassword}
-                  className="w-full mt-2 bg-sky-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-sky-200/50 hover:bg-sky-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 uppercase tracking-widest text-xs"
+                  className="w-full mt-2 bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-sky-200/50 hover:bg-sky-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 uppercase tracking-widest text-xs"
                 >
                   {isSubmitting ? (
                     <Loader2 className="animate-spin" size={20} />

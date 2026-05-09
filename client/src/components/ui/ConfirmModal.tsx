@@ -73,7 +73,7 @@ export function ConfirmModal({
             onClick={handleConfirm}
             disabled={loading}
             className={cn(
-              "text-white rounded-xl font-black h-12 px-8 shadow-lg transition-all",
+              "text-white rounded-xl font-bold h-12 px-8 shadow-lg transition-all",
               variantStyles[variant]
             )}
           >
@@ -87,7 +87,7 @@ export function ConfirmModal({
         <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border animate-in zoom-in duration-300", iconStyles[variant])}>
           <AlertCircle size={32} />
         </div>
-        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">
+        <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight mb-2">
           {title}
         </h3>
         <p className="text-sm font-medium text-slate-500 leading-relaxed max-w-[280px]">

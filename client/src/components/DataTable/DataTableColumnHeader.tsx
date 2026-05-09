@@ -26,7 +26,7 @@ export function DataTableColumnHeader<TData, TValue>({
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 data-[state=open]:bg-accent hover:bg-slate-100/50 text-[10px] font-black uppercase tracking-widest text-slate-500"
+        className="h-8 data-[state=open]:bg-accent hover:bg-slate-100/50 text-[10px] font-bold uppercase tracking-widest text-slate-500"
         onClick={() => {
             if (isSorted === "desc") column.clearSorting()
             else if (isSorted === "asc") column.toggleSorting(true)

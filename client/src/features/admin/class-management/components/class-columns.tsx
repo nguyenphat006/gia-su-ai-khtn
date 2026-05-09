@@ -37,7 +37,7 @@ export const classColumns: ColumnDef<any>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Mã lớp" />
     ),
-    cell: ({ row }) => <span className="font-black text-slate-800">{row.getValue("code")}</span>,
+    cell: ({ row }) => <span className="font-bold text-slate-800">{row.getValue("code")}</span>,
   },
   {
     accessorKey: "name",

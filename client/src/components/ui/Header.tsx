@@ -98,16 +98,16 @@ export default function Header({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-sky-600 font-black text-xs sm:text-base uppercase">
+                  <div className="text-sky-600 font-bold text-xs sm:text-base uppercase">
                     {(studentData?.displayName || user.displayName)?.[0]}
                   </div>
                 )}
               </div>
               <div className="hidden xs:block">
-                <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1 sm:mb-1.5">
+                <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1 sm:mb-1.5">
                   {user.role === "STUDENT" ? "Học sinh" : (user.role === "TEACHER" ? "Giáo viên" : "Quản trị viên")}
                 </p>
-                <p className="text-[11px] sm:text-sm font-black text-slate-900 leading-none truncate max-w-[80px] sm:max-w-none">
+                <p className="text-[11px] sm:text-sm font-bold text-slate-900 leading-none truncate max-w-[80px] sm:max-w-none">
                   {studentData?.displayName || user.displayName}
                 </p>
               </div>
@@ -117,7 +117,7 @@ export default function Header({
           <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-2xl border-slate-100 mt-2">
             <DropdownMenuLabel className="p-3">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tài khoản</p>
-              <p className="text-xs font-black text-slate-800 truncate">{studentData?.displayName || user.displayName}</p>
+              <p className="text-xs font-bold text-slate-800 truncate">{studentData?.displayName || user.displayName}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem 

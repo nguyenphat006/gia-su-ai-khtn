@@ -80,57 +80,75 @@ export async function addPoints(userId: string, amount: number, tx?: any) {
 }
 
 /**
- * Kiểm tra và cộng thưởng đăng nhập hàng ngày
+ * Kiểm tra và cộng thưởng đăng nhập hàng ngày + cập nhật Streak
  */
 export async function checkDailyLogin(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { lastLoginAt: true },
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00:00 hôm nay
+
+  // Lấy stats hiện tại (hoặc tạo mới nếu chưa có)
+  let stats = await prisma.userStats.upsert({
+    where: { userId },
+    update: {},
+    create: { userId },
   });
 
-  if (!user) return;
+  const lastStudy = stats.lastStudyDate;
 
-  const now = new Date();
-  const lastLogin = user.lastLoginAt;
-
-  // Nếu hôm nay chưa nhận thưởng (so sánh ngày)
-  const isSameDay = lastLogin && 
-    lastLogin.getDate() === now.getDate() &&
-    lastLogin.getMonth() === now.getMonth() &&
-    lastLogin.getFullYear() === now.getFullYear();
-
-  if (!isSameDay) {
-    await prisma.$transaction(async (tx) => {
-      // Cập nhật lastLoginAt
-      await tx.user.update({
-        where: { id: userId },
-        data: { lastLoginAt: now },
-      });
-
-      // Cộng 5 điểm (Sử dụng upsert để an toàn nếu chưa có record stats)
-      await tx.userStats.upsert({
-        where: { userId },
-        update: { points: { increment: 5 } },
-        create: {
-          userId,
-          points: 5,
-        },
-      });
-
-      // Ghi log
-      await tx.xpLog.create({
-        data: {
-          userId,
-          amount: 0,
-          action: "DAILY_LOGIN",
-        },
-      });
-    });
-    
-    return { rewarded: true, points: 5 };
+  // Nếu lastStudyDate đã là hôm nay → đã tính rồi, bỏ qua
+  if (lastStudy) {
+    const lastStudyDay = new Date(lastStudy.getFullYear(), lastStudy.getMonth(), lastStudy.getDate());
+    if (lastStudyDay.getTime() === todayStart.getTime()) {
+      return { rewarded: false };
+    }
   }
 
-  return { rewarded: false };
+  // Tính toán streak mới
+  let newStreak = 1; // Mặc định bắt đầu streak mới
+
+  if (lastStudy) {
+    const lastStudyDay = new Date(lastStudy.getFullYear(), lastStudy.getMonth(), lastStudy.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+    if (lastStudyDay.getTime() === yesterdayStart.getTime()) {
+      // Đăng nhập liên tiếp (hôm qua cũng đăng nhập) → tăng streak
+      newStreak = stats.currentStreak + 1;
+    }
+    // Nếu lastStudyDay < yesterdayStart → streak bị đứt → reset về 1
+  }
+
+  const newLongestStreak = Math.max(stats.longestStreak, newStreak);
+
+  await prisma.$transaction(async (tx) => {
+    // Cập nhật streak và lastStudyDate trong UserStats
+    await tx.userStats.update({
+      where: { userId },
+      data: {
+        currentStreak: newStreak,
+        longestStreak: newLongestStreak,
+        lastStudyDate: now,
+        points: { increment: 5 },
+      },
+    });
+
+    // Cập nhật lastLoginAt trên User
+    await tx.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: now },
+    });
+
+    // Ghi log XP
+    await tx.xpLog.create({
+      data: {
+        userId,
+        amount: 0,
+        action: "DAILY_LOGIN",
+      },
+    });
+  });
+
+  return { rewarded: true, points: 5, currentStreak: newStreak, longestStreak: newLongestStreak };
 }
 
 // ========================

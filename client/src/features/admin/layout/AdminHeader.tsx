@@ -82,11 +82,11 @@ export function AdminHeader({ user, onLogout, toggleSidebar, isSidebarOpen }: Ad
           {isSidebarOpen ? <X size={18} className="sm:w-5 sm:h-5" /> : <Menu size={18} className="sm:w-5 sm:h-5" />}
         </button>
 
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <h1 className="text-sm sm:text-xl font-black text-slate-900 tracking-tight leading-none uppercase truncate">
+        <div className="flex flex-col gap-1 min-w-0">
+          <h1 className="text-sm sm:text-xl font-bold text-slate-900 tracking-tight leading-tight uppercase truncate">
             {title}
           </h1>
-          <nav className="hidden xs:flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest overflow-hidden">
+          <nav className="hidden xs:flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest overflow-hidden py-0.5">
             {breadcrumbs.map((crumb, idx) => (
               <div key={idx} className="flex items-center gap-1.5 shrink-0">
                 {idx > 0 && <ChevronRight size={10} className="text-slate-300" />}

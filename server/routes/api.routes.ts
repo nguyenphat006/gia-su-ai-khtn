@@ -9,6 +9,7 @@ import revisionRoutes from "./revision.routes.js";
 import arenaRoutes from "./arena.routes.js";
 import documentRoutes from "./document.routes.js";
 import gamificationRoutes from "./gamification.routes.js";
+import reportRoutes from "./report.routes.js";
 
 const router = Router();
 
@@ -55,5 +56,6 @@ router.use("/revision", revisionRoutes);
 router.use("/arena", arenaRoutes);
 router.use("/documents", documentRoutes);
 router.use("/gamification", gamificationRoutes);
+router.use("/reports", reportRoutes);
 
 export default router;

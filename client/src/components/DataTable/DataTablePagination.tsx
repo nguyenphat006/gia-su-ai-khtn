@@ -28,7 +28,7 @@ export function DataTablePagination<TData>({
       
       <div className="flex items-center gap-4 sm:gap-6 lg:gap-8">
         <div className="flex items-center space-x-2">
-          <p className="hidden sm:block text-[10px] font-black text-slate-500 uppercase tracking-widest">Hàng/trang</p>
+          <p className="hidden sm:block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hàng/trang</p>
           <select
             value={pageSize}
             onChange={(e) => {
@@ -44,7 +44,7 @@ export function DataTablePagination<TData>({
           </select>
         </div>
 
-        <div className="flex items-center justify-center text-[10px] font-black text-slate-600 uppercase tracking-widest min-w-[70px]">
+        <div className="flex items-center justify-center text-[10px] font-bold text-slate-600 uppercase tracking-widest min-w-[70px]">
           {pageIndex + 1} / {table.getPageCount()}
         </div>
 

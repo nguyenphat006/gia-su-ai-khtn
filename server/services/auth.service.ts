@@ -150,19 +150,27 @@ export async function loginUnified(
     throw new UnauthorizedError("Mật khẩu không chính xác.");
   }
 
-  // Kiểm tra thưởng đăng nhập hàng ngày (trước khi cập nhật lastLoginAt)
+  // Kiểm tra thưởng đăng nhập hàng ngày + cập nhật streak
   try {
     await checkDailyLogin(user.id);
   } catch (error) {
     console.error("Lỗi khi kiểm tra thưởng đăng nhập hàng ngày:", error);
+    // Fallback: vẫn cập nhật lastLoginAt nếu checkDailyLogin lỗi
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    }).catch(() => {});
   }
 
-  // Cập nhật thời gian đăng nhập cuối
-  const updatedUser = await prisma.user.update({
+  // Re-fetch user để lấy data mới nhất (stats đã được cập nhật bởi checkDailyLogin)
+  const updatedUser = await prisma.user.findUnique({
     where: { id: user.id },
-    data: { lastLoginAt: new Date() },
     include: publicUserInclude,
   });
+
+  if (!updatedUser) {
+    throw new NotFoundError("Không tìm thấy thông tin người dùng sau đăng nhập.");
+  }
 
   // Đảm bảo có bản ghi UserStats cho Học sinh
   if (updatedUser.role === "STUDENT" && !updatedUser.stats) {

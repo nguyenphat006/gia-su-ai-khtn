@@ -204,12 +204,12 @@ export default function Sidebar({
                         >
                           <div className="flex items-center gap-2">
                             <span className={cn(
-                              "w-4 text-[8px] font-black text-center",
+                              "w-4 text-[8px] font-bold text-center",
                               i === 0 ? "text-yellow-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-orange-400" : "text-slate-300"
                             )}>
                               {i + 1}
                             </span>
-                            <div className="w-6 h-6 rounded-lg bg-slate-100 border border-white shadow-sm flex items-center justify-center font-black text-[8px] text-slate-700 overflow-hidden shrink-0">
+                            <div className="w-6 h-6 rounded-lg bg-slate-100 border border-white shadow-sm flex items-center justify-center font-bold text-[8px] text-slate-700 overflow-hidden shrink-0">
                               {player.avatarUrl ? (
                                 <img src={player.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                               ) : (
@@ -228,7 +228,7 @@ export default function Sidebar({
                           </div>
                           <div className="text-right shrink-0">
                             <p className={cn(
-                              "text-[9px] font-black leading-none",
+                              "text-[9px] font-bold leading-none",
                               isActive ? "text-sky-600" : "text-slate-700"
                             )}>
                               {player.weeklyXp.toLocaleString()}
@@ -262,3 +262,5 @@ export default function Sidebar({
     </aside>
   );
 }
+
+

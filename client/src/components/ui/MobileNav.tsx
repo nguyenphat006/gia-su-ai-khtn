@@ -46,7 +46,7 @@ export default function MobileNav({ isAdmin }: MobileNavProps) {
               <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
             </div>
             <span className={cn(
-              "text-[8px] font-black uppercase tracking-[0.1em] transition-colors",
+              "text-[8px] font-bold uppercase tracking-[0.1em] transition-colors",
               isActive ? "text-sky-600" : "text-slate-400"
             )}>
               {item.label}

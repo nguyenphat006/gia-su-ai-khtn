@@ -65,7 +65,7 @@ export default function AdminLayout({ user, isAdmin, onLogout }: AdminLayoutProp
           <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield size={32} />
           </div>
-          <h1 className="text-2xl font-black mb-2 text-red-600 uppercase">Truy cập bị từ chối</h1>
+          <h1 className="text-2xl font-bold mb-2 text-red-600 uppercase">Truy cập bị từ chối</h1>
           <p className="text-slate-500 mb-6 font-medium">Bạn không có quyền quản trị viên để truy cập khu vực này.</p>
           <Button
             onClick={() => navigate("/")}
@@ -116,7 +116,7 @@ export default function AdminLayout({ user, isAdmin, onLogout }: AdminLayoutProp
                 <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-6">
                   <AlertCircle size={40} />
                 </div>
-                <h2 className="text-2xl font-black text-slate-800 mb-2 uppercase">Tính năng đang phát triển</h2>
+                <h2 className="text-2xl font-bold text-slate-800 mb-2 uppercase">Tính năng đang phát triển</h2>
                 <p className="text-slate-500 max-w-md mb-8 font-medium leading-relaxed">
                   Trang bạn đang truy cập hiện chưa được khai báo hoặc đang trong quá trình hoàn thiện. Vui lòng quay lại sau!
                 </p>
