@@ -1,4 +1,4 @@
-import { Prisma, Role } from "@prisma/client";
+import { Prisma, Role, XpAction } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import {
   ConflictError,
@@ -435,7 +435,7 @@ export async function seedUserActivity(userId: string) {
     logsData.push({
       userId,
       amount: Math.floor(randomXP / logsCount),
-      action: "COMPLETE_QUIZ",
+      action: XpAction.COMPLETE_QUIZ,
       createdAt: logDate
     });
   }

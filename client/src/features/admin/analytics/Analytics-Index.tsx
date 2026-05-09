@@ -33,7 +33,6 @@ import { ResponsiveModal } from "@/components/ui/ResponsiveModal"
 import FormattedContent from "@/components/ui/FormattedContent"
 import { DataTablePagination } from "@/components/DataTable/DataTablePagination"
 import { toast } from "sonner"
-import * as XLSX from "xlsx"
 import { 
   ActivityTimeStat, 
   TopStudent, 
@@ -90,6 +89,9 @@ export default function AnalyticsIndex() {
   const [selectedLog, setSelectedLog] = React.useState<ChatLog | null>(null);
   const [sessionMessages, setSessionMessages] = React.useState<any[]>([]);
   const [isLoadingSession, setIsLoadingSession] = React.useState(false);
+
+  // Selected Rank State for student list
+  const [selectedRank, setSelectedRank] = React.useState<{ rank: string, count: number, students: any[] } | null>(null);
 
   // Hover state for Heatmap Tooltip
   const [hoveredCell, setHoveredCell] = React.useState<{ day: number, hour: number } | null>(null);
@@ -173,55 +175,63 @@ export default function AnalyticsIndex() {
 
   const handleExportExcel = async () => {
     setIsExporting(true);
-    const toastId = toast.loading("Đang tạo file Excel...");
+    const toastId = toast.loading("Đang tạo file Excel chuyên nghiệp...");
 
     try {
-      // Dynamic import XLSX for performance
       const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
 
-      // 1. Sheet Tổng quan
+      // 1. Sheet Tổng quan (Stylized)
       const summaryData = [
-        ["CHỈ SỐ", "GIÁ TRỊ"],
-        ["Học sinh tích cực", topStudents.length],
-        ["Tổng lượt Chat", totalLogs],
-        ["Chuỗi chuyên cần cao nhất", engagement?.topStreaks?.[0]?.longestStreak || 0],
-        ["Tổng tương tác hệ thống", activityTime?.reduce((acc, curr) => acc + (curr.count || (curr as any).actionCount || 0), 0)]
+        ["BÁO CÁO TỔNG QUAN HỆ THỐNG GIA SƯ AI KHTN"],
+        ["Ngày xuất báo cáo:", new Date().toLocaleString()],
+        [],
+        ["CHỈ SỐ", "GIÁ TRỊ", "GHI CHÚ"],
+        ["Học sinh tích cực", topStudents.length, "Số lượng học sinh có phát sinh điểm EXP"],
+        ["Tổng lượt thảo luận AI", totalLogs, "Tổng số câu hỏi học sinh đã gửi cho chatbot"],
+        ["Chuỗi chuyên cần cao nhất", engagement?.topStreaks?.[0]?.longestStreak || 0, "Số ngày học liên tiếp dài nhất"],
+        ["Tổng tương tác hệ thống", activityTime?.reduce((acc, curr) => acc + (curr.count || (curr as any).actionCount || 0), 0), "Tổng hành động trên toàn hệ thống"]
       ];
       const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+      wsSummary["!cols"] = [{ wch: 30 }, { wch: 15 }, { wch: 40 }];
       XLSX.utils.book_append_sheet(wb, wsSummary, "Tong quan");
 
-      // 2. Sheet Xếp hạng
+      // 2. Sheet Xếp hạng chi tiết
       const rankingData = topStudents.map((s, i) => ({
-        "Hạng": i + 1,
-        "Họ và tên": s.displayName,
-        "Username": s.username,
-        "EXP Tháng": s.xp
+        "HẠNG": i + 1,
+        "HỌ VÀ TÊN": s.displayName,
+        "TÊN ĐĂNG NHẬP": s.username,
+        "TỔNG EXP THÁNG": s.xp,
+        "DANH HIỆU": s.rank
       }));
       const wsRanking = XLSX.utils.json_to_sheet(rankingData);
+      wsRanking["!cols"] = [{ wch: 8 }, { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 25 }];
       XLSX.utils.book_append_sheet(wb, wsRanking, "Xep hang");
 
       // 3. Sheet Nhật ký Chat
       const chatData = chatLogs.map(log => ({
-        "Thời gian": new Date(log.createdAt).toLocaleString(),
-        "Học sinh": log.session?.user?.displayName || "Ẩn danh",
-        "Câu hỏi": log.question,
-        "AI trả lời": log.answer
+        "THỜI GIAN": new Date(log.createdAt).toLocaleString(),
+        "HỌC SINH": log.session?.user?.displayName || "Ẩn danh",
+        "NỘI DUNG CÂU HỎI": log.question,
+        "PHẢN HỒI TỪ AI": log.answer
       }));
       const wsChat = XLSX.utils.json_to_sheet(chatData);
+      wsChat["!cols"] = [{ wch: 25 }, { wch: 25 }, { wch: 50 }, { wch: 60 }];
       XLSX.utils.book_append_sheet(wb, wsChat, "Nhat ky Chat");
 
-      // 4. Sheet Phân bổ hạng
-      const rankData = engagement?.rankDistribution?.map(r => ({
-        "Danh hiệu": r.rank,
-        "Số học sinh": r.count
-      })) || [];
-      const wsRanks = XLSX.utils.json_to_sheet(rankData);
+      // 4. Sheet Phân bổ Danh hiệu (Kèm danh sách học sinh)
+      const rankRows: any[] = [["DANH HIỆU", "SỐ LƯỢNG", "DANH SÁCH HỌC SINH"]];
+      engagement?.rankDistribution?.forEach(r => {
+        const studentNames = r.students?.map((s: any) => s.displayName).join(", ") || "";
+        rankRows.push([r.rank, r.count, studentNames]);
+      });
+      const wsRanks = XLSX.utils.aoa_to_sheet(rankRows);
+      wsRanks["!cols"] = [{ wch: 25 }, { wch: 12 }, { wch: 100 }];
       XLSX.utils.book_append_sheet(wb, wsRanks, "Phan bo Danh hieu");
 
       // Save file
-      XLSX.writeFile(wb, `bao_cao_giasu_ai_${new Date().toISOString().slice(0, 10)}.xlsx`);
-      toast.success("Đã xuất file Excel thành công!", { id: toastId });
+      XLSX.writeFile(wb, `bao_cao_tong_hop_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success("Đã xuất báo cáo thành công!", { id: toastId });
     } catch (error) {
       console.error("Export Excel error:", error);
       toast.error("Lỗi khi tạo file Excel.");
@@ -431,18 +441,18 @@ export default function AnalyticsIndex() {
                     </div>
                     <div className="space-y-5 flex-1">
                        {engagement?.rankDistribution?.map((rank, idx) => (
-                         <div key={idx} className="space-y-1.5">
+                         <div key={idx} className="space-y-1.5 group cursor-pointer" onClick={() => setSelectedRank(rank as any)}>
                             <div className="flex justify-between items-end">
-                              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{rank.rank}</p>
-                              <p className="text-[10px] font-bold text-slate-400"><b>{rank.count}</b> học sinh</p>
+                              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tight group-hover:text-sky-600 transition-colors">{rank.rank}</p>
+                              <p className="text-[10px] font-bold text-slate-400 group-hover:text-sky-400"><b>{rank.count}</b> học sinh <ArrowRight size={10} className="inline ml-1" /></p>
                             </div>
-                            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner">
+                            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
                               <motion.div 
                                 initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(100, (rank.count / 50) * 100)}%` }}
+                                animate={{ width: `${Math.min(100, (rank.count / (topStudents.length || 1)) * 100)}%` }}
                                 className={cn(
                                   "h-full rounded-full shadow-sm",
-                                  idx === 0 ? "bg-amber-500" : (idx === 1 ? "bg-sky-500" : "bg-indigo-500")
+                                  idx === 0 ? "bg-amber-500" : (idx === 1 ? "bg-sky-500" : (idx === 2 ? "bg-emerald-500" : "bg-indigo-500"))
                                 )}
                               />
                             </div>
@@ -607,7 +617,7 @@ export default function AnalyticsIndex() {
                       {idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight">{s.displayName}</p>
+                      <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight leading-tight">{s.displayName}</p>
                       <p className="text-[9px] text-slate-400 font-bold leading-tight mt-0.5 uppercase">{s.rank}</p>
                     </div>
                     <div className="text-right">
@@ -739,6 +749,50 @@ export default function AnalyticsIndex() {
             
             <div className="flex justify-end pt-4 border-t border-slate-100">
                <Button onClick={() => setSelectedLog(null)} className="rounded-xl px-10 h-11 font-bold uppercase tracking-[0.2em] text-[10px] bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xl active:scale-95">Đóng cửa sổ</Button>
+            </div>
+          </div>
+        )}
+      </ResponsiveModal>
+
+      {/* Rank Student List Modal */}
+      <ResponsiveModal
+        isOpen={!!selectedRank}
+        onOpenChange={(open) => !open && setSelectedRank(null)}
+        title={`Học sinh bậc ${selectedRank?.rank}`}
+        maxWidth="2xl"
+      >
+        {selectedRank && (
+          <div className="space-y-6">
+            <div className="bg-sky-50 p-4 rounded-2xl border border-sky-100 flex items-center justify-between">
+               <div>
+                  <p className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">Phân loại danh hiệu</p>
+                  <h4 className="text-sm font-bold text-sky-900 uppercase tracking-tight">{selectedRank.rank}</h4>
+               </div>
+               <div className="text-right">
+                  <p className="text-2xl font-bold text-sky-600 leading-none">{selectedRank.count}</p>
+                  <p className="text-[8px] font-bold text-sky-400 uppercase tracking-widest mt-1">Học sinh</p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar p-1">
+               {selectedRank.students?.map((s: any) => (
+                 <div key={s.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-all">
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 text-xs font-bold border border-slate-100">
+                       {s.displayName?.[0] || "?"}
+                    </div>
+                    <div className="min-w-0">
+                       <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight">{s.displayName}</p>
+                       <p className="text-[9px] text-slate-400 font-bold leading-none mt-1">{(s.totalXp || 0).toLocaleString()} EXP</p>
+                    </div>
+                 </div>
+               ))}
+               {(!selectedRank.students || selectedRank.students.length === 0) && (
+                 <div className="col-span-full py-10 text-center text-slate-400 italic text-xs font-bold">Chưa có học sinh nào đạt danh hiệu này.</div>
+               )}
+            </div>
+            
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+               <Button onClick={() => setSelectedRank(null)} className="rounded-xl px-10 h-11 font-bold uppercase tracking-[0.2em] text-[10px] bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xl active:scale-95">Đóng</Button>
             </div>
           </div>
         )}

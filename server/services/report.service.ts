@@ -487,27 +487,41 @@ export async function getUserEngagementStats() {
     }
   });
 
-  // 5.2. Tính phân bổ cấp độ (Ranks Distribution)
-  const rankStats: any[] = await prisma.$queryRaw`
-    SELECT 
-      CASE 
-        WHEN "totalXp" <= 250 THEN 'NHÀ KHOA HỌC NHÍ'
-        WHEN "totalXp" > 250 AND "totalXp" <= 500 THEN 'SỨ GIẢ CHÂN LÝ'
-        WHEN "totalXp" > 500 AND "totalXp" <= 1000 THEN 'BẬC THẦY THỰC NGHIỆM'
-        WHEN "totalXp" > 1000 AND "totalXp" <= 1500 THEN 'HÀN LÂM HỌC SĨ'
-        WHEN "totalXp" > 1500 AND "totalXp" <= 2000 THEN 'NHÀ KIẾN TẠO TINH HOA'
-        WHEN "totalXp" > 2000 AND "totalXp" <= 2500 THEN 'HỌC GIẢ TINH ANH'
-        ELSE 'VỊ THẦN TRÍ THỨC'
-      END as rank,
-      COUNT(*) as count
-    FROM "UserStats"
-    GROUP BY rank;
-  `;
+  // 5.2. Lấy toàn bộ UserStats kèm User để phân loại danh hiệu chi tiết
+  const allStats = await prisma.userStats.findMany({
+    include: {
+      user: {
+        select: { id: true, displayName: true, username: true }
+      }
+    }
+  });
 
-  // Chuyển BigInt count sang Number để JSON.stringify không bị lỗi
-  const formattedRankStats = rankStats.map(r => ({
-    rank: r.rank,
-    count: Number(r.count)
+  const getRankName = (xp: number) => {
+    if (xp <= 250) return 'NHÀ KHOA HỌC NHÍ';
+    if (xp <= 500) return 'SỨ GIẢ CHÂN LÝ';
+    if (xp <= 1000) return 'BẬC THẦY THỰC NGHIỆM';
+    if (xp <= 1500) return 'HÀN LÂM HỌC SĨ';
+    if (xp <= 2000) return 'NHÀ KIẾN TẠO TINH HOA';
+    if (xp <= 2500) return 'HỌC GIẢ TINH ANH';
+    return 'VỊ THẦN TRÍ THỨC';
+  };
+
+  const rankGroups: Record<string, any[]> = {};
+  allStats.forEach(s => {
+    const rank = getRankName(s.totalXp);
+    if (!rankGroups[rank]) rankGroups[rank] = [];
+    rankGroups[rank].push({
+      id: s.user.id,
+      displayName: s.user.displayName,
+      username: s.user.username,
+      totalXp: s.totalXp
+    });
+  });
+
+  const formattedRankStats = Object.keys(rankGroups).map(rank => ({
+    rank,
+    count: rankGroups[rank].length,
+    students: rankGroups[rank]
   }));
 
   return {
