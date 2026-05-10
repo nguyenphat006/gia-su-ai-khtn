@@ -6,11 +6,11 @@ import {
   getUserById,
   createUser,
   updateUserByAdmin,
-  deleteUsersByIds,
+  deleteUsers,
   updateMyProfile,
-  generateMockUsers,
   batchImportUsers,
 } from "../services/user.service.js";
+import { generateMockUsers } from "../services/gemini.service.js";
 import { Role } from "@prisma/client";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
 
@@ -63,7 +63,7 @@ export const removeUsers = asyncHandler(async (req: Request, res: Response) => {
     throw new ValidationError("Vui long cung cap danh sach ID.");
   }
 
-  const result = await deleteUsersByIds(ids);
+  const result = await deleteUsers(ids);
   res.json({ status: "ok", data: result });
 });
 
