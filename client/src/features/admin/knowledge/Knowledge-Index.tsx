@@ -1,5 +1,5 @@
 import * as React from "react"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import { 
   PaginationState, 
   SortingState 
@@ -9,13 +9,21 @@ import { columns } from "./components/columns"
 import { knowledgeService } from "./services/knowledge.service"
 import { KnowledgeDocument } from "./types"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, Filter, Trash2 } from "lucide-react"
+import { Search, Plus, Filter, Trash2, Database, FileText, RefreshCcw, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import KnowledgeFormModal from "./components/KnowledgeFormModal"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { SourceDocumentTab } from "./components/SourceDocumentTab"
+
+const TABS = [
+  { id: "rag", label: "Dữ liệu tri thức (RAG)", icon: Database },
+  { id: "upload", label: "Nạp tri thức từ Tài liệu (AI)", icon: FileText },
+]
 
 export default function KnowledgeList() {
+  const [activeTab, setActiveTab] = React.useState("rag")
   const [data, setData] = React.useState<KnowledgeDocument[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
@@ -52,6 +60,7 @@ export default function KnowledgeList() {
   const [pageCount, setPageCount] = React.useState(0)
 
   const fetchData = React.useCallback(async () => {
+    if (activeTab !== "rag") return;
     setLoading(true)
     setError(null)
     try {
@@ -69,7 +78,7 @@ export default function KnowledgeList() {
     } finally {
       setLoading(false)
     }
-  }, [pageIndex, pageSize, search])
+  }, [pageIndex, pageSize, search, activeTab])
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -124,78 +133,119 @@ export default function KnowledgeList() {
   const selectedCount = Object.keys(rowSelection).length
 
   return (
-    <div className="space-y-6">
-      {/* Header Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Tìm kiếm tài liệu..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 bg-white border-slate-200 rounded-2xl focus:ring-sky-500/20"
-            />
-          </div>
-
-          {selectedCount > 0 && (
-            <motion.div 
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="hidden sm:flex items-center gap-3 bg-slate-100 p-2 pl-4 rounded-2xl border border-slate-200"
-            >
-              <span className="text-xs font-bold text-slate-600">Đã chọn <span className="text-slate-900">{selectedCount}</span> mục</span>
-              <div className="h-4 w-px bg-slate-300 mx-1" />
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleDeleteSelected}
-                className="h-8 px-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl gap-2"
-              >
-                <Trash2 size={14} />
-                Xóa
-              </Button>
-            </motion.div>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="h-11 px-4 gap-2 rounded-2xl border-slate-200 font-bold text-slate-600">
-            <Filter size={18} />
-            Bộ lọc
-          </Button>
-          <Button 
-            onClick={() => {
-              setSelectedDoc(undefined)
-              setIsModalOpen(true)
-            }}
-            className="h-11 px-6 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all"
+    <div className="space-y-8 pb-10">
+      {/* Tab Navigation */}
+      <div className="flex p-1.5 bg-slate-100 rounded-3xl w-fit border border-slate-200 shadow-inner">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex items-center gap-2.5 px-6 py-3 rounded-[1.25rem] text-xs font-bold uppercase tracking-widest transition-all relative",
+              activeTab === tab.id ? "text-sky-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
+            )}
           >
-            <Plus size={18} />
-            Thêm tài liệu
-          </Button>
-        </div>
+            {activeTab === tab.id && (
+              <motion.div layoutId="knowledge-tab" className="absolute inset-0 bg-white rounded-[1.25rem] border border-white/50 shadow-md" />
+            )}
+            <tab.icon size={16} className="relative z-10" />
+            <span className="relative z-10">{tab.label}</span>
+          </button>
+        ))}
       </div>
 
-      {/* DataTable */}
-      <DataTable
-        columns={columns}
-        data={data}
-        loading={loading}
-        error={error}
-        totalCount={totalCount}
-        pageCount={pageCount}
-        pagination={{ pageIndex, pageSize }}
-        onPaginationChange={setPagination}
-        sorting={sorting}
-        onSortingChange={setSorting}
-        onRowSelectionChange={setRowSelection}
-        state={{ rowSelection }}
-        meta={{
-          onEdit: handleEdit,
-          onDelete: handleDeleteOne,
-        }}
-      />
+      <AnimatePresence mode="wait">
+        {activeTab === "rag" ? (
+          <motion.div
+            key="rag"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
+          >
+            {/* Header Actions */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-1 items-center gap-4">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Tìm kiếm tri thức..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10 h-11 bg-white border-slate-200 rounded-2xl focus:ring-sky-500/20"
+                  />
+                </div>
+
+                {selectedCount > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-3 bg-red-50 p-2 pl-4 rounded-2xl border border-red-100"
+                  >
+                    <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">Đã chọn {selectedCount} mục</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handleDeleteSelected}
+                      className="h-8 px-3 text-xs font-bold text-red-600 hover:bg-white hover:text-red-700 rounded-xl gap-2 shadow-sm"
+                    >
+                      <Trash2 size={14} />
+                      Xóa tất cả
+                    </Button>
+                  </motion.div>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Button variant="outline" onClick={() => fetchData()} className="h-11 w-11 p-0 rounded-2xl border-slate-200 text-slate-400 hover:text-sky-600 transition-all">
+                  <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setSelectedDoc(undefined)
+                    setIsModalOpen(true)
+                  }}
+                  className="h-11 px-6 gap-2 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all"
+                >
+                  <Plus size={18} />
+                  Thêm tri thức
+                </Button>
+              </div>
+            </div>
+
+            {/* DataTable */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                <DataTable
+                columns={columns}
+                data={data}
+                loading={loading}
+                error={error}
+                totalCount={totalCount}
+                pageCount={pageCount}
+                pagination={{ pageIndex, pageSize }}
+                onPaginationChange={setPagination}
+                sorting={sorting}
+                onSortingChange={setSorting}
+                onRowSelectionChange={setRowSelection}
+                state={{ rowSelection }}
+                meta={{
+                    onEdit: handleEdit,
+                    onDelete: handleDeleteOne,
+                }}
+                />
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="upload"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <SourceDocumentTab />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Form Modal */}
       <KnowledgeFormModal

@@ -225,6 +225,7 @@ Trả về mảng JSON:
       const jsonStr = resultText.replace(/```json/g, "").replace(/```/g, "").trim();
       const generatedQuestions = JSON.parse(jsonStr);
 
+      // 1. Tạo câu hỏi ôn tập (Revision source)
       for (const q of generatedQuestions) {
         await prisma.questionBank.create({
           data: {
@@ -242,6 +243,16 @@ Trả về mảng JSON:
           },
         });
       }
+
+      // 2. Tạo tri thức RAG (Knowledge source) - Tự động nạp vào bộ não AI
+      await prisma.knowledgeDocument.create({
+        data: {
+          title: `[Tài liệu] ${topic || "Chưa rõ"} - Phần ${i + 1}`,
+          content: chunk,
+          tags: [topic || "Tài liệu hệ thống", `Khối ${grade || "Chung"}`],
+          isActive: true,
+        }
+      });
 
       parsedCount++;
       console.log(`[Quiz Job] Chunk ${i + 1}/${chunks.length} ✓ — ${generatedQuestions.length} câu hỏi`);

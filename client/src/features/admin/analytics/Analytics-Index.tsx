@@ -3,34 +3,21 @@ import { motion, AnimatePresence } from "motion/react"
 import { 
   LayoutDashboard, 
   MessageSquare, 
-  Swords, 
-  Users, 
-  Clock, 
   Trophy, 
-  TrendingUp, 
-  BarChart3,
-  Calendar,
   Zap,
+  Calendar,
   Search,
-  Filter,
   ArrowRight,
   User as UserIcon,
   Flame,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
   RefreshCcw,
-  Download,
-  Share2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { adminAnalyticsService } from "./services/analytics.service"
-import { ResponsiveModal } from "@/components/ui/ResponsiveModal"
-import FormattedContent from "@/components/ui/FormattedContent"
 import { DataTablePagination } from "@/components/DataTable/DataTablePagination"
 import { toast } from "sonner"
 import { 
@@ -40,31 +27,11 @@ import {
   UserEngagement
 } from "./types"
 
-// Simple Stats Card
-function StatsCard({ label, value, icon: Icon, color, trend }: any) {
-  return (
-    <motion.div 
-      whileHover={{ y: -4 }}
-      className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden"
-    >
-      <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8 opacity-[0.03]", color)}></div>
-      <div className="flex items-center gap-4 relative z-10">
-        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg", color)}>
-          <Icon size={22} />
-        </div>
-        <div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight mb-1.5">{label}</p>
-          <div className="flex items-baseline gap-2">
-            <h4 className="text-2xl font-bold text-slate-900 leading-tight">{value}</h4>
-            {trend && <span className="text-[10px] font-bold text-emerald-500">+{trend}%</span>}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-const DAYS = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+// Sub-components
+import { StatsCard } from "./components/StatsCard"
+import { StudyHeatmap } from "./components/StudyHeatmap"
+import { ChatLogDetailModal } from "./components/ChatLogDetailModal"
+import { RankStudentListModal } from "./components/RankStudentListModal"
 
 export default function AnalyticsIndex() {
   const [activeTab, setActiveTab] = React.useState<"general" | "chat" | "ranking">("general");
@@ -98,9 +65,6 @@ export default function AnalyticsIndex() {
   // Selected Rank State for student list
   const [selectedRank, setSelectedRank] = React.useState<{ rank: string, count: number, students: any[] } | null>(null);
 
-  // Hover state for Heatmap Tooltip
-  const [hoveredCell, setHoveredCell] = React.useState<{ day: number, hour: number } | null>(null);
-
   const fetchLeaderboard = React.useCallback(async (m: number, y: number) => {
     try {
       const res = await adminAnalyticsService.getMonthlyLeaderboard({ month: m, year: y });
@@ -124,7 +88,6 @@ export default function AnalyticsIndex() {
         adminAnalyticsService.getUserEngagement(),
         adminAnalyticsService.getStudyTimeAnalytics(),
       ]);
-      
       setEngagement(engRes.data);
       setActivityTime(timeRes.data);
     } catch (error) {
@@ -157,17 +120,14 @@ export default function AnalyticsIndex() {
     if (showLoading) setLoading(false);
   }, [fetchGeneralData, fetchChatLogs, fetchLeaderboard, selectedMonth, selectedYear]);
 
-  // Initial Fetch on mount
   React.useEffect(() => {
     fetchAllData();
   }, []);
 
-  // Refetch when ranking filter changes
   React.useEffect(() => {
     fetchLeaderboard(selectedMonth, selectedYear);
   }, [selectedMonth, selectedYear, fetchLeaderboard]);
 
-  // Refetch chat logs when pagination changes
   React.useEffect(() => {
     fetchChatLogs();
   }, [pagination.pageIndex, pagination.pageSize]);
@@ -201,7 +161,6 @@ export default function AnalyticsIndex() {
       const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
 
-      // 1. Sheet Tổng quan (Stylized)
       const summaryData = [
         ["BÁO CÁO TỔNG QUAN HỆ THỐNG GIA SƯ AI KHTN"],
         ["Ngày xuất báo cáo:", new Date().toLocaleString()],
@@ -216,7 +175,6 @@ export default function AnalyticsIndex() {
       wsSummary["!cols"] = [{ wch: 30 }, { wch: 15 }, { wch: 40 }];
       XLSX.utils.book_append_sheet(wb, wsSummary, "Tong quan");
 
-      // 2. Sheet Xếp hạng chi tiết (Theo tháng được chọn)
       const rankingData = topStudents.map((s, i) => ({
         "HẠNG": i + 1,
         "HỌ VÀ TÊN": s.displayName,
@@ -227,7 +185,6 @@ export default function AnalyticsIndex() {
       wsRanking["!cols"] = [{ wch: 8 }, { wch: 30 }, { wch: 20 }, { wch: 20 }];
       XLSX.utils.book_append_sheet(wb, wsRanking, `Xep hang T${selectedMonth}`);
 
-      // 3. Sheet Nhật ký Chat
       const chatData = chatLogs.map(log => ({
         "THỜI GIAN": new Date(log.createdAt).toLocaleString(),
         "HỌC SINH": log.session?.user?.displayName || "Ẩn danh",
@@ -238,7 +195,6 @@ export default function AnalyticsIndex() {
       wsChat["!cols"] = [{ wch: 25 }, { wch: 25 }, { wch: 50 }, { wch: 60 }];
       XLSX.utils.book_append_sheet(wb, wsChat, "Nhat ky Chat");
 
-      // 4. Sheet Phân bổ Danh hiệu (Kèm danh sách học sinh)
       const rankRows: any[] = [["DANH HIỆU", "SỐ LƯỢNG", "DANH SÁCH HỌC SINH"]];
       engagement?.rankDistribution?.forEach(r => {
         const studentNames = r.students?.map((s: any) => s.displayName).join(", ") || "";
@@ -248,7 +204,6 @@ export default function AnalyticsIndex() {
       wsRanks["!cols"] = [{ wch: 25 }, { wch: 12 }, { wch: 100 }];
       XLSX.utils.book_append_sheet(wb, wsRanks, "Phan bo Danh hieu");
 
-      // Save file
       XLSX.writeFile(wb, `bao_cao_tong_hop_${new Date().toISOString().slice(0, 10)}.xlsx`);
       toast.success("Đã xuất báo cáo thành công!", { id: toastId });
     } catch (error) {
@@ -264,16 +219,6 @@ export default function AnalyticsIndex() {
     { id: "chat", label: "Nhật ký Chat", icon: MessageSquare },
     { id: "ranking", label: "Xếp hạng", icon: Trophy },
   ];
-
-  // Helper for Heatmap Color
-  const getHeatmapColor = (count: number) => {
-    if (count === 0) return "bg-slate-50";
-    if (count < 5) return "bg-sky-100";
-    if (count < 10) return "bg-sky-200";
-    if (count < 20) return "bg-sky-300";
-    if (count < 50) return "bg-sky-400";
-    return "bg-sky-600";
-  };
 
   const months = [
     { value: 3, label: "Tháng 3" },
@@ -353,105 +298,8 @@ export default function AnalyticsIndex() {
             </div>
 
             <div className="grid grid-cols-1 gap-8">
-              {/* Professional Heatmap Analysis */}
-              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-sky-500 border border-sky-100 shadow-sm">
-                      <Clock size={20} />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Ma trận thời điểm học tập</h3>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phân tích hoạt động theo Thứ và Giờ</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                     <div className="flex items-center gap-1.5">
-                        <span className="text-[8px] font-bold text-slate-400 uppercase">Ít</span>
-                        <div className="flex gap-1">
-                           <div className="w-3 h-3 rounded-sm bg-slate-50 border border-slate-100"></div>
-                           <div className="w-3 h-3 rounded-sm bg-sky-100"></div>
-                           <div className="w-3 h-3 rounded-sm bg-sky-300"></div>
-                           <div className="w-3 h-3 rounded-sm bg-sky-600"></div>
-                        </div>
-                        <span className="text-[8px] font-bold text-slate-400 uppercase">Nhiều</span>
-                     </div>
-                  </div>
-                </div>
-                
-                <div className="overflow-x-auto pb-4 custom-scrollbar">
-                  <div className="min-w-[800px] space-y-1">
-                    {/* Hour Labels */}
-                    <div className="flex ml-16 mb-2">
-                       {Array.from({ length: 24 }).map((_, h) => (
-                         <div key={h} className="flex-1 text-center text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                           {h}h
-                         </div>
-                       ))}
-                    </div>
+              <StudyHeatmap activityTime={activityTime} />
 
-                    {/* Day Rows */}
-                    {Array.from({ length: 7 }).map((_, day) => (
-                      <div key={day} className="flex items-center gap-2">
-                         <div className="w-14 text-right pr-2">
-                           <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">{DAYS[day]}</span>
-                         </div>
-                         <div className="flex-1 flex gap-1 h-8 sm:h-10">
-                            {Array.from({ length: 24 }).map((_, hour) => {
-                              const cellData = activityTime?.find(s => 
-                                (s.hour === hour || (s as any).hourOfDay === hour) && 
-                                (s.dayOfWeek === day)
-                              );
-                              const count = cellData ? (cellData.count || (cellData as any).actionCount || 0) : 0;
-                              const isHovered = hoveredCell?.day === day && hoveredCell?.hour === hour;
-
-                              return (
-                                <div 
-                                  key={hour}
-                                  className="flex-1 relative group"
-                                  onMouseEnter={() => setHoveredCell({ day, hour })}
-                                  onMouseLeave={() => setHoveredCell(null)}
-                                >
-                                   <motion.div 
-                                     initial={false}
-                                     animate={{ scale: isHovered ? 1.1 : 1 }}
-                                     className={cn(
-                                       "w-full h-full rounded-md border border-white/20 transition-colors duration-300 cursor-pointer",
-                                       getHeatmapColor(count),
-                                       isHovered && "ring-2 ring-sky-500 ring-offset-1 z-10 shadow-lg"
-                                     )}
-                                   />
-                                   
-                                   {/* Tooltip */}
-                                   <AnimatePresence>
-                                     {isHovered && (
-                                       <motion.div 
-                                         initial={{ opacity: 0, y: -10, scale: 0.9 }}
-                                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                                         exit={{ opacity: 0, y: -10, scale: 0.9 }}
-                                         className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 text-white p-2 rounded-lg z-50 shadow-2xl min-w-[120px] pointer-events-none text-center"
-                                       >
-                                         <p className="text-[8px] font-bold text-slate-400 uppercase mb-1">{DAYS[day]}, {hour}:00</p>
-                                         <div className="flex items-center justify-center gap-2">
-                                            <span className="text-xs font-bold">{count}</span>
-                                            <span className="text-[7px] font-bold text-sky-400 uppercase tracking-widest">Tương tác</span>
-                                         </div>
-                                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 w-2 h-2 bg-slate-900 rotate-45"></div>
-                                       </motion.div>
-                                     )}
-                                   </AnimatePresence>
-                                </div>
-                              );
-                            })}
-                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Lower Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                  {/* Rank Distribution */}
                  <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-full">
@@ -588,7 +436,6 @@ export default function AnalyticsIndex() {
                </table>
             </div>
 
-            {/* Pagination Controls */}
             {chatLogs.length > 0 && (
               <div className="mt-4">
                 <DataTablePagination 
@@ -711,139 +558,17 @@ export default function AnalyticsIndex() {
         )}
       </AnimatePresence>
 
-      {/* Log Detail Modal */}
-      <ResponsiveModal
-        isOpen={!!selectedLog}
-        onOpenChange={(open) => !open && setSelectedLog(null)}
-        title="Chi tiết hội thoại"
-        maxWidth="3xl"
-      >
-        {selectedLog && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-               <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-sky-600 font-bold uppercase">
-                   {selectedLog.session?.user?.displayName?.[0] || "?"}
-                 </div>
-                 <div>
-                   <p className="text-sm font-bold text-slate-900">{selectedLog.session?.user?.displayName || "Ẩn danh"}</p>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                     @{selectedLog.session?.user?.username || "unknown"}
-                   </p>
-                 </div>
-               </div>
-               <div className="text-right">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thời gian</p>
-                 <p className="text-xs font-bold text-slate-600">
-                   {selectedLog.createdAt ? new Date(selectedLog.createdAt).toLocaleString() : "---"}
-                 </p>
-               </div>
-            </div>
+      <ChatLogDetailModal 
+        selectedLog={selectedLog}
+        onClose={() => setSelectedLog(null)}
+        isLoadingSession={isLoadingSession}
+        sessionMessages={sessionMessages}
+      />
 
-            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar px-1">
-               {isLoadingSession ? (
-                 <div className="flex flex-col items-center justify-center py-20 gap-4">
-                   <div className="w-12 h-12 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin" />
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Đang trích xuất toàn bộ hội thoại...</p>
-                 </div>
-               ) : sessionMessages.length > 0 ? (
-                 <div className="space-y-4">
-                   {sessionMessages.map((msg, idx) => (
-                     <div key={idx} className={cn(
-                       "flex flex-col gap-2 max-w-[90%]",
-                       msg.role === "USER" ? "ml-auto items-end" : "mr-auto items-start"
-                     )}>
-                        <div className={cn(
-                          "flex items-center gap-2 text-[8px] font-bold uppercase tracking-widest px-1",
-                          msg.role === "USER" ? "text-slate-400" : "text-sky-500"
-                        )}>
-                          {msg.role === "USER" ? <UserIcon size={10} /> : <Zap size={10} className="text-orange-400" />}
-                          {msg.role === "USER" ? "Học sinh" : "Trợ lý AI"}
-                        </div>
-                        <div className={cn(
-                          "p-4 rounded-2xl text-sm leading-relaxed",
-                          msg.role === "USER" 
-                            ? "bg-sky-50 text-sky-900 rounded-tr-none border border-sky-100 font-bold italic shadow-sm" 
-                            : "bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-md"
-                        )}>
-                          <FormattedContent content={msg.content} />
-                        </div>
-                     </div>
-                   ))}
-                 </div>
-               ) : (
-                 <div className="space-y-6">
-                   <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-                        <UserIcon size={12} /> Học sinh hỏi
-                      </div>
-                      <div className="bg-sky-50 p-5 rounded-2xl rounded-tl-none border border-sky-100 text-sky-900 text-sm font-bold italic leading-relaxed shadow-sm">
-                        "{selectedLog.question}"
-                      </div>
-                   </div>
-
-                   <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-                        < Zap size={12} className="text-orange-400" /> Trợ lý AI trả lời
-                      </div>
-                      <div className="bg-white p-6 rounded-2xl rounded-tr-none border border-slate-100 shadow-sm text-slate-700 text-sm leading-relaxed prose prose-slate max-w-none">
-                        <FormattedContent content={selectedLog.answer || "AI chưa có phản hồi cho câu hỏi này."} />
-                      </div>
-                   </div>
-                 </div>
-               )}
-            </div>
-            
-            <div className="flex justify-end pt-4 border-t border-slate-100">
-               <Button onClick={() => setSelectedLog(null)} className="rounded-xl px-10 h-11 font-bold uppercase tracking-[0.2em] text-[10px] bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xl active:scale-95">Đóng cửa sổ</Button>
-            </div>
-          </div>
-        )}
-      </ResponsiveModal>
-
-      {/* Rank Student List Modal */}
-      <ResponsiveModal
-        isOpen={!!selectedRank}
-        onOpenChange={(open) => !open && setSelectedRank(null)}
-        title={`Học sinh bậc ${selectedRank?.rank}`}
-        maxWidth="2xl"
-      >
-        {selectedRank && (
-          <div className="space-y-6">
-            <div className="bg-sky-50 p-4 rounded-2xl border border-sky-100 flex items-center justify-between">
-               <div>
-                  <p className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">Phân loại danh hiệu</p>
-                  <h4 className="text-sm font-bold text-sky-900 uppercase tracking-tight">{selectedRank.rank}</h4>
-               </div>
-               <div className="text-right">
-                  <p className="text-2xl font-bold text-sky-600 leading-none">{selectedRank.count}</p>
-                  <p className="text-[8px] font-bold text-sky-400 uppercase tracking-widest mt-1">Học sinh</p>
-               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar p-1">
-               {selectedRank.students?.map((s: any) => (
-                 <div key={s.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-all">
-                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 text-xs font-bold border border-slate-100">
-                       {s.displayName?.[0] || "?"}
-                    </div>
-                    <div className="min-w-0">
-                       <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight">{s.displayName}</p>
-                       <p className="text-[9px] text-slate-400 font-bold leading-none mt-1">{(s.totalXp || 0).toLocaleString()} EXP</p>
-                    </div>
-                 </div>
-               ))}
-               {(!selectedRank.students || selectedRank.students.length === 0) && (
-                 <div className="col-span-full py-10 text-center text-slate-400 italic text-xs font-bold">Chưa có học sinh nào đạt danh hiệu này.</div>
-               )}
-            </div>
-            
-            <div className="flex justify-end pt-4 border-t border-slate-100">
-               <Button onClick={() => setSelectedRank(null)} className="rounded-xl px-10 h-11 font-bold uppercase tracking-[0.2em] text-[10px] bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xl active:scale-95">Đóng</Button>
-            </div>
-          </div>
-        )}
-      </ResponsiveModal>
+      <RankStudentListModal 
+        selectedRank={selectedRank}
+        onClose={() => setSelectedRank(null)}
+      />
     </div>
   )
 }
