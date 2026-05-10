@@ -109,7 +109,8 @@ export async function generateArenaQuiz(config: ArenaQuizConfig) {
   // 2. NẾU THIẾU CÂU HỎI -> GỌI AI BỔ SUNG
   if (quizzes.length < count) {
     const remainingCount = count - quizzes.length;
-    const context = await retrieveRelevantContext(config.topic);
+    // Tối ưu RAG: Truyền gradeNum để lấy đúng kiến thức theo khối
+    const context = await retrieveRelevantContext(config.topic, 5, gradeNum || undefined);
 
     const prompt = `Bạn là hệ thống "Đấu Trường Trí Tuệ AI" thuộc dự án Gia sư AI KHTN.
       Nhiệm vụ: Khởi tạo bộ câu hỏi thách đấu dựa trên thông tin sau:
@@ -320,11 +321,12 @@ export async function getUserArenaStats(userId: string) {
 export async function analyzeArenaPerformance(params: {
   topic: string;
   results: any[];
+  grade?: number; // Nhận thêm grade để RAG chính xác hơn
 }) {
-  const { topic, results } = params;
+  const { topic, results, grade } = params;
 
-  // Lấy ngữ cảnh từ Knowledge Base
-  const context = await retrieveRelevantContext(topic);
+  // Lấy ngữ cảnh từ Knowledge Base - Có lọc theo khối lớp
+  const context = await retrieveRelevantContext(topic, 5, grade);
 
   const prompt = `Bạn là cô Trang, giáo viên KHTN. Hãy phân tích kết quả làm bài của học sinh trong trận đấu trí chủ đề: ${topic}.
     

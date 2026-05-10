@@ -16,8 +16,9 @@ export async function generateDraftContent(params: {
 }) {
   const { type, grade, topic, count = 5 } = params;
 
-  // Retrieve relevant context from Knowledge Base
-  const context = await retrieveRelevantContext(`${grade} ${topic}`, 5);
+  // Retrieve relevant context from Knowledge Base - Lọc theo grade
+  const gradeNum = parseInt(grade.replace(/\D/g, ""));
+  const context = await retrieveRelevantContext(`${grade} ${topic}`, 5, isNaN(gradeNum) ? undefined : gradeNum);
 
   if (type === "QUIZ") {
     return geminiService.generateQuiz(topic, context, grade, "Trắc nghiệm", count);
@@ -59,7 +60,7 @@ export async function getQuizForStudent(params: {
 
   // If not enough questions, call AI (Hybrid logic)
   if (bankQuestions.length < limit) {
-    const context = await retrieveRelevantContext(`${grade} ${topic}`, 5);
+    const context = await retrieveRelevantContext(`${grade} ${topic}`, 5, grade);
     const aiResult = await geminiService.generateQuiz(
       topic, 
       context, 
@@ -108,7 +109,7 @@ export async function getFlashcardsForStudent(params: {
   });
 
   if (!deck) {
-    const context = await retrieveRelevantContext(`${grade} ${topic}`, 5);
+    const context = await retrieveRelevantContext(`${grade} ${topic}`, 5, grade);
     const aiResult = await geminiService.generateFlashcards(topic, context, `Lớp ${grade}`);
     
     if (aiResult && aiResult.flashcards) {
@@ -127,6 +128,9 @@ export async function getFlashcardsForStudent(params: {
   return deck;
 }
 
+/**
+ * 4. MINDMAP LOGIC
+ */
 export async function getMindmapForStudent(params: {
   grade: number;
   topic: string;
@@ -142,7 +146,7 @@ export async function getMindmapForStudent(params: {
   });
 
   if (!mindmap) {
-    const context = await retrieveRelevantContext(`${grade} ${topic}`, 5);
+    const context = await retrieveRelevantContext(`${grade} ${topic}`, 5, grade);
     const aiResult = await geminiService.generateMindmap(topic, context, `Lớp ${grade}`);
     
     if (aiResult && aiResult.mindmap) {
@@ -158,7 +162,6 @@ export async function getMindmapForStudent(params: {
     throw new NotFoundError("Không thể tạo sơ đồ tư duy cho chủ đề này.");
   }
 
-  // Chuẩn hóa dữ liệu từ DB (vốn lưu nodes trong trường markdown dưới dạng string JSON)
   let nodes = [];
   try {
     nodes = JSON.parse(mindmap.markdown);

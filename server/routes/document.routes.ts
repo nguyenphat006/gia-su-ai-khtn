@@ -1,7 +1,12 @@
 import { Router } from "express";
 import multer from "multer";
 import { authenticate } from "../middleware/auth.js";
-import { uploadDocument, listDocuments, reviewDocumentQuestions } from "../controllers/document.controller.js";
+import { 
+  uploadDocument, 
+  listDocuments, 
+  reviewDocumentQuestions,
+  getDetail
+} from "../controllers/document.controller.js";
 
 const router = Router();
 
@@ -26,7 +31,7 @@ router.use(authenticate);
  * @swagger
  * /api/documents/upload:
  *   post:
- *     summary: Upload sách/tài liệu để AI đọc và sinh câu hỏi
+ *     summary: Upload sách/tài liệu để AI đọc và nạp tri thức
  *     tags: [Documents]
  *     security:
  *       - bearerAuth: []
@@ -57,15 +62,52 @@ router.post("/upload", upload.single("file"), uploadDocument);
  * @swagger
  * /api/documents:
  *   get:
- *     summary: Lấy danh sách tài liệu đang/đã phân tích
+ *     summary: Lấy danh sách tài liệu đang/đã phân tích (Phân trang & Lọc)
  *     tags: [Documents]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: grade
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Trả về danh sách SourceDocument
  */
 router.get("/", listDocuments);
+
+/**
+ * @swagger
+ * /api/documents/{id}/detail:
+ *   get:
+ *     summary: Lấy nội dung chi tiết (văn bản trích xuất) của tài liệu
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Trả về nội dung rawText
+ */
+router.get("/:id/detail", getDetail);
 
 /**
  * @swagger

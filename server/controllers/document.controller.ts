@@ -1,10 +1,14 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../middleware/error-handler.js";
-import { processDocumentUpload, getSourceDocuments, reviewPendingQuestions } from "../services/document.service.js";
+import { 
+  processDocumentUpload, 
+  getSourceDocuments, 
+  reviewPendingQuestions,
+  getDocumentContent
+} from "../services/document.service.js";
 
 /**
- * Upload tệp tài liệu để phân tích ngầm
- * Yêu cầu: Multipart/form-data với field 'file'
+ * Upload tệp tài liệu để nạp tri thức RAG
  */
 export const uploadDocument = asyncHandler(async (req: Request, res: Response) => {
   if (!req.file) {
@@ -23,17 +27,36 @@ export const uploadDocument = asyncHandler(async (req: Request, res: Response) =
 
   res.status(202).json({
     status: "ok",
-    message: "Đã tiếp nhận tài liệu. Hệ thống đang tiến hành đọc và sinh câu hỏi (Quá trình này có thể mất vài phút).",
+    message: "Hệ thống đang tiến hành trích xuất tri thức từ tài liệu (Quá trình này chạy ngầm).",
     data: { document }
   });
 });
 
 /**
- * Lấy danh sách các tài liệu đã tải lên và trạng thái tiến độ
+ * Lấy danh sách các tài liệu đã tải lên (phân trang, lọc)
  */
 export const listDocuments = asyncHandler(async (req: Request, res: Response) => {
-  const documents = await getSourceDocuments();
-  res.json({ status: "ok", data: { documents } });
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const search = req.query.search as string;
+  const grade = req.query.grade ? parseInt(req.query.grade as string) : undefined;
+
+  const result = await getSourceDocuments({ page, limit, search, grade });
+  res.json({ status: "ok", data: result });
+});
+
+/**
+ * Lấy nội dung chi tiết của tài liệu
+ */
+export const getDetail = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const document = await getDocumentContent(id);
+  
+  if (!document) {
+    return res.status(404).json({ status: "error", message: "Không tìm thấy tài liệu." });
+  }
+
+  res.json({ status: "ok", data: { document } });
 });
 
 /**
@@ -41,13 +64,12 @@ export const listDocuments = asyncHandler(async (req: Request, res: Response) =>
  */
 export const reviewDocumentQuestions = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { action } = req.body; // "APPROVE_ALL" hoặc "DELETE_ALL"
+  const { action } = req.body; 
 
   if (action !== "APPROVE_ALL" && action !== "DELETE_ALL") {
     return res.status(400).json({ status: "error", message: "Hành động (action) không hợp lệ." });
   }
 
   await reviewPendingQuestions(id, action);
-
   res.json({ status: "ok", message: action === "APPROVE_ALL" ? "Đã phê duyệt toàn bộ." : "Đã hủy toàn bộ." });
 });

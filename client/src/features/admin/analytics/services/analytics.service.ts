@@ -37,6 +37,12 @@ export const adminAnalyticsService = {
     return apiClient<{ status: string; data: ArenaLogDetail }>(`/api/reports/arena-logs/${id}`);
   },
 
+  // Nhật ký Ôn tập (Quiz History)
+  getQuizLogs: async (params?: { page?: number; limit?: number; keyword?: string }) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiClient<any>(`/api/reports/quiz-logs?${query}`);
+  },
+
   // Chuyên cần & Phân bổ hạng
   getUserEngagement: async () => {
     return apiClient<{ status: string; data: UserEngagement }>("/api/reports/user-engagement");

@@ -184,4 +184,31 @@ router.get("/arena-export", reportController.exportArenaLogsExcel);
  */
 router.get("/user-engagement", reportController.getUserEngagementStats);
 
+/**
+ * @swagger
+ * /api/reports/quiz-logs:
+ *   get:
+ *     summary: Lấy nhật ký làm bài ôn tập (Quiz History) của học sinh
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: keyword
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Trả về danh sách QuizHistory
+ */
+router.get("/quiz-logs", reportController.getQuizLogs);
+
 export default router;

@@ -54,6 +54,15 @@ export const getUserEngagementStats = asyncHandler(async (req: Request, res: Res
   res.json({ status: "ok", data: result });
 });
 
+export const getQuizLogs = asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const keyword = req.query.keyword as string | undefined;
+
+  const result = await reportService.getQuizLogs(page, limit, keyword);
+  res.json({ status: "ok", data: result });
+});
+
 export const exportArenaLogsExcel = asyncHandler(async (req: Request, res: Response) => {
   // Lấy toàn bộ dữ liệu arena (không phân trang) để xuất excel
   const result = await reportService.getArenaLogs(1, 10000); 

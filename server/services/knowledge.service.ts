@@ -24,7 +24,7 @@ interface ListKnowledgeQuery {
 }
 
 /**
- * Lấy danh sách tài liệu với phân trang và tìm kiếm (Chuẩn hóa theo user.service)
+ * Lấy danh sách tài liệu với phân trang và tìm kiếm (Chuẩn hóa)
  */
 export async function getKnowledgeDocuments(query: ListKnowledgeQuery) {
   const page = Math.max(1, query.page || 1);
@@ -117,11 +117,25 @@ export async function deleteKnowledgeDocuments(ids: string[]) {
 
 
 /**
- * Trích xuất các tài liệu phù hợp nhất (Keyword Matching/Simple RAG)
+ * Trích xuất các tài liệu phù hợp nhất (Simple RAG)
+ * Có lọc theo KHỐI LỚP (grade)
  */
-export async function retrieveRelevantContext(query: string, limit = 3): Promise<string> {
-  const result = await getKnowledgeDocuments({ onlyActive: true });
-  const docs = result.documents;
+export async function retrieveRelevantContext(query: string, limit = 5, grade?: number): Promise<string> {
+  const where: Prisma.KnowledgeDocumentWhereInput = { isActive: true };
+  
+  // Nếu có grade, ưu tiên kiến thức khối đó hoặc kiến thức chung/hệ thống
+  if (grade) {
+    where.OR = [
+        { tags: { has: `Khối ${grade}` } },
+        { tags: { has: "Chung" } },
+        { tags: { has: "Hệ thống" } }
+    ];
+  }
+
+  const docs = await prisma.knowledgeDocument.findMany({ 
+    where,
+    select: { content: true, title: true }
+  });
   
   if (docs.length === 0) return "";
 
@@ -131,8 +145,9 @@ export async function retrieveRelevantContext(query: string, limit = 3): Promise
     let score = 0;
     const lowContent = doc.content.toLowerCase();
     keywords.forEach((word) => {
-      if (lowContent.includes(word)) score++;
+      if (lowContent.includes(word)) score += 2;
     });
+    if (doc.title.toLowerCase().includes(query.toLowerCase())) score += 5;
     return { ...doc, score };
   });
 

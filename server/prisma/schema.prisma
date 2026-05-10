@@ -278,6 +278,7 @@ model SourceDocument {
   status       DocumentStatus @default(PROCESSING)
   totalChunks  Int            @default(0)
   parsedChunks Int            @default(0)
+  rawText      String?        @db.Text
   createdAt    DateTime       @default(now())
   
   questions    QuestionBank[]

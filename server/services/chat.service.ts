@@ -23,7 +23,6 @@ export async function getUserSessions(userId: string) {
  * Lấy lịch sử tin nhắn của một phiên
  */
 export async function getSessionMessages(sessionId: string, userId: string) {
-  // Đảm bảo session thuộc về user này
   const session = await prisma.chatSession.findUnique({
     where: { id: sessionId },
   });
@@ -51,7 +50,7 @@ export async function createSession(userId: string, title = "Đoạn chat mới"
 }
 
 /**
- * Nhận câu hỏi từ User, xử lý RAG, gọi Gemini, và lưu lịch sử
+ * Nhận câu hỏi từ User, xử lý RAG (Lọc theo khối lớp), gọi Gemini, và lưu lịch sử
  */
 export async function processUserMessage(
   userId: string,
@@ -59,14 +58,17 @@ export async function processUserMessage(
   content: string,
   image?: { data: string; mimeType: string }
 ) {
-  // 1. Kiểm tra session
-  const session = await prisma.chatSession.findUnique({
-    where: { id: sessionId },
-  });
+  // 1. Kiểm tra session & Lấy thông tin khối lớp của học sinh
+  const [session, studentProfile] = await Promise.all([
+    prisma.chatSession.findUnique({ where: { id: sessionId } }),
+    prisma.studentProfile.findUnique({ where: { userId } })
+  ]);
 
   if (!session || session.userId !== userId) {
     throw new Error("Phiên trò chuyện không hợp lệ.");
   }
+
+  const studentGrade = studentProfile?.grade;
 
   // 2. Lưu tin nhắn của User vào DB
   const userMessageData: any = {
@@ -83,58 +85,48 @@ export async function processUserMessage(
     data: userMessageData,
   });
 
-  // 3. Cộng 10 EXP cho User vì đã đặt câu hỏi & Cập nhật thử thách
+  // 3. Cộng 10 EXP cho User & Cập nhật thử thách
   try {
     await addXp(userId, 10, XpAction.CHAT_AI);
     await updateChallengeProgress(userId, "S_GIA_CAU_HOI", 1);
   } catch (error) {
-    console.error("Lỗi khi cộng EXP cho user:", error);
+    console.error("Lỗi cộng EXP:", error);
   }
 
-  // 4. Kéo lịch sử chat gần nhất (10 tin nhắn) để truyền cho AI
+  // 4. Kéo lịch sử chat gần nhất
   const recentMessages = await prisma.chatMessage.findMany({
     where: { sessionId },
     orderBy: { createdAt: "desc" },
     take: 10,
   });
 
-  // Đảo ngược lại thành thứ tự thời gian cũ -> mới
   const formattedHistory: GeminiMessage[] = recentMessages
     .reverse()
-    .filter((m) => m.role !== ChatRole.SYSTEM) // Bỏ qua system msg nếu có
+    .filter((m) => m.role !== ChatRole.SYSTEM)
     .map((m) => {
       const parts: any[] = [{ text: m.content }];
-      
-      // Thêm attachments nếu có
       if (m.attachments && Array.isArray(m.attachments)) {
         (m.attachments as any[]).forEach((att) => {
           if (att.type === "image" && att.data) {
-            parts.push({
-              inlineData: {
-                data: att.data,
-                mimeType: att.mimeType,
-              },
-            });
+            parts.push({ inlineData: { data: att.data, mimeType: att.mimeType } });
           }
         });
       }
-
       return {
         role: m.role === ChatRole.USER ? "user" : "model",
         parts,
       };
     });
 
-  // Loại bỏ câu hỏi hiện tại vừa thêm khỏi history vì askGemini đã tự nạp câu hỏi mới
   formattedHistory.pop();
 
-  // 5. RAG: Tìm kiếm tài liệu liên quan từ DB (Knowledge Base)
-  const context = await retrieveRelevantContext(content);
+  // 5. RAG: Tìm kiếm tri thức liên quan (Ưu tiên theo KHỐI LỚP)
+  const context = await retrieveRelevantContext(content, 5, studentGrade);
 
   // 6. Gọi Gemini API
   const aiResponseText = await askGemini(content, formattedHistory, context, image);
 
-  // 7. Lưu tin nhắn phản hồi của AI vào DB
+  // 7. Lưu tin nhắn phản hồi của AI
   const aiMessage = await prisma.chatMessage.create({
     data: {
       sessionId,
@@ -143,7 +135,7 @@ export async function processUserMessage(
     },
   });
 
-  // Cập nhật updatedAt cho Session
+  // Cập nhật thời gian cho Session
   await prisma.chatSession.update({
     where: { id: sessionId },
     data: { updatedAt: new Date() },

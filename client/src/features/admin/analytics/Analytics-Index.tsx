@@ -5,20 +5,13 @@ import {
   MessageSquare, 
   Trophy, 
   Zap,
-  Calendar,
-  Search,
-  ArrowRight,
-  User as UserIcon,
-  Flame,
   RefreshCcw,
   FileSpreadsheet,
-  Users,
+  CheckCircle2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { adminAnalyticsService } from "./services/analytics.service"
-import { DataTablePagination } from "@/components/DataTable/DataTablePagination"
 import { toast } from "sonner"
 import { 
   ActivityTimeStat, 
@@ -28,13 +21,15 @@ import {
 } from "./types"
 
 // Sub-components
-import { StatsCard } from "./components/StatsCard"
-import { StudyHeatmap } from "./components/StudyHeatmap"
 import { ChatLogDetailModal } from "./components/ChatLogDetailModal"
 import { RankStudentListModal } from "./components/RankStudentListModal"
+import { GeneralAnalyticsTab } from "./components/GeneralAnalyticsTab"
+import { ChatLogsTab } from "./components/ChatLogsTab"
+import { RankingTab } from "./components/RankingTab"
+import { QuizLogsTab } from "./components/QuizLogsTab"
 
 export default function AnalyticsIndex() {
-  const [activeTab, setActiveTab] = React.useState<"general" | "chat" | "ranking">("general");
+  const [activeTab, setActiveTab] = React.useState<"general" | "chat" | "ranking" | "quiz">("general");
   const [loading, setLoading] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
   
@@ -42,6 +37,7 @@ export default function AnalyticsIndex() {
   const [engagement, setEngagement] = React.useState<UserEngagement | null>(null);
   const [topStudents, setTopStudents] = React.useState<TopStudent[]>([]);
   const [chatLogs, setChatLogs] = React.useState<ChatLog[]>([]);
+  const [quizLogs, setQuizLogs] = React.useState<any[]>([]);
   const [activityTime, setActivityTime] = React.useState<ActivityTimeStat[]>([]);
 
   // Ranking Filter State
@@ -50,12 +46,14 @@ export default function AnalyticsIndex() {
   const [selectedYear, setSelectedYear] = React.useState(2026);
 
   // Pagination State for Chat Logs
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
   const [totalPages, setTotalPages] = React.useState(1);
   const [totalLogs, setTotalLogs] = React.useState(0);
+
+  // Pagination State for Quiz Logs
+  const [quizPagination, setQuizPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
+  const [quizTotalPages, setQuizTotalPages] = React.useState(1);
+  const [quizTotalLogs, setQuizTotalLogs] = React.useState(0);
 
   // Selected Log & Session State
   const [selectedLog, setSelectedLog] = React.useState<ChatLog | null>(null);
@@ -110,19 +108,35 @@ export default function AnalyticsIndex() {
     }
   }, [pagination.pageIndex, pagination.pageSize]);
 
+  const fetchQuizLogs = React.useCallback(async () => {
+    try {
+      const res = await adminAnalyticsService.getQuizLogs({ 
+        page: quizPagination.pageIndex + 1, 
+        limit: quizPagination.pageSize 
+      });
+      const payload = res.data as any;
+      setQuizLogs(payload.data || []);
+      setQuizTotalPages(payload.pagination?.totalPages || 1);
+      setQuizTotalLogs(payload.pagination?.total || 0);
+    } catch (error) {
+      console.error("Lỗi khi tải nhật ký ôn tập:", error);
+    }
+  }, [quizPagination.pageIndex, quizPagination.pageSize]);
+
   const fetchAllData = React.useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
     await Promise.all([
       fetchGeneralData(), 
       fetchChatLogs(),
+      fetchQuizLogs(),
       fetchLeaderboard(selectedMonth, selectedYear)
     ]);
     if (showLoading) setLoading(false);
-  }, [fetchGeneralData, fetchChatLogs, fetchLeaderboard, selectedMonth, selectedYear]);
+  }, [fetchGeneralData, fetchChatLogs, fetchQuizLogs, fetchLeaderboard, selectedMonth, selectedYear]);
 
-  React.useEffect(() => {
-    fetchAllData();
-  }, []);
+  React.useEffect(() => { fetchData(); }, []); // eslint-disable-line
+
+  const fetchData = () => fetchAllData(true);
 
   React.useEffect(() => {
     fetchLeaderboard(selectedMonth, selectedYear);
@@ -130,7 +144,11 @@ export default function AnalyticsIndex() {
 
   React.useEffect(() => {
     fetchChatLogs();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, fetchChatLogs]);
+
+  React.useEffect(() => {
+    fetchQuizLogs();
+  }, [quizPagination.pageIndex, quizPagination.pageSize, fetchQuizLogs]);
 
   const fetchSessionMessages = async (sessionId: string) => {
     setIsLoadingSession(true);
@@ -146,11 +164,8 @@ export default function AnalyticsIndex() {
   };
 
   React.useEffect(() => {
-    if (selectedLog?.sessionId) {
-      fetchSessionMessages(selectedLog.sessionId);
-    } else {
-      setSessionMessages([]);
-    }
+    if (selectedLog?.sessionId) fetchSessionMessages(selectedLog.sessionId);
+    else setSessionMessages([]);
   }, [selectedLog]);
 
   const handleExportExcel = async () => {
@@ -193,8 +208,7 @@ export default function AnalyticsIndex() {
       }));
       const wsChat = XLSX.utils.json_to_sheet(chatData);
       wsChat["!cols"] = [{ wch: 25 }, { wch: 25 }, { wch: 50 }, { wch: 60 }];
-      XLSX.utils.book_append_sheet(wb, wsChat, "Nhat ky Chat");
-
+      // 4. Sheet Phân bổ Danh hiệu (Kèm danh sách học sinh)
       const rankRows: any[] = [["DANH HIỆU", "SỐ LƯỢNG", "DANH SÁCH HỌC SINH"]];
       engagement?.rankDistribution?.forEach(r => {
         const studentNames = r.students?.map((s: any) => s.displayName).join(", ") || "";
@@ -204,6 +218,19 @@ export default function AnalyticsIndex() {
       wsRanks["!cols"] = [{ wch: 25 }, { wch: 12 }, { wch: 100 }];
       XLSX.utils.book_append_sheet(wb, wsRanks, "Phan bo Danh hieu");
 
+      // 5. Sheet Nhật ký Ôn tập (Quiz Logs)
+      const quizData = quizLogs.map(log => ({
+        "THỜI GIAN": new Date(log.createdAt).toLocaleString(),
+        "HỌC SINH": log.user?.displayName || "Ẩn danh",
+        "LOẠI BÀI": log.quizType === "CHINH_PHUC" ? "Thử thách" : "Flashcard",
+        "ĐÚNG/TỔNG": `${log.correctCount}/${log.totalQuestions}`,
+        "XP NHẬN": log.xpEarned
+      }));
+      const wsQuiz = XLSX.utils.json_to_sheet(quizData);
+      wsQuiz["!cols"] = [{ wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 12 }];
+      XLSX.utils.book_append_sheet(wb, wsQuiz, "Nhat ky On tap");
+
+      // Save file
       XLSX.writeFile(wb, `bao_cao_tong_hop_${new Date().toISOString().slice(0, 10)}.xlsx`);
       toast.success("Đã xuất báo cáo thành công!", { id: toastId });
     } catch (error) {
@@ -218,6 +245,7 @@ export default function AnalyticsIndex() {
     { id: "general", label: "Tổng quan", icon: LayoutDashboard },
     { id: "chat", label: "Nhật ký Chat", icon: MessageSquare },
     { id: "ranking", label: "Xếp hạng", icon: Trophy },
+    { id: "quiz", label: "Ôn tập", icon: CheckCircle2 },
   ];
 
   const months = [
@@ -241,21 +269,11 @@ export default function AnalyticsIndex() {
         </div>
         
         <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
-          <Button 
-            variant="outline" 
-            onClick={() => fetchAllData(true)}
-            disabled={loading}
-            className="rounded-xl border-slate-200 h-10 w-10 p-0 hover:bg-slate-50 transition-all shadow-sm"
-          >
+          <Button variant="outline" onClick={() => fetchAllData(true)} disabled={loading} className="rounded-xl border-slate-200 h-10 w-10 p-0 hover:bg-slate-50 transition-all shadow-sm">
             <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
           </Button>
 
-          <Button 
-            variant="outline" 
-            onClick={handleExportExcel}
-            disabled={isExporting}
-            className="rounded-xl border-slate-200 h-10 px-4 gap-2 text-xs font-bold hover:border-emerald-500 hover:text-emerald-600 transition-all shadow-sm"
-          >
+          <Button variant="outline" onClick={handleExportExcel} disabled={isExporting} className="rounded-xl border-slate-200 h-10 px-4 gap-2 text-xs font-bold hover:border-emerald-500 hover:text-emerald-600 transition-all shadow-sm">
             {isExporting ? <RefreshCcw size={14} className="animate-spin" /> : <FileSpreadsheet size={16} />}
             <span>Xuất Excel</span>
           </Button>
@@ -283,292 +301,54 @@ export default function AnalyticsIndex() {
 
       <AnimatePresence mode="wait">
         {activeTab === "general" && (
-          <motion.div
-            key="general"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-8"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatsCard label="Học sinh tích cực" value={(engagement?.rankDistribution?.reduce((acc, curr) => acc + curr.count, 0) || 0)} icon={Users} color="bg-emerald-500" />
-              <StatsCard label="Câu hỏi đã hỏi" value={totalLogs || 0} icon={MessageSquare} color="bg-sky-500" />
-              <StatsCard label="Chuỗi đăng nhập Max" value={engagement?.topStreaks?.[0]?.longestStreak || 0} icon={Flame} color="bg-orange-500" />
-              <StatsCard label="Tổng tương tác" value={activityTime?.reduce((acc, curr) => acc + (curr.count || (curr as any).actionCount || 0), 0).toLocaleString() || 0} icon={Zap} color="bg-purple-500" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-8">
-              <StudyHeatmap activityTime={activityTime} />
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                 {/* Rank Distribution */}
-                 <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-full">
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 border border-indigo-100 shadow-sm">
-                        <Zap size={20} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Phân phối danh hiệu</h3>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tỉ lệ trình độ học sinh</p>
-                      </div>
-                    </div>
-                    <div className="space-y-5 flex-1">
-                       {engagement?.rankDistribution?.map((rank, idx) => (
-                         <div key={idx} className="space-y-1.5 group cursor-pointer" onClick={() => setSelectedRank(rank as any)}>
-                            <div className="flex justify-between items-end">
-                              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tight group-hover:text-sky-600 transition-colors">{rank.rank}</p>
-                              <p className="text-[10px] font-bold text-slate-400 group-hover:text-sky-400"><b>{rank.count}</b> học sinh <ArrowRight size={10} className="inline ml-1" /></p>
-                            </div>
-                            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
-                              <motion.div 
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(100, (rank.count / (engagement?.rankDistribution?.reduce((acc, curr) => acc + curr.count, 0) || 1)) * 100)}%` }}
-                                className={cn(
-                                  "h-full rounded-full shadow-sm",
-                                  idx === 0 ? "bg-amber-500" : (idx === 1 ? "bg-sky-500" : (idx === 2 ? "bg-emerald-500" : "bg-indigo-500"))
-                                )}
-                              />
-                            </div>
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 {/* Streak Summary */}
-                 <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-full">
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 border border-emerald-100 shadow-sm">
-                        <Flame size={20} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Thống kê Chuyên cần</h3>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Hiệu suất rèn luyện trung bình</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-                       <div className="relative">
-                          <div className="w-32 h-32 rounded-full border-8 border-slate-50 flex items-center justify-center relative z-10">
-                             <div className="text-center">
-                                <span className="text-3xl font-bold text-slate-900">84%</span>
-                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Active Rate</p>
-                             </div>
-                          </div>
-                          <svg className="absolute inset-0 w-32 h-32 -rotate-90 z-20 pointer-events-none">
-                             <circle cx="64" cy="64" r="56" fill="transparent" stroke="url(#active-gradient)" strokeWidth="8" strokeDasharray={`${0.84 * 351} 351`} strokeLinecap="round" />
-                             <defs>
-                                <linearGradient id="active-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                   <stop offset="0%" stopColor="#10b981" />
-                                   <stop offset="100%" stopColor="#3b82f6" />
-                                </linearGradient>
-                             </defs>
-                          </svg>
-                       </div>
-                       <p className="text-[10px] text-slate-500 font-medium max-w-[200px] leading-relaxed italic">
-                         Dựa trên chuỗi ngày học tập và tần suất tương tác của toàn bộ học sinh trong tháng này.
-                       </p>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </motion.div>
+          <GeneralAnalyticsTab 
+            engagement={engagement}
+            totalLogs={totalLogs}
+            activityTime={activityTime}
+            topStudentsCount={topStudents.length}
+            onRankClick={setSelectedRank}
+          />
         )}
 
         {activeTab === "chat" && (
-          <motion.div
-            key="chat"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-6"
-          >
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input placeholder="Tìm kiếm nội dung hội thoại..." className="pl-10 h-10 rounded-xl font-bold" />
-              </div>
-              <Button variant="outline" onClick={() => fetchChatLogs()} className="h-10 rounded-xl gap-2 border-slate-200">
-                <RefreshCcw size={14} className={loading ? "animate-spin" : ""} /> <span>Làm mới</span>
-              </Button>
-            </div>
-
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
-               <table className="w-full text-left border-collapse">
-                 <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100">
-                      <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thời gian</th>
-                      <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Học sinh</th>
-                      <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nội dung câu hỏi</th>
-                      <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Hành động</th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-50">
-                    {chatLogs?.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setSelectedLog(log)}>
-                        <td className="p-4 text-[10px] font-bold text-slate-500 whitespace-nowrap">
-                          {log.createdAt ? new Date(log.createdAt).toLocaleString() : "---"}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                             <div className="w-6 h-6 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-[10px] font-bold uppercase border border-white shadow-sm">
-                               {log.session?.user?.displayName?.[0] || "?"}
-                             </div>
-                             <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">
-                               {log.session?.user?.displayName || "Ẩn danh"}
-                             </span>
-                          </div>
-                        </td>
-                        <td className="p-4 max-w-md">
-                          <p className="text-xs font-medium text-slate-600 line-clamp-1 italic">"{log.question}"</p>
-                        </td>
-                        <td className="p-4 text-right">
-                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50">
-                             <ArrowRight size={14} />
-                           </Button>
-                        </td>
-                      </tr>
-                    ))}
-                    {chatLogs.length === 0 && !loading && (
-                      <tr>
-                        <td colSpan={4} className="p-10 text-center text-slate-400 font-bold italic text-xs">Chưa có nhật ký hội thoại nào.</td>
-                      </tr>
-                    )}
-                 </tbody>
-               </table>
-            </div>
-
-            {chatLogs.length > 0 && (
-              <div className="mt-4">
-                <DataTablePagination 
-                  table={{
-                    getState: () => ({ pagination }),
-                    setPageIndex: (index: number) => setPagination(prev => ({ ...prev, pageIndex: index })),
-                    setPageSize: (size: number) => setPagination(prev => ({ ...prev, pageSize: size, pageIndex: 0 })),
-                    getPageCount: () => totalPages,
-                    getCanPreviousPage: () => pagination.pageIndex > 0,
-                    getCanNextPage: () => pagination.pageIndex < totalPages - 1,
-                    previousPage: () => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 })),
-                    nextPage: () => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 })),
-                    getFilteredSelectedRowModel: () => ({ rows: [] })
-                  } as any}
-                  totalCount={totalLogs}
-                />
-              </div>
-            )}
-          </motion.div>
+          <ChatLogsTab 
+            chatLogs={chatLogs}
+            loading={loading}
+            pagination={pagination}
+            setPagination={setPagination}
+            totalPages={totalPages}
+            totalLogs={totalLogs}
+            fetchChatLogs={fetchChatLogs}
+            onViewDetail={setSelectedLog}
+          />
         )}
 
         {activeTab === "ranking" && (
-          <motion.div
-            key="ranking"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
-          >
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col min-h-[600px]">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 border border-amber-100 shadow-sm">
-                    <Trophy size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight">Vinh danh EXP</h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bảng xếp hạng theo tháng</p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                   <select 
-                      value={selectedMonth} 
-                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-sky-500 transition-all"
-                   >
-                      {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                   </select>
-                   <div className="px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-500 flex items-center gap-1.5">
-                      <Calendar size={12} />
-                      {selectedYear}
-                   </div>
-                </div>
-              </div>
+          <RankingTab 
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            selectedYear={selectedYear}
+            topStudents={topStudents}
+            engagement={engagement}
+            months={months}
+          />
+        )}
 
-              <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
-                {topStudents?.map((s, idx) => (
-                  <div key={idx} className={cn(
-                    "flex items-center gap-4 p-4 rounded-2xl transition-all border",
-                    idx === 0 ? "bg-amber-50 border-amber-200 shadow-md shadow-amber-100" : "bg-white border-slate-100 hover:bg-slate-50"
-                  )}>
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs",
-                      idx === 0 ? "bg-amber-400 text-white" : (idx === 1 ? "bg-slate-300 text-white" : (idx === 2 ? "bg-orange-300 text-white" : "bg-slate-50 text-slate-400"))
-                    )}>
-                      {idx + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight leading-tight">{s.displayName}</p>
-                      <p className="text-[9px] text-slate-400 font-bold leading-tight mt-0.5 uppercase">@{s.username}</p>
-                    </div>
-                    <div className="text-right">
-                       <p className="text-sm font-bold text-sky-600 leading-tight">{(s.xp || 0).toLocaleString()}</p>
-                       <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">EXP</p>
-                    </div>
-                  </div>
-                ))}
-                {topStudents.length === 0 && (
-                  <div className="h-full flex flex-col items-center justify-center text-center opacity-30 py-20">
-                     <Trophy size={48} className="mb-2" />
-                     <p className="text-xs font-bold uppercase tracking-widest">Chưa có dữ liệu tháng này</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-full">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 border border-emerald-100 shadow-sm">
-                    <Flame size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight leading-tight mb-1">Kỷ luật & Chuyên cần</h3>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Những học sinh chăm chỉ nhất</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-3 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
-                   {engagement?.topStreaks?.slice(0, 20).map((streak, idx) => (
-                     <div key={idx} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100 group">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 text-xs font-bold">
-                              {idx + 1}
-                           </div>
-                           <div className="min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight leading-tight mb-1">{streak.user?.displayName || "Học sinh"}</p>
-                              <p className="text-[9px] text-slate-400 font-bold uppercase">@{streak.user?.username}</p>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 px-3 py-1 bg-orange-50 rounded-full border border-orange-100">
-                           <Flame size={12} className="text-orange-500 fill-orange-500" />
-                           <span className="text-xs font-bold text-orange-700">{streak.longestStreak} ngày</span>
-                        </div>
-                     </div>
-                   ))}
-                </div>
-            </div>
-          </motion.div>
+        {activeTab === "quiz" && (
+          <QuizLogsTab 
+            quizLogs={quizLogs}
+            loading={loading}
+            quizPagination={quizPagination}
+            setQuizPagination={setQuizPagination}
+            quizTotalPages={quizTotalPages}
+            quizTotalLogs={quizTotalLogs}
+            fetchQuizLogs={fetchQuizLogs}
+          />
         )}
       </AnimatePresence>
 
-      <ChatLogDetailModal 
-        selectedLog={selectedLog}
-        onClose={() => setSelectedLog(null)}
-        isLoadingSession={isLoadingSession}
-        sessionMessages={sessionMessages}
-      />
-
-      <RankStudentListModal 
-        selectedRank={selectedRank}
-        onClose={() => setSelectedRank(null)}
-      />
+      <ChatLogDetailModal selectedLog={selectedLog} onClose={() => setSelectedLog(null)} isLoadingSession={isLoadingSession} sessionMessages={sessionMessages} />
+      <RankStudentListModal selectedRank={selectedRank} onClose={() => setSelectedRank(null)} />
     </div>
   )
 }

@@ -529,3 +529,48 @@ export async function getUserEngagementStats() {
     rankDistribution: formattedRankStats
   };
 }
+
+// ==========================================
+// 6. GET QUIZ LOGS (Revision History)
+// ==========================================
+export async function getQuizLogs(page = 1, limit = 50, keyword?: string) {
+  const skip = (page - 1) * limit;
+
+  const where: any = {};
+  if (keyword) {
+    where.OR = [
+      { user: { displayName: { contains: keyword, mode: "insensitive" } } },
+      { user: { username: { contains: keyword, mode: "insensitive" } } },
+    ];
+  }
+
+  const [logs, total] = await Promise.all([
+    prisma.quizHistory.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            displayName: true,
+            username: true,
+            studentProfile: { select: { studentCode: true } }
+          }
+        }
+      }
+    }),
+    prisma.quizHistory.count({ where }),
+  ]);
+
+  return {
+    data: logs,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
+  };
+}
