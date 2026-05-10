@@ -109,6 +109,7 @@ model XpLog {
   createdAt   DateTime @default(now())
 
   @@index([userId, createdAt])
+  @@index([action, createdAt])
 }
 
 model AuthSession {
@@ -349,6 +350,7 @@ model ArenaResult {
 
   createdAt  DateTime @default(now())
 
-  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([mode, createdAt])
   @@index([score])
 }
