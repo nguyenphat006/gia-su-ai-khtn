@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
-export const userColumns: ColumnDef<any>[] = [
+export const userColumns = ({ onEdit, onDelete }: { onEdit: (user: any) => void, onDelete: (id: string) => void }): ColumnDef<any>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -39,7 +39,6 @@ export const userColumns: ColumnDef<any>[] = [
       <DataTableColumnHeader column={column} title="Họ và tên" />
     ),
     cell: ({ row }) => {
-      const role = row.original.role;
       return (
         <div className="flex flex-col items-center">
             <span className="font-bold text-slate-800 tracking-tight leading-tight mb-1">
@@ -109,9 +108,8 @@ export const userColumns: ColumnDef<any>[] = [
   },
   {
     id: "actions",
-    cell: ({ row, table }) => {
+    cell: ({ row }) => {
       const user = row.original;
-      const meta = table.options.meta as any;
 
       return (
         <DropdownMenu>
@@ -121,11 +119,11 @@ export const userColumns: ColumnDef<any>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-slate-100">
-            <DropdownMenuItem onClick={() => meta?.onEdit?.(user)} className="flex items-center gap-2 cursor-pointer">
+            <DropdownMenuItem onClick={() => onEdit?.(user)} className="flex items-center gap-2 cursor-pointer">
               <Pencil size={14} /> Chỉnh sửa
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => meta?.onDelete?.(user.id)} className="flex items-center gap-2 text-red-600 cursor-pointer">
+            <DropdownMenuItem onClick={() => onDelete?.(user.id)} className="flex items-center gap-2 text-red-600 cursor-pointer">
               <Trash2 size={14} /> Xóa người dùng
             </DropdownMenuItem>
           </DropdownMenuContent>

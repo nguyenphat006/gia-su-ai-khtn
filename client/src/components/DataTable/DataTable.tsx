@@ -37,6 +37,7 @@ interface DataTableProps<TData, TValue> {
   totalCount?: number
   meta?: any
   state?: any
+  rowSelection?: any
   onRowSelectionChange?: any
 }
 
@@ -53,6 +54,7 @@ export function DataTable<TData, TValue>({
   totalCount,
   meta,
   state: externalState,
+  rowSelection: externalRowSelection,
   onRowSelectionChange: externalOnRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const [internalRowSelection, setInternalRowSelection] = React.useState({})
@@ -76,7 +78,7 @@ export function DataTable<TData, TValue>({
     state: {
       pagination: pagination ?? internalPagination,
       sorting: sorting ?? internalSorting,
-      rowSelection: externalState?.rowSelection ?? internalRowSelection,
+      rowSelection: externalRowSelection ?? externalState?.rowSelection ?? internalRowSelection,
       columnVisibility,
     },
     onPaginationChange: onPaginationChange ?? setInternalPagination,

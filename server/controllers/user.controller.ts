@@ -6,76 +6,64 @@ import {
   getUserById,
   createUser,
   updateUserByAdmin,
-  deleteUsers,
+  deleteUsersByIds,
   updateMyProfile,
+  generateMockUsers,
   batchImportUsers,
 } from "../services/user.service.js";
-import { generateMockUsers } from "../services/gemini.service.js";
-import { ValidationError, UnauthorizedError, NotFoundError } from "../utils/errors.js";
 import { Role } from "@prisma/client";
+import { ValidationError, UnauthorizedError } from "../utils/errors.js";
 
 // ========================
-// CRUD (Admin only)
+// USER LIST / CRUD (Admin)
 // ========================
 
 export const listUsers = asyncHandler(async (req: Request, res: Response) => {
-  const { page, limit, search, role, status, classId } = req.query;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const search = req.query.search as string;
+  const role = req.query.role as string;
+  const classId = req.query.classId as string;
+  const status = req.query.status as string;
 
   const result = await getUsers({
-    page: page ? Number(page) : undefined,
-    limit: limit ? Number(limit) : undefined,
-    search: search as string,
-    role: role as Role,
-    status: status as string,
-    classId: classId as string,
+    page,
+    limit,
+    search,
+    role: role as any,
+    classId,
+    status: status as any,
   });
 
   res.json({ status: "ok", data: result });
 });
 
 export const getUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await getUserById(req.params.id);
+  const { id } = req.params;
+  const user = await getUserById(id);
   res.json({ status: "ok", data: { user } });
 });
 
 export const createNewUser = asyncHandler(async (req: Request, res: Response) => {
-  const { role, username, displayName, password, email, classId, studentCode, grade, employeeCode, subject } = req.body;
-
-  if (!role || !username || !displayName) {
-    throw new ValidationError("Thieu du lieu bat buoc: role, username, displayName.");
-  }
-
-  if (!Object.values(Role).includes(role)) {
-    throw new ValidationError("Vai tro khong hop le (STUDENT, TEACHER, ADMIN).");
-  }
-
-  const user = await createUser({
-    role,
-    username,
-    displayName,
-    password,
-    email,
-    classId,
-    studentCode,
-    grade: grade ? Number(grade) : undefined,
-    employeeCode,
-    subject,
-  });
-
+  const data = req.body;
+  const user = await createUser(data);
   res.status(201).json({ status: "ok", data: { user } });
 });
 
 export const updateUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await updateUserByAdmin(req.params.id, req.body);
+  const { id } = req.params;
+  const data = req.body;
+  const user = await updateUserByAdmin(id, data);
   res.json({ status: "ok", data: { user } });
 });
 
 export const removeUsers = asyncHandler(async (req: Request, res: Response) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
-    throw new ValidationError("Danh sach ID khong hop le.");
+    throw new ValidationError("Vui long cung cap danh sach ID.");
   }
-  const result = await deleteUsers(ids);
+
+  const result = await deleteUsersByIds(ids);
   res.json({ status: "ok", data: result });
 });
 
@@ -102,7 +90,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
  * POST /api/users/batch-import — Import tu JSON array (AI generate preview -> save)
  */
 export const importUsersFromJson = asyncHandler(async (req: Request, res: Response) => {
-  const { users, seedActivity } = req.body;
+  const { users, seedActivity, seedOptions } = req.body;
   const isSeeding = seedActivity === "true" || seedActivity === true;
 
   if (!Array.isArray(users) || users.length === 0) {
@@ -127,7 +115,7 @@ export const importUsersFromJson = asyncHandler(async (req: Request, res: Respon
     throw new ValidationError("Khong co du lieu hop le (can username va displayName).");
   }
 
-  const result = await batchImportUsers(normalized, isSeeding);
+  const result = await batchImportUsers(normalized, isSeeding, seedOptions);
   res.json({ status: "ok", data: result });
 });
 
@@ -139,8 +127,17 @@ export const importUsersFromExcel = asyncHandler(async (req: Request, res: Respo
     throw new ValidationError("Vui long tai len file Excel (.xlsx).");
   }
 
-  const { seedActivity, grade, classId: targetClassId } = req.body;
+  const { seedActivity, grade, classId: targetClassId, seedOptions: rawSeedOptions } = req.body;
   const isSeeding = seedActivity === "true" || seedActivity === true;
+  
+  let seedOptions: any = undefined;
+  if (rawSeedOptions) {
+    try {
+      seedOptions = typeof rawSeedOptions === 'string' ? JSON.parse(rawSeedOptions) : rawSeedOptions;
+    } catch (e) {
+      console.error("Lỗi parse seedOptions:", e);
+    }
+  }
 
   let workbook: XLSX.WorkBook;
   try {
@@ -213,7 +210,7 @@ export const importUsersFromExcel = asyncHandler(async (req: Request, res: Respo
     );
   }
 
-  const result = await batchImportUsers(usersToImport, isSeeding);
+  const result = await batchImportUsers(usersToImport, isSeeding, seedOptions);
   res.json({ status: "ok", data: { ...result, total: usersToImport.length } });
 });
 
@@ -248,63 +245,50 @@ export const exportUsersToExcel = asyncHandler(async (req: Request, res: Respons
         studentCode: "HS2024002",
         grade: 7,
         classId: "",
-        email: "",
+        email: "binh.tv@school.edu.vn",
       }
     ];
   } else {
     const result = await getUsers({
-      limit: 1000,
-      role: role as Role,
-      classId: classId as string,
+      page: 1,
+      limit: 10000,
       search: search as string,
+      role: role as any,
+      classId: classId as string,
     });
-
-    exportData = result.users.map((u: any, index: number) => ({
-      STT: index + 1,
-      "Ho va ten": u.displayName,
-      "Ten dang nhap": u.username,
-      "Vai tro": u.role,
-      Email: u.email || "",
-      "Trang thai": u.status,
-      Lop: u.class?.name || "",
-      "Ma hoc sinh": u.studentProfile?.studentCode || "",
-      "Khoi lop": u.studentProfile?.grade || "",
-      "Ma nhan vien": u.teacherProfile?.employeeCode || "",
-      "Ngay tao": u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "",
+    exportData = result.users.map(u => ({
+      "Tên đăng nhập": u.username,
+      "Họ và tên": u.displayName,
+      "Vai trò": u.role,
+      "Trạng thái": u.status,
+      "Khối": u.studentProfile?.grade || u.teacherProfile?.subject || "",
+      "Mã số": u.studentProfile?.studentCode || u.teacherProfile?.employeeCode || "",
+      "Email": u.email || "",
+      "Lớp": u.class?.name || "",
+      "Ngày tạo": new Date(u.createdAt).toLocaleDateString(),
     }));
   }
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(exportData);
+  XLSX.utils.book_append_sheet(wb, ws, "Users");
 
+  // Neu la template, them huong dan
   if (isTemplate) {
-    ws["!cols"] = [
-      { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
-      { wch: 15 }, { wch: 10 }, { wch: 20 }, { wch: 25 }
+    const guideData = [
+      { "Ten cot": "username", "Bat buoc": "X", "Mo ta": "Ten dang nhap duy nhat", "Vi du": "nguyenvana" },
+      { "Ten cot": "displayName", "Bat buoc": "X", "Mo ta": "Ho va ten hien thi", "Vi du": "Nguyen Van An" },
+      { "Ten cot": "password", "Bat buoc": "", "Mo ta": "Mat khau (mac dinh 123456)", "Vi du": "123456" },
+      { "Ten cot": "role", "Bat buoc": "", "Mo ta": "STUDENT, TEACHER, ADMIN", "Vi du": "STUDENT" },
+      { "Ten cot": "studentCode", "Bat buoc": "", "Mo ta": "Ma hoc sinh (cho STUDENT)", "Vi du": "HS2024001" },
+      { "Ten cot": "grade", "Bat buoc": "", "Mo ta": "Khoi lop 6/7/8/9", "Vi du": "6" },
+      { "Ten cot": "classId", "Bat buoc": "", "Mo ta": "ID lop trong he thong", "Vi du": "..." },
+      { "Ten cot": "email", "Bat buoc": "", "Mo ta": "Email lien he", "Vi du": "hs@truong.edu.vn" },
     ];
-  } else {
-    ws["!cols"] = [
-      { wch: 5 }, { wch: 25 }, { wch: 20 }, { wch: 12 },
-      { wch: 25 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 12 },
-    ];
+    const wsGuide = XLSX.utils.json_to_sheet(guideData);
+    wsGuide["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 45 }, { wch: 25 }];
+    XLSX.utils.book_append_sheet(wb, wsGuide, "Huong dan");
   }
-
-  XLSX.utils.book_append_sheet(wb, ws, isTemplate ? "Mau Import" : "Danh sach nguoi dung");
-
-  // Sheet huong dan import
-  const guideData = [
-    { "Ten cot": "username", "Bat buoc": "X", "Mo ta": "Ten dang nhap (viet lien, khong dau)", "Vi du": "nguyenvana" },
-    { "Ten cot": "displayName", "Bat buoc": "X", "Mo ta": "Ho va ten day du", "Vi du": "Nguyen Van A" },
-    { "Ten cot": "password", "Bat buoc": "", "Mo ta": "Mat khau (mac dinh 123456)", "Vi du": "123456" },
-    { "Ten cot": "role", "Bat buoc": "", "Mo ta": "Vai tro: STUDENT / TEACHER / ADMIN", "Vi du": "STUDENT" },
-    { "Ten cot": "studentCode", "Bat buoc": "", "Mo ta": "Ma hoc sinh (cho STUDENT)", "Vi du": "HS2024001" },
-    { "Ten cot": "grade", "Bat buoc": "", "Mo ta": "Khoi lop 6/7/8/9", "Vi du": "6" },
-    { "Ten cot": "classId", "Bat buoc": "", "Mo ta": "ID lop trong he thong", "Vi du": "..." },
-    { "Ten cot": "email", "Bat buoc": "", "Mo ta": "Email lien he", "Vi du": "hs@truong.edu.vn" },
-  ];
-  const wsGuide = XLSX.utils.json_to_sheet(guideData);
-  wsGuide["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 45 }, { wch: 25 }];
-  XLSX.utils.book_append_sheet(wb, wsGuide, "Huong dan");
 
   const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
@@ -317,7 +301,7 @@ export const exportUsersToExcel = asyncHandler(async (req: Request, res: Respons
  * POST /api/users/generate-mock — Tao du lieu hoc sinh gia lap bang AI
  */
 export const generateMockData = asyncHandler(async (req: Request, res: Response) => {
-  const { count, classId, grade, saveToDb, seedActivity } = req.body;
+  const { count, classId, grade, saveToDb, seedActivity, seedOptions } = req.body;
   const isSeeding = seedActivity === "true" || seedActivity === true;
 
   const num = Number(count);
@@ -328,7 +312,7 @@ export const generateMockData = asyncHandler(async (req: Request, res: Response)
   const users = await generateMockUsers(num, classId as string, grade ? Number(grade) : undefined);
 
   if (saveToDb === true) {
-    const result = await batchImportUsers(users, isSeeding);
+    const result = await batchImportUsers(users, isSeeding, seedOptions);
     return res.json({ status: "ok", data: { users, saved: result } });
   }
 

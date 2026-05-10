@@ -77,6 +77,11 @@ export default function AnalyticsIndex() {
   const [chatLogs, setChatLogs] = React.useState<ChatLog[]>([]);
   const [activityTime, setActivityTime] = React.useState<ActivityTimeStat[]>([]);
 
+  // Ranking Filter State
+  const currentNow = new Date();
+  const [selectedMonth, setSelectedMonth] = React.useState(currentNow.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = React.useState(2026);
+
   // Pagination State for Chat Logs
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -96,18 +101,10 @@ export default function AnalyticsIndex() {
   // Hover state for Heatmap Tooltip
   const [hoveredCell, setHoveredCell] = React.useState<{ day: number, hour: number } | null>(null);
 
-  const fetchGeneralData = React.useCallback(async () => {
+  const fetchLeaderboard = React.useCallback(async (m: number, y: number) => {
     try {
-      const [engRes, timeRes, rankingRes] = await Promise.all([
-        adminAnalyticsService.getUserEngagement(),
-        adminAnalyticsService.getStudyTimeAnalytics(),
-        adminAnalyticsService.getMonthlyLeaderboard()
-      ]);
-      
-      setEngagement(engRes.data);
-      setActivityTime(timeRes.data);
-      
-      const students: TopStudent[] = (rankingRes.data as any[] || []).map(item => ({
+      const res = await adminAnalyticsService.getMonthlyLeaderboard({ month: m, year: y });
+      const students: TopStudent[] = (res.data as any[] || []).map(item => ({
         userId: item.userId,
         displayName: item.user?.displayName || "Học sinh",
         username: item.user?.username || "",
@@ -116,6 +113,20 @@ export default function AnalyticsIndex() {
         streak: 0
       }));
       setTopStudents(students);
+    } catch (error) {
+      console.error("Lỗi khi tải bảng xếp hạng:", error);
+    }
+  }, []);
+
+  const fetchGeneralData = React.useCallback(async () => {
+    try {
+      const [engRes, timeRes] = await Promise.all([
+        adminAnalyticsService.getUserEngagement(),
+        adminAnalyticsService.getStudyTimeAnalytics(),
+      ]);
+      
+      setEngagement(engRes.data);
+      setActivityTime(timeRes.data);
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu chung:", error);
     }
@@ -138,14 +149,23 @@ export default function AnalyticsIndex() {
 
   const fetchAllData = React.useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
-    await Promise.all([fetchGeneralData(), fetchChatLogs()]);
+    await Promise.all([
+      fetchGeneralData(), 
+      fetchChatLogs(),
+      fetchLeaderboard(selectedMonth, selectedYear)
+    ]);
     if (showLoading) setLoading(false);
-  }, [fetchGeneralData, fetchChatLogs]);
+  }, [fetchGeneralData, fetchChatLogs, fetchLeaderboard, selectedMonth, selectedYear]);
 
   // Initial Fetch on mount
   React.useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Refetch when ranking filter changes
+  React.useEffect(() => {
+    fetchLeaderboard(selectedMonth, selectedYear);
+  }, [selectedMonth, selectedYear, fetchLeaderboard]);
 
   // Refetch chat logs when pagination changes
   React.useEffect(() => {
@@ -187,7 +207,7 @@ export default function AnalyticsIndex() {
         ["Ngày xuất báo cáo:", new Date().toLocaleString()],
         [],
         ["CHỈ SỐ", "GIÁ TRỊ", "GHI CHÚ"],
-        ["Học sinh tích cực", topStudents.length, "Số lượng học sinh có phát sinh điểm EXP"],
+        ["Học sinh tích cực", (engagement?.rankDistribution?.reduce((acc, curr) => acc + curr.count, 0) || 0), "Số lượng học sinh có phát sinh điểm EXP"],
         ["Tổng lượt thảo luận AI", totalLogs, "Tổng số câu hỏi học sinh đã gửi cho chatbot"],
         ["Chuỗi chuyên cần cao nhất", engagement?.topStreaks?.[0]?.longestStreak || 0, "Số ngày học liên tiếp dài nhất"],
         ["Tổng tương tác hệ thống", activityTime?.reduce((acc, curr) => acc + (curr.count || (curr as any).actionCount || 0), 0), "Tổng hành động trên toàn hệ thống"]
@@ -196,17 +216,16 @@ export default function AnalyticsIndex() {
       wsSummary["!cols"] = [{ wch: 30 }, { wch: 15 }, { wch: 40 }];
       XLSX.utils.book_append_sheet(wb, wsSummary, "Tong quan");
 
-      // 2. Sheet Xếp hạng chi tiết
+      // 2. Sheet Xếp hạng chi tiết (Theo tháng được chọn)
       const rankingData = topStudents.map((s, i) => ({
         "HẠNG": i + 1,
         "HỌ VÀ TÊN": s.displayName,
         "TÊN ĐĂNG NHẬP": s.username,
-        "TỔNG EXP THÁNG": s.xp,
-        "DANH HIỆU": s.rank
+        [`EXP THÁNG ${selectedMonth}/${selectedYear}`]: s.xp,
       }));
       const wsRanking = XLSX.utils.json_to_sheet(rankingData);
-      wsRanking["!cols"] = [{ wch: 8 }, { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 25 }];
-      XLSX.utils.book_append_sheet(wb, wsRanking, "Xep hang");
+      wsRanking["!cols"] = [{ wch: 8 }, { wch: 30 }, { wch: 20 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsRanking, `Xep hang T${selectedMonth}`);
 
       // 3. Sheet Nhật ký Chat
       const chatData = chatLogs.map(log => ({
@@ -255,6 +274,12 @@ export default function AnalyticsIndex() {
     if (count < 50) return "bg-sky-400";
     return "bg-sky-600";
   };
+
+  const months = [
+    { value: 3, label: "Tháng 3" },
+    { value: 4, label: "Tháng 4" },
+    { value: 5, label: "Tháng 5" },
+  ];
 
   return (
     <div className="space-y-8 pb-10">
@@ -321,7 +346,7 @@ export default function AnalyticsIndex() {
             className="space-y-8"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatsCard label="Học sinh tích cực" value={topStudents?.length || 0} icon={Users} color="bg-emerald-500" />
+              <StatsCard label="Học sinh tích cực" value={(engagement?.rankDistribution?.reduce((acc, curr) => acc + curr.count, 0) || 0)} icon={Users} color="bg-emerald-500" />
               <StatsCard label="Câu hỏi đã hỏi" value={totalLogs || 0} icon={MessageSquare} color="bg-sky-500" />
               <StatsCard label="Chuỗi đăng nhập Max" value={engagement?.topStreaks?.[0]?.longestStreak || 0} icon={Flame} color="bg-orange-500" />
               <StatsCard label="Tổng tương tác" value={activityTime?.reduce((acc, curr) => acc + (curr.count || (curr as any).actionCount || 0), 0).toLocaleString() || 0} icon={Zap} color="bg-purple-500" />
@@ -449,7 +474,7 @@ export default function AnalyticsIndex() {
                             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
                               <motion.div 
                                 initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(100, (rank.count / (topStudents.length || 1)) * 100)}%` }}
+                                animate={{ width: `${Math.min(100, (rank.count / (engagement?.rankDistribution?.reduce((acc, curr) => acc + curr.count, 0) || 1)) * 100)}%` }}
                                 className={cn(
                                   "h-full rounded-full shadow-sm",
                                   idx === 0 ? "bg-amber-500" : (idx === 1 ? "bg-sky-500" : (idx === 2 ? "bg-emerald-500" : "bg-indigo-500"))
@@ -593,18 +618,34 @@ export default function AnalyticsIndex() {
             exit={{ opacity: 0, y: -10 }}
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col">
+            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col min-h-[600px]">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 border border-amber-100 shadow-sm">
                     <Trophy size={20} />
                   </div>
-                  <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight">Vinh danh Tháng {new Date().getMonth() + 1}</h3>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight">Vinh danh EXP</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bảng xếp hạng theo tháng</p>
+                  </div>
                 </div>
-                <Calendar size={18} className="text-slate-300" />
+                
+                <div className="flex gap-2">
+                   <select 
+                      value={selectedMonth} 
+                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                      className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-sky-500 transition-all"
+                   >
+                      {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                   </select>
+                   <div className="px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                      <Calendar size={12} />
+                      {selectedYear}
+                   </div>
+                </div>
               </div>
 
-              <div className="space-y-3 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
+              <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
                 {topStudents?.map((s, idx) => (
                   <div key={idx} className={cn(
                     "flex items-center gap-4 p-4 rounded-2xl transition-all border",
@@ -618,14 +659,20 @@ export default function AnalyticsIndex() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight leading-tight">{s.displayName}</p>
-                      <p className="text-[9px] text-slate-400 font-bold leading-tight mt-0.5 uppercase">{s.rank}</p>
+                      <p className="text-[9px] text-slate-400 font-bold leading-tight mt-0.5 uppercase">@{s.username}</p>
                     </div>
                     <div className="text-right">
                        <p className="text-sm font-bold text-sky-600 leading-tight">{(s.xp || 0).toLocaleString()}</p>
-                       <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">EXP Tháng</p>
+                       <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">EXP</p>
                     </div>
                   </div>
                 ))}
+                {topStudents.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center opacity-30 py-20">
+                     <Trophy size={48} className="mb-2" />
+                     <p className="text-xs font-bold uppercase tracking-widest">Chưa có dữ liệu tháng này</p>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -737,7 +784,7 @@ export default function AnalyticsIndex() {
 
                    <div className="space-y-2">
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-                        <Zap size={12} className="text-orange-400" /> Trợ lý AI trả lời
+                        < Zap size={12} className="text-orange-400" /> Trợ lý AI trả lời
                       </div>
                       <div className="bg-white p-6 rounded-2xl rounded-tr-none border border-slate-100 shadow-sm text-slate-700 text-sm leading-relaxed prose prose-slate max-w-none">
                         <FormattedContent content={selectedLog.answer || "AI chưa có phản hồi cho câu hỏi này."} />

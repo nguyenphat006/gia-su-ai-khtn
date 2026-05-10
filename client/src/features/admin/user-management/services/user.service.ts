@@ -44,11 +44,12 @@ export const adminUserService = {
   /**
    * Upload file Excel để import danh sách người dùng
    */
-  importFromExcel: async (file: File, options?: { grade?: string; seedActivity?: boolean }) => {
+  importFromExcel: async (file: File, options?: { grade?: string; seedActivity?: boolean; seedOptions?: any }) => {
     const formData = new FormData();
     formData.append("file", file);
     if (options?.grade) formData.append("grade", options.grade);
     if (options?.seedActivity) formData.append("seedActivity", "true");
+    if (options?.seedOptions) formData.append("seedOptions", JSON.stringify(options.seedOptions));
 
     return apiClient<any>("/api/users/import-excel", {
       method: "POST",
@@ -87,17 +88,17 @@ export const adminUserService = {
   /**
    * Import danh sách user từ JSON array (dùng sau khi AI preview)
    */
-  importFromJson: async (users: any[], seedActivity = true) => {
+  importFromJson: async (users: any[], seedActivity = true, seedOptions?: any) => {
     return apiClient<any>("/api/users/batch-import", {
       method: "POST",
-      body: JSON.stringify({ users, seedActivity }),
+      body: JSON.stringify({ users, seedActivity, seedOptions }),
     });
   },
 
   /**
    * Sinh dữ liệu học sinh giả lập bằng AI Gemini
    */
-  generateMockUsers: async (data: { count: number; classId?: string; grade?: number; saveToDb?: boolean }) => {
+  generateMockUsers: async (data: { count: number; classId?: string; grade?: number; saveToDb?: boolean; seedActivity?: boolean, seedOptions?: any }) => {
     return apiClient<any>("/api/users/generate-mock", {
       method: "POST",
       body: JSON.stringify(data),

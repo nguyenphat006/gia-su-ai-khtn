@@ -389,7 +389,7 @@ export function generateUsername(displayName: string) {
 /**
  * Sinh dữ liệu hoạt động giả lập cho User (XP, Streak, Logs, Chat)
  */
-export async function seedUserActivity(userId: string) {
+export async function seedUserActivity(userId: string, options?: { xpMarch?: number, xpApril?: number, xpMay?: number, maxStreak?: number }) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { studentProfile: true, stats: true }
@@ -398,47 +398,68 @@ export async function seedUserActivity(userId: string) {
   if (!user || user.role !== "STUDENT") return;
 
   const now = new Date();
-  const randomXP = Math.floor(Math.random() * 3000) + 1000; // 1000 - 4000 XP
-  const randomStreak = Math.floor(Math.random() * 10) + 1; // 1 - 10 days
-  const randomWins = Math.floor(Math.random() * 30) + 10;
-  const randomTotal = randomWins + Math.floor(Math.random() * 15);
+  
+  // Tính toán XP theo yêu cầu của giáo viên hoặc dùng mặc định
+  const maxMar = options?.xpMarch || 250;
+  const maxApr = options?.xpApril || 500;
+  const maxMay = options?.xpMay || 550;
+  const maxStreak = options?.maxStreak || 4;
+
+  const xpMarch = Math.floor(Math.random() * (maxMar * 0.8)) + (maxMar * 0.2); 
+  const xpApril = Math.floor(Math.random() * (maxApr * 0.8)) + (maxApr * 0.2);
+  const xpMay = Math.floor(Math.random() * (maxMay * 0.8)) + (maxMay * 0.2);
+  
+  const totalXp = Math.floor(xpMarch + xpApril + xpMay);
+  const randomStreak = Math.floor(Math.random() * maxStreak) + 1; 
+  
+  const randomWins = Math.floor(Math.random() * 20) + 5;
+  const randomTotal = randomWins + Math.floor(Math.random() * 10);
 
   // 1. Cập nhật Stats
   await prisma.userStats.upsert({
     where: { userId },
     create: {
       userId,
-      totalXp: randomXP,
-      weeklyXp: Math.floor(randomXP * 0.3),
+      totalXp: totalXp,
+      weeklyXp: Math.floor(xpMay * 0.5), // XP tuần này lấy từ 1 phần tháng 5
       currentStreak: randomStreak,
       longestStreak: randomStreak,
       lastStudyDate: now,
     },
     update: {
-      totalXp: randomXP,
-      weeklyXp: Math.floor(randomXP * 0.3),
+      totalXp: totalXp,
+      weeklyXp: Math.floor(xpMay * 0.5),
       currentStreak: randomStreak,
       longestStreak: randomStreak,
       lastStudyDate: now,
     }
   });
 
-  // 2. Tạo XpLog giả (Trải dài trong 14 ngày gần nhất để hiện trên Dashboard)
-  const logsCount = 10 + Math.floor(Math.random() * 15);
-  const logsData = [];
-  for (let i = 0; i < logsCount; i++) {
-    const randomDaysAgo = Math.floor(Math.random() * 14);
-    const logDate = new Date();
-    logDate.setDate(now.getDate() - randomDaysAgo);
-    logDate.setHours(Math.floor(Math.random() * 14) + 7); // Giờ học từ 7h - 21h
-    
-    logsData.push({
-      userId,
-      amount: Math.floor(randomXP / logsCount),
-      action: XpAction.COMPLETE_QUIZ,
-      createdAt: logDate
-    });
-  }
+  // 2. Tạo XpLog giả (Phân bổ theo 3 tháng: 3, 4, 5 năm 2026)
+  const logsData: any[] = [];
+  
+  // Helper tạo logs cho 1 tháng
+  const generateMonthlyLogs = (month: number, totalAmount: number) => {
+    const count = 3 + Math.floor(Math.random() * 4);
+    const isCurrentMonth = (now.getFullYear() === 2026 && now.getMonth() === month - 1);
+    const maxDay = isCurrentMonth ? now.getDate() : 28;
+
+    for (let i = 0; i < count; i++) {
+      const logDate = new Date(2026, month - 1, Math.floor(Math.random() * maxDay) + 1);
+      logDate.setHours(Math.floor(Math.random() * 12) + 8);
+      logsData.push({
+        userId,
+        amount: Math.max(1, Math.floor(totalAmount / count)),
+        action: XpAction.COMPLETE_QUIZ,
+        createdAt: logDate
+      });
+    }
+  };
+
+  generateMonthlyLogs(3, xpMarch);
+  generateMonthlyLogs(4, xpApril);
+  generateMonthlyLogs(5, xpMay);
+
   await prisma.xpLog.createMany({ data: logsData });
 
   // 3. Tạo Arena Results giả
@@ -512,7 +533,7 @@ export async function seedUserActivity(userId: string) {
 /**
  * Import nhiều users cùng lúc (Batch Import)
  */
-export async function batchImportUsers(usersData: any[], seedActivity = false) {
+export async function batchImportUsers(usersData: any[], seedActivity = false, seedOptions?: any) {
   const results = {
     success: 0,
     errors: [] as { index: number; username: string; reason: string }[],
@@ -533,7 +554,7 @@ export async function batchImportUsers(usersData: any[], seedActivity = false) {
       });
       
       if (seedActivity && user.role === "STUDENT") {
-        await seedUserActivity(user.id);
+        await seedUserActivity(user.id, seedOptions);
       }
       
       results.success++;
