@@ -3,7 +3,8 @@ import {
   Quiz, 
   FlashcardDeck, 
   MindmapData, 
-  QuizHistory 
+  QuizHistory,
+  EssayFeedback
 } from "../types";
 
 export const assessmentService = {
@@ -49,5 +50,10 @@ export const assessmentService = {
       method: "POST",
       body: JSON.stringify({ question, answer, image }),
     });
+  },
+
+  // Lấy lịch sử làm bài cá nhân
+  getHistory: async (limit = 20) => {
+    return apiClient<{ status: string; data: QuizHistory[] }>(`/api/revision/history?limit=${limit}`);
   },
 };

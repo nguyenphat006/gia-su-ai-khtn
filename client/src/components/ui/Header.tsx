@@ -2,13 +2,14 @@ import { motion } from "motion/react";
 import {
   UserIcon,
   LogOut,
-  Bell,
   ChevronRight,
   Home,
   Shield,
-  ChevronDown
+  ChevronDown,
+  Zap,
+  Flame
 } from "lucide-react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { type AuthenticatedUser } from "@/features/auth/types";
 import { 
   DropdownMenu,
@@ -25,6 +26,7 @@ interface HeaderProps {
   studentData: any;
   onProfileEdit: () => void;
   onLogout: () => void;
+  onAchievementToggle: () => void;
 }
 
 const ROUTE_NAMES: Record<string, string> = {
@@ -47,6 +49,7 @@ const Header = memo(({
   studentData,
   onProfileEdit,
   onLogout,
+  onAchievementToggle,
 }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,7 +70,7 @@ const Header = memo(({
   const canAccessAdmin = user.role === "ADMIN" || user.role === "TEACHER";
 
   return (
-    <header className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-100 shadow-sm shrink-0">
+    <header className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-100 shadow-sm shrink-0 gap-4">
       {/* ── Left: Breadcrumbs ────────────────────────────────── */}
       <nav className="flex items-center gap-1.5 sm:gap-2 text-slate-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider overflow-hidden">
         <Home size={14} className="text-slate-300 shrink-0" />
@@ -77,8 +80,37 @@ const Header = memo(({
         </span>
       </nav>
 
+      {/* ── Center: Mini Stats (Click to open Panel) ─────────── */}
+      <div className="hidden md:flex items-center gap-3">
+         <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onAchievementToggle}
+            className="flex items-center gap-4 bg-slate-900 px-4 py-1.5 rounded-xl border border-slate-800 shadow-lg shadow-slate-200"
+         >
+            <div className="flex items-center gap-1.5 border-r border-white/10 pr-3">
+               <Zap size={14} className="text-sky-400" />
+               <span className="text-xs font-black text-white">{(studentData?.xp || 0).toLocaleString()}</span>
+               <span className="text-[7px] font-bold text-sky-400 uppercase tracking-widest">EXP</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+               <Flame size={14} className="text-orange-400 fill-orange-400" />
+               <span className="text-xs font-black text-white">{studentData?.streak || 0}</span>
+               <span className="text-[7px] font-bold text-orange-400 uppercase tracking-widest">NGÀY</span>
+            </div>
+         </motion.button>
+      </div>
+
       {/* ── Right: User Info & Actions ────────────────────────── */}
       <div className="flex items-center gap-3 sm:gap-4 ml-auto shrink-0">
+        {/* Mobile Mini Toggle (Stats) */}
+        <button 
+          onClick={onAchievementToggle}
+          className="md:hidden p-2 bg-slate-50 border border-slate-100 rounded-xl text-orange-500 shadow-sm active:scale-95"
+        >
+          <Flame size={18} className="fill-orange-500" />
+        </button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <motion.div

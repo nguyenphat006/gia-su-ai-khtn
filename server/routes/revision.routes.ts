@@ -451,4 +451,22 @@ router.post("/flashcards/get", authorize(Role.STUDENT, Role.ADMIN), getStudentFl
  */
 router.post("/mindmap/get", authorize(Role.STUDENT, Role.ADMIN), getStudentMindmap);
 
+/**
+ * @swagger
+ * /api/revision/history:
+ *   get:
+ *     summary: "[Student] Lấy lịch sử làm bài cá nhân"
+ *     tags: [Revision Student]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: "Thành công"
+ */
+router.get("/history", authorize(Role.STUDENT, Role.ADMIN), (await import("../controllers/revision.controller.js")).getPersonalHistory);
+
 export default router;

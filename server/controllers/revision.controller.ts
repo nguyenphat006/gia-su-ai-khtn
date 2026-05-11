@@ -361,7 +361,7 @@ export const generateStudentQuiz = asyncHandler(async (req: Request, res: Respon
 
 export const submitStudentQuiz = asyncHandler(async (req: Request, res: Response) => {
   const { quizType, totalQuestions, correctCount } = req.body;
-  const userId = (req as any).user.id;
+  const userId = req.auth!.userId;
   const result = await revisionService.saveQuizResult({
     userId,
     quizType,
@@ -394,4 +394,11 @@ export const getStudentMindmap = asyncHandler(async (req: Request, res: Response
   const { grade, topic } = req.body;
   const mindmap = await revisionService.getMindmapForStudent({ grade: Number(grade), topic });
   res.json({ status: "success", data: mindmap });
+});
+
+export const getPersonalHistory = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const history = await revisionService.getStudentHistory(userId, limit);
+  res.json({ status: "success", data: history });
 });

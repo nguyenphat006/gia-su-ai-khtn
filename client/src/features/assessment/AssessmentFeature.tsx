@@ -42,7 +42,8 @@ export default function AssessmentFeature({ studentName, addXP, userId }: Assess
     createFlashcards,
     createMindmap,
     saveQuizHistory,
-    gradeEssay
+    gradeEssay,
+    fetchHistory
   } = useAssessment(userId);
 
   const [isFinished, setIsFinished] = useState(false);
@@ -57,6 +58,13 @@ export default function AssessmentFeature({ studentName, addXP, userId }: Assess
     }
     // We don't necessarily need to sync id back to hook yet unless we add fetchById logic
   }, []);
+
+  // Fetch history when entering history mode
+  useEffect(() => {
+    if (mode === "history") {
+      fetchHistory();
+    }
+  }, [mode]);
 
   // Update URL when state changes
   useEffect(() => {

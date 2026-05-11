@@ -71,14 +71,19 @@ const MessageItem = memo(({ msg }: { msg: Message }) => (
 ));
 
 export default function MessageList({ messages, isLoading }: MessageListProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
   }, [messages, isLoading]);
 
   return (
-    <div className="h-full overflow-y-auto space-y-6 pb-12 pt-6 px-3 sm:px-6 custom-scrollbar">
+    <div 
+      ref={containerRef}
+      className="h-full overflow-y-auto space-y-6 pb-12 pt-6 px-3 sm:px-6 custom-scrollbar"
+    >
       {messages.length === 0 && !isLoading && (
         <div className="h-full flex flex-col items-center justify-center text-center opacity-30 select-none">
           <Bot size={64} className="mb-4 text-sky-500" />
@@ -106,7 +111,6 @@ export default function MessageList({ messages, isLoading }: MessageListProps) {
           </div>
         </div>
       )}
-      <div ref={scrollRef} />
     </div>
   );
 }

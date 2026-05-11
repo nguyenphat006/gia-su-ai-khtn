@@ -306,6 +306,37 @@ export async function getCurrentUser(userId: string) {
     throw new NotFoundError("Không tìm thấy thông tin người dùng.");
   }
 
+  // Tự động cập nhật streak nếu là học sinh và sang ngày mới
+  if (user.role === "STUDENT") {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastStudy = user.stats?.lastStudyDate;
+
+    let isNewDay = false;
+    if (!lastStudy) {
+      isNewDay = true;
+    } else {
+      const lastStudyDay = new Date(lastStudy.getFullYear(), lastStudy.getMonth(), lastStudy.getDate());
+      if (lastStudyDay.getTime() < todayStart.getTime()) {
+        isNewDay = true;
+      }
+    }
+
+    if (isNewDay) {
+      try {
+        await checkDailyLogin(userId);
+        // Fetch lại để lấy stats đã cập nhật
+        const updatedUser = await prisma.user.findUnique({
+          where: { id: userId },
+          include: publicUserInclude,
+        });
+        if (updatedUser) return mapPublicUser(updatedUser);
+      } catch (e) {
+        console.error("Lỗi tự động cập nhật streak:", e);
+      }
+    }
+  }
+
   return mapPublicUser(user);
 }
 

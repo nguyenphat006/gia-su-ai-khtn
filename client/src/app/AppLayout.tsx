@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import Header from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
+import AchievementPanel from "@/components/ui/AchievementPanel";
 import MobileNav from "@/components/ui/MobileNav";
 import ProfileEditModal from "@/components/ui/ProfileEditModal";
-import { AnimatePresence } from "motion/react";
 import { type AuthenticatedUser } from "@/features/auth/types";
+import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   user: AuthenticatedUser;
@@ -30,51 +31,77 @@ export default function AppLayout({
   onLogout,
 }: AppLayoutProps) {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [achievementOpen, setAchievementOpen] = useState(() => {
+    const saved = localStorage.getItem("achievementPanelOpen");
+    return saved === "true";
+  });
+  
   const location = useLocation();
+  const isChatPage = location.pathname === "/chat" || location.pathname === "/";
+
+  const toggleAchievement = () => {
+    setAchievementOpen(prev => {
+      const newState = !prev;
+      localStorage.setItem("achievementPanelOpen", String(newState));
+      return newState;
+    });
+  };
 
   return (
-    <div className="flex h-[100dvh] w-full bg-[#fcfdfe] font-sans overflow-hidden">
-      {/* ── Sidebar: Fixed Left ────────────────────────────────── */}
+    <div className="flex h-[100dvh] w-full bg-[#fcfdfe] font-sans overflow-hidden relative">
+      {/* ── Background Decorative Accents ────────────────────────── */}
+      <div className="hidden sm:block absolute top-0 right-0 w-[600px] h-[600px] bg-sky-100/10 rounded-full blur-[120px] -mr-64 -mt-64 pointer-events-none z-0"></div>
+      <div className="hidden sm:block absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-100/10 rounded-full blur-[100px] -ml-32 -mb-32 pointer-events-none z-0"></div>
+
+      {/* ── Sidebar (Static Left) ─────────────────────────────── */}
       <Sidebar
-        studentData={studentData}
-        currentUserId={user.id}
         onLogout={() => {
           void onLogout();
         }}
       />
 
-      {/* ── Main Dashboard Area ────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Decorative Background Accents - Hidden on small mobile to avoid noise */}
-        <div className="hidden sm:block absolute top-0 right-0 w-[600px] h-[600px] bg-sky-100/20 rounded-full blur-[100px] -mr-64 -mt-64 pointer-events-none"></div>
+      {/* ── Achievement Panel (Fixed Right Drawer) ───────────────── */}
+      <AchievementPanel 
+        studentData={studentData}
+        currentUserId={user.id}
+        isOpen={achievementOpen}
+        onToggle={toggleAchievement}
+      />
 
-        {/* Header - Sát lề hơn trên mobile, cố định shrink-0 */}
-        <div className="px-3 sm:px-6 py-2 sm:py-4 relative z-40 shrink-0">
-          <Header
-            user={user}
-            studentData={studentData}
-            onProfileEdit={() => setShowProfileEdit(true)}
-            onLogout={() => {
-              void onLogout();
-            }}
-          />
+      {/* ── Main Workspace Area ────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 h-full relative z-10">
+        
+        {/* Header Area: Fixed height, always on top */}
+        <div className="px-3 sm:px-6 py-2 sm:py-4 relative z-40 shrink-0 flex items-center gap-3 sm:gap-4 h-auto">
+          <div className="flex-1 min-w-0">
+            <Header
+              user={user}
+              studentData={studentData}
+              onProfileEdit={() => setShowProfileEdit(true)}
+              onLogout={() => {
+                void onLogout();
+              }}
+              onAchievementToggle={toggleAchievement}
+            />
+          </div>
         </div>
 
-        {/* Main Workspace Area: Full-screen on mobile */}
-        {/* Thêm pb-[76px] trên mobile để không bị MobileNav che khuất (khớp với h-MobileNav) */}
-
-        <main className="flex-1 px-0 sm:px-6 pb-[76px] sm:pb-6 relative z-10 min-h-0 flex flex-col overflow-hidden">
-          <div className="flex-1 bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-[0_-8px_30px_rgba(0,0,0,0.02)] sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-t sm:border border-slate-100 overflow-hidden relative flex flex-col min-h-0">
+        {/* Main Content Area */}
+        <main className="flex-1 px-3 sm:px-6 pb-[76px] sm:pb-6 relative z-10 min-h-0 flex flex-col">
+          <div className="flex-1 bg-white rounded-t-[2.5rem] sm:rounded-[3rem] shadow-[0_-12px_40px_rgba(0,0,0,0.03)] border-t border-x sm:border border-slate-100 relative flex flex-col min-h-0 overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={location.pathname}
-                initial={{ opacity: 0, scale: 0.995 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.005 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute inset-0 flex flex-col overflow-hidden"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                className="flex-1 flex flex-col min-h-0"
               >
-                <div className="flex-1 h-full min-h-0 flex flex-col overflow-y-auto custom-scrollbar pt-0">
+                <div className={cn(
+                  "flex-1 flex flex-col min-h-0",
+                  !isChatPage && "overflow-y-auto custom-scrollbar"
+                )}>
                   <Outlet
                     context={{
                       user,
@@ -102,7 +129,7 @@ export default function AppLayout({
         )}
       </div>
 
-      {/* Mobile Nav - Luôn ở trên cùng z-index */}
+      {/* Mobile Nav */}
       <MobileNav isAdmin={isAdmin} />
     </div>
   );

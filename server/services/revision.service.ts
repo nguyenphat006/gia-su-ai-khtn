@@ -222,3 +222,14 @@ export async function evaluateEssayLogic(params: {
 }) {
   return geminiService.evaluateEssay(params.question, params.answer, params.image);
 }
+
+/**
+ * 7. STUDENT HISTORY: Get personal quiz history
+ */
+export async function getStudentHistory(userId: string, limit = 20) {
+  return await prisma.quizHistory.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit
+  });
+}

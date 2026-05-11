@@ -23,7 +23,17 @@ export function useAssessment(userId: string) {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [mindmapNodes, setMindmapNodes] = useState<MindmapNode[]>([]);
 
-  // NOTE: History fetching could be added here later using a specific service method
+  const fetchHistory = async () => {
+    setIsLoading(true);
+    try {
+      const res = await assessmentService.getHistory();
+      setHistory(res.data || []);
+    } catch (e) {
+      toast.error("Lỗi khi tải lịch sử học tập.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const startQuiz = async () => {
     if (!topic.trim()) {
@@ -162,6 +172,7 @@ export function useAssessment(userId: string) {
     createFlashcards,
     createMindmap,
     saveQuizHistory,
-    gradeEssay
+    gradeEssay,
+    fetchHistory
   };
 }
