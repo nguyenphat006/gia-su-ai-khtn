@@ -17,7 +17,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export const columns: ColumnDef<SystemConfig>[] = [
+export const columns = ({ onEdit, onDelete }: { 
+  onEdit: (config: SystemConfig) => void, 
+  onDelete: (key: string) => void 
+}): ColumnDef<SystemConfig>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -93,9 +96,8 @@ export const columns: ColumnDef<SystemConfig>[] = [
   },
   {
     id: "actions",
-    cell: ({ row, table }) => {
+    cell: ({ row }) => {
       const config = row.original;
-      const meta = table.options.meta as any;
 
       return (
         <DropdownMenu>
@@ -109,7 +111,7 @@ export const columns: ColumnDef<SystemConfig>[] = [
             <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hành động</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-slate-50" />
             <DropdownMenuItem 
-              onClick={() => meta?.onEdit?.(config)}
+              onClick={() => onEdit?.(config)}
               className="flex items-center gap-3 p-2.5 text-xs font-bold text-slate-600 hover:bg-sky-50 hover:text-sky-600 rounded-xl transition-colors cursor-pointer"
             >
               <Pencil size={16} className="text-slate-400" /> Chỉnh sửa
@@ -117,7 +119,7 @@ export const columns: ColumnDef<SystemConfig>[] = [
             <DropdownMenuSeparator className="bg-slate-50" />
             <DropdownMenuItem 
               className="flex items-center gap-3 p-2.5 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
-              onClick={() => meta?.onDelete?.(config.key)}
+              onClick={() => onDelete?.(config.key)}
             >
               <Trash2 size={16} className="text-red-400" /> Xóa cấu hình
             </DropdownMenuItem>

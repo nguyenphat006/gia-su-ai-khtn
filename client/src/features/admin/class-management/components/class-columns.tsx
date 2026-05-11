@@ -12,7 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export const classColumns: ColumnDef<any>[] = [
+export const classColumns = ({ onEdit, onDelete }: { 
+  onEdit: (cls: any) => void, 
+  onDelete: (id: string) => void 
+}): ColumnDef<any>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -61,9 +64,8 @@ export const classColumns: ColumnDef<any>[] = [
   },
   {
     id: "actions",
-    cell: ({ row, table }) => {
+    cell: ({ row }) => {
       const cls = row.original;
-      const meta = table.options.meta as any;
 
       return (
         <DropdownMenu>
@@ -74,11 +76,11 @@ export const classColumns: ColumnDef<any>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-slate-100">
             <DropdownMenuLabel className="text-[10px] uppercase font-bold text-slate-400">Hành động</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => meta?.onEdit?.(cls)} className="flex items-center gap-2 cursor-pointer">
+            <DropdownMenuItem onClick={() => onEdit?.(cls)} className="flex items-center gap-2 cursor-pointer">
               <Pencil size={14} /> Chỉnh sửa
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => meta?.onDelete?.(cls.id)} className="flex items-center gap-2 text-red-600 cursor-pointer">
+            <DropdownMenuItem onClick={() => onDelete?.(cls.id)} className="flex items-center gap-2 text-red-600 cursor-pointer">
               <Trash2 size={14} /> Xóa lớp
             </DropdownMenuItem>
           </DropdownMenuContent>

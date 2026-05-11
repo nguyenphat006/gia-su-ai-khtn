@@ -9,7 +9,7 @@ function buildQueryString(params?: any) {
 }
 
 export const systemService = {
-  getConfigs: async (params?: { page?: number; limit?: number }) => {
+  getConfigs: async (params?: { page?: number; limit?: number; search?: string }) => {
     const query = buildQueryString(params);
     return apiClient<{ status: string; data: { configs: any[]; pagination: any } }>(`/api/system/configs?${query}`);
   },
