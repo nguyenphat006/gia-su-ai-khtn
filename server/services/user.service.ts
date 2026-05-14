@@ -389,7 +389,15 @@ export function generateUsername(displayName: string) {
 /**
  * Sinh dữ liệu hoạt động giả lập cho User (XP, Streak, Logs, Chat)
  */
-export async function seedUserActivity(userId: string, options?: { xpMarch?: number, xpApril?: number, xpMay?: number, maxStreak?: number }) {
+export async function seedUserActivity(userId: string, options?: { 
+  xpMarch?: number, 
+  xpApril?: number, 
+  xpMay?: number, 
+  maxStreak?: number,
+  timeDistribution?: string,
+  customQuestion?: string,
+  askCustomQuestion?: boolean
+}) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { studentProfile: true, stats: true }
@@ -415,13 +423,44 @@ export async function seedUserActivity(userId: string, options?: { xpMarch?: num
   const randomWins = Math.floor(Math.random() * 20) + 5;
   const randomTotal = randomWins + Math.floor(Math.random() * 10);
 
+  // Helper sinh giờ theo phân bổ yêu cầu (GIỜ LOCAL VIỆT NAM)
+  const getWeightedHour = () => {
+    const rand = Math.random() * 100;
+    
+    // Ưu tiên yêu cầu mới: 0h-17h không tương tác, 17h-23h tương tác nhiều, 
+    // đặc biệt tăng dần 19h-22h, 23h cực ít (chỉ 2-3 tương tác trên tổng thể).
+    if (options?.timeDistribution === "evening" || !options?.timeDistribution) {
+      if (rand < 8) return 17;      // 17h (8%) - Tăng nhẹ để dễ thấy trên UI
+      if (rand < 18) return 18;     // 18h (10%)
+      if (rand < 33) return 19;     // 19h (15%)
+      if (rand < 53) return 20;     // 20h (20%)
+      if (rand < 75) return 21;     // 21h (22%)
+      if (rand < 99.6) return 22;   // 22h (24.6%) - Đỉnh điểm
+      return 23;                    // 0.4% - Rất ít
+    }
+
+    
+    return Math.floor(Math.random() * 6) + 17; // Mặc định 17h-22h
+  };
+
+  // Helper tạo Date object từ giờ local để đảm bảo không bị lệch múi giờ khi lưu
+  const createDateWithLocalHour = (year: number, month: number, day: number, localHour: number) => {
+    // Tạo date ở local (server)
+    const d = new Date(year, month - 1, day, localHour, Math.floor(Math.random() * 60));
+    // Nếu server không phải GMT+7, ta cần force nó về GMT+7 hoặc để Prisma/Postgres xử lý.
+    // Tuy nhiên, cách an toàn nhất là tạo ISO string với đúng giờ mong muốn và offset +07:00
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const isoStr = `${year}-${pad(month)}-${pad(day)}T${pad(localHour)}:${pad(Math.floor(Math.random() * 60))}:00+07:00`;
+    return new Date(isoStr);
+  };
+
   // 1. Cập nhật Stats
   await prisma.userStats.upsert({
     where: { userId },
     create: {
       userId,
       totalXp: totalXp,
-      weeklyXp: Math.floor(xpMay * 0.5), // XP tuần này lấy từ 1 phần tháng 5
+      weeklyXp: Math.floor(xpMay * 0.5),
       currentStreak: randomStreak,
       longestStreak: randomStreak,
       lastStudyDate: now,
@@ -445,8 +484,7 @@ export async function seedUserActivity(userId: string, options?: { xpMarch?: num
     const maxDay = isCurrentMonth ? now.getDate() : 28;
 
     for (let i = 0; i < count; i++) {
-      const logDate = new Date(2026, month - 1, Math.floor(Math.random() * maxDay) + 1);
-      logDate.setHours(Math.floor(Math.random() * 12) + 8);
+      const logDate = createDateWithLocalHour(2026, month, Math.floor(Math.random() * maxDay) + 1, getWeightedHour());
       logsData.push({
         userId,
         amount: Math.max(1, Math.floor(totalAmount / count)),
@@ -468,9 +506,9 @@ export async function seedUserActivity(userId: string, options?: { xpMarch?: num
   const topics = ["Động vật", "Thực vật", "Cơ năng", "Nhiệt học", "Hóa học hữu cơ", "Tế bào", "Quang hợp", "Hệ mặt trời"];
   for (let i = 0; i < arenaCount; i++) {
     const randomDaysAgo = Math.floor(Math.random() * 10);
-    const matchDate = new Date();
-    matchDate.setDate(now.getDate() - randomDaysAgo);
-    matchDate.setHours(Math.floor(Math.random() * 12) + 8);
+    const d = new Date();
+    d.setDate(now.getDate() - randomDaysAgo);
+    const matchDate = createDateWithLocalHour(2026, d.getMonth() + 1, d.getDate(), getWeightedHour());
     
     const mode = Math.random() > 0.5 ? "PVP" : "AI";
     arenaData.push({
@@ -486,7 +524,7 @@ export async function seedUserActivity(userId: string, options?: { xpMarch?: num
   }
   await prisma.arenaResult.createMany({ data: arenaData });
 
-  // 4. Tạo Chat Sessions & Messages giả (Nội dung tự nhiên hơn)
+  // 4. Tạo Chat Sessions & Messages giả
   const chatSessionsCount = 3 + Math.floor(Math.random() * 4);
   const chatContents = [
     { q: "Cô ơi, lực đẩy Ác-si-mét phụ thuộc vào những yếu tố nào ạ?", a: "Chào em! Lực đẩy Ác-si-mét phụ thuộc vào hai yếu tố chính: trọng lượng riêng của chất lỏng ($d$) và thể tích của phần chất lỏng bị vật chiếm chỗ ($V$). Công thức là $F_A = d.V$ em nhé." },
@@ -498,8 +536,19 @@ export async function seedUserActivity(userId: string, options?: { xpMarch?: num
     { q: "Làm sao để phân biệt được động vật không xương sống và động vật có xương sống?", a: "Dấu hiệu cơ bản nhất chính là bộ xương trong, mà đặc điểm quan trọng là cột sống chứa tủy sống. Động vật có xương sống luôn có cột sống, còn nhóm kia thì không em nhé." }
   ];
 
+  if (options?.askCustomQuestion && options?.customQuestion) {
+    chatContents.unshift({
+      q: options.customQuestion,
+      a: "Chào em! Đây là một bài toán thú vị về lực kế. Khi treo vật 100g, lực kế chỉ vạch thứ 2, nghĩa là mỗi vạch tương ứng với 50g (100g / 2). Khi treo thêm 50g, tổng khối lượng là 150g. Vì vậy, kim lực kế sẽ chỉ vạch thứ 3 ($150g / 50g$) em nhé!"
+    });
+  }
+
   for (let i = 0; i < chatSessionsCount; i++) {
-    const sessionDate = new Date(now.getTime() - Math.random() * 86400000 * 10);
+    const randomDaysAgo = Math.floor(Math.random() * 10);
+    const d = new Date();
+    d.setDate(now.getDate() - randomDaysAgo);
+    const sessionDate = createDateWithLocalHour(2026, d.getMonth() + 1, d.getDate(), getWeightedHour());
+
     const session = await prisma.chatSession.create({
       data: {
         userId,
@@ -508,13 +557,16 @@ export async function seedUserActivity(userId: string, options?: { xpMarch?: num
       }
     });
 
-    // Chọn ngẫu nhiên 1-2 cặp câu hỏi cho mỗi session
     const numMessages = Math.random() > 0.7 ? 2 : 1;
     const usedIndices = new Set();
     
     for(let j = 0; j < numMessages; j++) {
       let idx;
-      do { idx = Math.floor(Math.random() * chatContents.length); } while(usedIndices.has(idx));
+      if (i === 0 && j === 0 && options?.askCustomQuestion) {
+        idx = 0;
+      } else {
+        do { idx = Math.floor(Math.random() * chatContents.length); } while(usedIndices.has(idx));
+      }
       usedIndices.add(idx);
       
       const qa = chatContents[idx];
@@ -539,6 +591,9 @@ export async function batchImportUsers(usersData: any[], seedActivity = false, s
     errors: [] as { index: number; username: string; reason: string }[],
   };
 
+  const createdUserIds: string[] = [];
+  const importedUsers: any[] = [];
+
   for (let i = 0; i < usersData.length; i++) {
     const data = usersData[i];
     try {
@@ -553,8 +608,8 @@ export async function batchImportUsers(usersData: any[], seedActivity = false, s
         grade: data.grade ? Number(data.grade) : undefined,
       });
       
-      if (seedActivity && user.role === "STUDENT") {
-        await seedUserActivity(user.id, seedOptions);
+      if (user.role === "STUDENT") {
+        createdUserIds.push(user.id);
       }
       
       results.success++;
@@ -563,6 +618,21 @@ export async function batchImportUsers(usersData: any[], seedActivity = false, s
         index: i + 1,
         username: data.username || "Không xác định",
         reason: error.message || "Lỗi không xác định",
+      });
+    }
+  }
+
+  // Thực hiện seed activity sau khi đã import xong để có thể tính toán phân bổ câu hỏi tùy chỉnh
+  if (seedActivity && createdUserIds.length > 0) {
+    const customCount = seedOptions?.customQuestionCount || 0;
+    // Chọn ngẫu nhiên N học sinh để hỏi câu hỏi tùy chỉnh
+    const shuffled = [...createdUserIds].sort(() => 0.5 - Math.random());
+    const customQuestionUserIds = new Set(shuffled.slice(0, customCount));
+
+    for (const userId of createdUserIds) {
+      await seedUserActivity(userId, {
+        ...seedOptions,
+        askCustomQuestion: customQuestionUserIds.has(userId)
       });
     }
   }

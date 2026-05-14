@@ -92,7 +92,7 @@ export default function GamificationFeature({ studentData }: GamificationFeature
                       <h4 className={`text-[11px] font-bold truncate ${challenge.isCompleted ? 'text-emerald-900 line-through' : 'text-slate-800'}`}>
                         {challenge.name}
                       </h4>
-                      <span className="text-[8px] font-black text-sky-600 shrink-0">+{challenge.xpReward}E</span>
+                      <span className="text-[8px] font-black text-sky-600 shrink-0">+{challenge.xpReward} EXP</span>
                     </div>
                     <p className="text-[8px] text-slate-400 italic leading-tight mt-0.5">{challenge.description}</p>
                     {!challenge.isCompleted && (

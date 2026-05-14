@@ -12,7 +12,7 @@ function ResultCard({ name, score, winner, isOpponent = false }: any) {
           <div className="text-left min-w-0">
              <p className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">{isOpponent ? "Đối thủ" : "Chiến binh"}</p>
              <h4 className="text-xs sm:text-base font-bold text-sky-900 uppercase tracking-tight truncate leading-tight">{name}</h4>
-             <div className="flex items-center gap-2 mt-1 sm:mt-2"><p className="text-xl sm:text-3xl font-bold text-sky-600 leading-none">{score}</p><p className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-widest">Điểm</p></div>
+             <div className="flex items-center gap-2 mt-1 sm:mt-2"><p className="text-xl sm:text-3xl font-bold text-sky-600 leading-none">{score}</p><p className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-widest">EXP</p></div>
           </div>
        </div>
     </div>

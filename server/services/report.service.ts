@@ -131,24 +131,24 @@ export async function getChatLogs(page = 1, limit = 50, keyword?: string, userId
 // 2. GET STUDY TIME ANALYTICS (Heatmap)
 // ==========================================
 export async function getStudyTimeAnalytics() {
-  // Vì Prisma không hỗ trợ group by theo expression trực tiếp (như HOUR(createdAt)) một cách dễ dàng
-  // Ta sẽ dùng query thô (raw query) cho PostgreSQL
+  // Sử dụng khoảng lệch +7 tiếng (interval '7 hours') để ép Postgres tính toán đúng giờ Việt Nam
+  // Cách này an toàn hơn 'AT TIME ZONE' vì không phụ thuộc vào bộ nhớ múi giờ của hệ điều hành server.
   
   const rawData: any[] = await prisma.$queryRaw`
     SELECT 
-      EXTRACT(DOW FROM "createdAt") as "dayOfWeek",
-      EXTRACT(HOUR FROM "createdAt") as "hourOfDay",
-      COUNT(*) as "actionCount"
+      EXTRACT(DOW FROM ("createdAt" + interval '7 hours'))::int as "dayOfWeek",
+      EXTRACT(HOUR FROM ("createdAt" + interval '7 hours'))::int as "hourOfDay",
+      COUNT(*)::int as "actionCount"
     FROM "XpLog"
-    GROUP BY EXTRACT(DOW FROM "createdAt"), EXTRACT(HOUR FROM "createdAt")
+    GROUP BY 1, 2
     ORDER BY "dayOfWeek", "hourOfDay";
   `;
 
   // dayOfWeek: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
   return rawData.map(row => ({
-    dayOfWeek: Number(row.dayOfWeek),
-    hourOfDay: Number(row.hourOfDay),
-    actionCount: Number(row.actionCount)
+    dayOfWeek: row.dayOfWeek,
+    hourOfDay: row.hourOfDay,
+    actionCount: row.actionCount
   }));
 }
 

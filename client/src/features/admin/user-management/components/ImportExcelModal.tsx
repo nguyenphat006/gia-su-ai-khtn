@@ -20,7 +20,10 @@ export function ImportExcelModal({ isOpen, onClose, onSuccess }: ImportExcelModa
     xpMarch: 250,
     xpApril: 500,
     xpMay: 550,
-    maxStreak: 4
+    maxStreak: 4,
+    timeDistribution: "evening",
+    customQuestion: "Treo một quả cân 100g vào một lực kế thì kim của lực kế chỉ vạch thứ 2. Nếu treo thêm quả cân 50g vào lực kế thì kim của lực kế chỉ vạch thứ bao nhiêu?",
+    customQuestionCount: 7
   });
   
   const fileInputRef = React.useRef<HTMLInputElement>(null)

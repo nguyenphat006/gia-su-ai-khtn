@@ -68,7 +68,43 @@ export function SeedOptionsForm({ options, setOptions }: SeedOptionsFormProps) {
                 />
               </div>
             </div>
-            <p className="text-[8px] text-slate-400 italic">Dữ liệu thực tế sẽ được sinh ngẫu nhiên từ 20% đến 100% giá trị Max bạn chọn.</p>
+
+            <div className="space-y-3 pt-2 border-t border-slate-200/50">
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-slate-400 uppercase">Phân bổ thời gian học (Heatmap)</label>
+                <select 
+                  value={options.timeDistribution} 
+                  onChange={e => setOptions({...options, timeDistribution: e.target.value})}
+                  className="w-full h-8 bg-white border border-slate-200 rounded-lg text-xs font-bold px-2 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                >
+                  <option value="random">Ngẫu nhiên (8h - 20h)</option>
+                  <option value="evening">Tối ưu buổi tối (17h - 23h)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase">Câu hỏi Chat tùy chỉnh</label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase">Số HS hỏi:</label>
+                    <input 
+                      type="number" 
+                      value={options.customQuestionCount} 
+                      onChange={e => setOptions({...options, customQuestionCount: parseInt(e.target.value)})}
+                      className="w-10 h-6 border border-slate-200 rounded text-[10px] font-bold text-center"
+                    />
+                  </div>
+                </div>
+                <textarea 
+                  value={options.customQuestion} 
+                  onChange={e => setOptions({...options, customQuestion: e.target.value})}
+                  placeholder="Nhập câu hỏi muốn chèn vào chat logs..."
+                  className="w-full h-16 p-2 bg-white border border-slate-200 rounded-lg text-[10px] font-medium resize-none focus:outline-none focus:ring-1 focus:ring-sky-500"
+                />
+              </div>
+            </div>
+
+            <p className="text-[8px] text-slate-400 italic">Dữ liệu thực tế sẽ được sinh ngẫu nhiên dựa trên các tham số bạn cấu hình ở trên.</p>
           </motion.div>
         )}
       </AnimatePresence>

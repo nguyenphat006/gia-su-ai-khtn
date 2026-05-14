@@ -163,7 +163,7 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
                 <p className="text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Của em</p>
                 <div className="flex items-baseline gap-1">
                    <p className="text-xl sm:text-2xl font-bold text-sky-900 leading-none">{myScore}</p>
-                   <span className="text-[7px] sm:text-[9px] font-bold text-sky-50 uppercase">EXP</span>
+                   <span className="text-[7px] sm:text-[9px] font-bold text-sky-400 uppercase">EXP</span>
                 </div>
              </div>
           </div>
@@ -194,7 +194,7 @@ export function ActiveBattle({ battleId, opponent, questions, scores, isAiMode, 
                 {!isAiMode && (
                    <div className="flex items-baseline justify-end gap-0.5 leading-none mt-0.5">
                       <p className="text-base sm:text-lg font-bold text-sky-600">{oppScore}</p>
-                      <span className="text-[7px] font-bold text-sky-400 uppercase">PTS</span>
+                      <span className="text-[7px] font-bold text-sky-400 uppercase">EXP</span>
                    </div>
                 )}
              </div>

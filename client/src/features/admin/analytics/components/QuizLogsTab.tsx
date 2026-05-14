@@ -69,7 +69,7 @@ export function QuizLogsTab({
                      </div>
                   </td>
                   <td className="p-4 text-right">
-                     <span className="text-xs font-bold text-emerald-600">+{log.xpEarned}E</span>
+                     <span className="text-xs font-bold text-emerald-600">+{log.xpEarned} EXP</span>
                   </td>
                 </tr>
               ))}

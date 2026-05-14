@@ -89,7 +89,7 @@ export function ArenaLobby({
                         <p className="text-base sm:text-xl font-bold text-sky-600 leading-none">
                           {entry.totalScore}
                         </p>
-                        <p className="text-[7px] sm:text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Điểm</p>
+                        <p className="text-[7px] sm:text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">EXP</p>
                       </div>
                    </div>
                  )) : (
