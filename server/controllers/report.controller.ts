@@ -63,6 +63,31 @@ export const getQuizLogs = asyncHandler(async (req: Request, res: Response) => {
   res.json({ status: "ok", data: result });
 });
 
+export const getActivityLogs = asyncHandler(async (req: Request, res: Response) => {
+  const filters = {
+    page: parseInt(req.query.page as string) || 1,
+    limit: parseInt(req.query.limit as string) || 50,
+    source: req.query.source as string,
+    userId: req.query.userId as string,
+    username: req.query.username as string,
+    module: req.query.module as string,
+    method: req.query.method as string,
+    statusGroup: req.query.statusGroup as string,
+    dateFrom: req.query.dateFrom as string,
+    dateTo: req.query.dateTo as string,
+    search: req.query.search as string,
+    minDuration: req.query.minDuration ? parseInt(req.query.minDuration as string) : undefined,
+  };
+
+  const result = await reportService.getActivityLogs(filters);
+  res.json({ status: "ok", data: result });
+});
+
+export const getActivityLogSummary = asyncHandler(async (req: Request, res: Response) => {
+  const result = await reportService.getActivityLogSummary();
+  res.json({ status: "ok", data: result });
+});
+
 export const exportArenaLogsExcel = asyncHandler(async (req: Request, res: Response) => {
   // Lấy toàn bộ dữ liệu arena (không phân trang) để xuất excel
   const result = await reportService.getArenaLogs(1, 10000); 

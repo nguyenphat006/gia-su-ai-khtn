@@ -2,10 +2,11 @@ import {
   BookOpen, 
   Users, 
   LayoutDashboard, 
-  BrainCircuit,
-  Database,
-  School,
-  Swords
+  BrainCircuit, 
+  Database, 
+  School, 
+  Swords,
+  Activity
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -39,6 +40,11 @@ export const ADMIN_NAV_CONFIG: NavGroup[] = [
         title: "Báo cáo Đấu trường",
         to: "/admin/arena-reports",
         icon: Swords,
+      },
+      {
+        title: "Nhật ký hệ thống",
+        to: "/admin/activity-logs",
+        icon: Activity,
       }
     ]
   },

@@ -211,4 +211,70 @@ router.get("/user-engagement", reportController.getUserEngagementStats);
  */
 router.get("/quiz-logs", reportController.getQuizLogs);
 
+/**
+ * @swagger
+ * /api/reports/activity-logs:
+ *   get:
+ *     summary: Lấy danh sách nhật ký hoạt động (Activity Logs)
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *           enum: [student, admin, guest]
+ *         description: Lọc theo nguồn (Học sinh, Admin, Khách)
+ *       - in: query
+ *         name: statusGroup
+ *         schema:
+ *           type: string
+ *           enum: [2xx, 4xx, 5xx]
+ *         description: Lọc theo nhóm mã trạng thái
+ *       - in: query
+ *         name: module
+ *         schema:
+ *           type: string
+ *         description: Lọc theo module (chat, arena, users...)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm theo hành động hoặc username
+ *       - in: query
+ *         name: minDuration
+ *         schema:
+ *           type: integer
+ *         description: Lọc request chậm (ms)
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get("/activity-logs", reportController.getActivityLogs);
+
+/**
+ * @swagger
+ * /api/reports/activity-logs/summary:
+ *   get:
+ *     summary: Lấy thống kê tổng hợp nhật ký hoạt động
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get("/activity-logs/summary", reportController.getActivityLogSummary);
+
 export default router;

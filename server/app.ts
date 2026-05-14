@@ -6,12 +6,15 @@ import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { activityLogger } from "./middleware/activity-logger.js";
 import apiRoutes from "./routes/api.routes.js";
 import { setupArenaSockets } from "./sockets/arenaHandler.js";
 import { seedChallenges } from "./services/gamification.service.js";
+import { ensureDefaultConfigs } from "./services/system.service.js";
 
 export async function buildApp() {
-  // Khởi tạo challenges mặc định
+  // Khởi tạo cấu hình & challenges mặc định
+  ensureDefaultConfigs().catch(err => console.error("Lỗi khi khởi tạo cấu hình:", err));
   seedChallenges().catch(err => console.error("Lỗi khi seed challenges:", err));
 
   const app = express();
@@ -51,21 +54,12 @@ export async function buildApp() {
   // Cookie parser
   app.use(cookieParser());
 
+  // Activity logging (Database)
+  app.use(activityLogger);
+
   // Body parser
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
-  // Request logging (đơn giản)
-  app.use((req, res, next) => {
-    const start = Date.now();
-    res.on("finish", () => {
-      const duration = Date.now() - start;
-      console.log(
-        `${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`
-      );
-    });
-    next();
-  });
 
   // ========================
   // SWAGGER UI

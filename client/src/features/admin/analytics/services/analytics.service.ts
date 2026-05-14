@@ -5,7 +5,9 @@ import {
   ChatLog,
   ArenaLog,
   ArenaLogDetail,
-  UserEngagement
+  UserEngagement,
+  ActivityLog,
+  ActivityLogSummary
 } from "../types";
 
 export const adminAnalyticsService = {
@@ -46,5 +48,20 @@ export const adminAnalyticsService = {
   // Chuyên cần & Phân bổ hạng
   getUserEngagement: async () => {
     return apiClient<{ status: string; data: UserEngagement }>("/api/reports/user-engagement");
+  },
+
+  // Nhật ký hành động (Activity Logs)
+  getActivityLogs: async (params?: any) => {
+    // Loại bỏ các params undefined
+    const cleanParams = Object.fromEntries(
+      Object.entries(params || {}).filter(([_, v]) => v !== undefined && v !== "")
+    );
+    const query = new URLSearchParams(cleanParams as any).toString();
+    return apiClient<{ status: string; data: { data: ActivityLog[]; pagination: any } }>(`/api/reports/activity-logs?${query}`);
+  },
+
+  // Thống kê tổng hợp Activity Logs
+  getActivityLogSummary: async () => {
+    return apiClient<{ status: string; data: ActivityLogSummary }>("/api/reports/activity-logs/summary");
   },
 };

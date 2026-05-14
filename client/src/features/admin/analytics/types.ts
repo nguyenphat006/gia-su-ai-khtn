@@ -78,3 +78,37 @@ export interface ArenaLog {
 export interface ArenaLogDetail extends ArenaLog {
   // Thêm các thông tin chi tiết nếu cần
 }
+
+export interface ActivityLog {
+  id: string;
+  userId: string | null;
+  username: string | null;
+  userRole: string | null;
+  source: "student" | "admin" | "guest";
+  method: string;
+  path: string;
+  module: string;
+  action: string;
+  statusCode: number;
+  durationMs: number;
+  ipAddress: string | null;
+  userAgent: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  user?: {
+    displayName: string;
+    studentProfile?: { avatarUrl: string | null };
+    teacherProfile?: { avatarUrl: string | null };
+  };
+}
+
+export interface ActivityLogSummary {
+  stats: {
+    totalToday: number;
+    error4xxToday: number;
+    error5xxToday: number;
+    slowRequestsToday: number;
+  };
+  topModules: { module: string; count: number }[];
+  sourceDistribution: { source: string; count: number }[];
+}

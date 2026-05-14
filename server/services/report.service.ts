@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { getSystemConfig } from "./system.service.js";
 
 // ==========================================
 // 1. GET CHAT LOGS
@@ -572,5 +573,182 @@ export async function getQuizLogs(page = 1, limit = 50, keyword?: string) {
       limit,
       totalPages: Math.ceil(total / limit),
     }
+  };
+}
+
+// ==========================================
+// 7. GET ACTIVITY LOGS (Nhật ký hành động)
+// ==========================================
+export async function getActivityLogs(filters: {
+  page?: number;
+  limit?: number;
+  source?: string;
+  userId?: string;
+  username?: string;
+  module?: string;
+  method?: string;
+  statusGroup?: string; // "2xx", "4xx", "5xx"
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+  minDuration?: number;
+}) {
+  const page = filters.page || 1;
+  const limit = filters.limit || 50;
+  const skip = (page - 1) * limit;
+
+  // Xây dựng điều kiện lọc
+  const where: any = {};
+
+  if (filters.source) where.source = filters.source;
+  if (filters.userId) where.userId = filters.userId;
+  if (filters.username) where.username = { contains: filters.username, mode: "insensitive" };
+  if (filters.module) where.module = filters.module;
+  if (filters.method) where.method = filters.method;
+  
+  if (filters.statusGroup) {
+    if (filters.statusGroup === "2xx") where.statusCode = { gte: 200, lt: 300 };
+    else if (filters.statusGroup === "4xx") where.statusCode = { gte: 400, lt: 500 };
+    else if (filters.statusGroup === "5xx") where.statusCode = { gte: 500 };
+  }
+
+  if (filters.dateFrom || filters.dateTo) {
+    where.createdAt = {};
+    if (filters.dateFrom) where.createdAt.gte = new Date(filters.dateFrom);
+    if (filters.dateTo) {
+      const end = new Date(filters.dateTo);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
+  }
+
+  if (filters.search) {
+    where.OR = [
+      { action: { contains: filters.search, mode: "insensitive" } },
+      { username: { contains: filters.search, mode: "insensitive" } },
+      { path: { contains: filters.search, mode: "insensitive" } },
+    ];
+  }
+
+  if (filters.minDuration) {
+    where.durationMs = { gte: Number(filters.minDuration) };
+  }
+
+  // Thực hiện query
+  const [data, total] = await Promise.all([
+    prisma.activityLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        user: {
+          select: {
+            displayName: true,
+            studentProfile: { select: { avatarUrl: true } },
+            teacherProfile: { select: { avatarUrl: true } }
+          }
+        }
+      }
+    }),
+    prisma.activityLog.count({ where }),
+  ]);
+
+  // INLINE CLEANUP: Xóa logs cũ (không await để không block)
+  (async () => {
+    try {
+      const retentionDaysStr = await getSystemConfig("LOG_RETENTION_DAYS");
+      const retentionDays = parseInt(retentionDaysStr || "90");
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - retentionDays);
+
+      const deleteResult = await prisma.activityLog.deleteMany({
+        where: { createdAt: { lt: cutoff } }
+      });
+      if (deleteResult.count > 0) {
+        console.log(`[Cleanup] Đã xóa ${deleteResult.count} activity logs cũ hơn ${retentionDays} ngày.`);
+      }
+    } catch (err) {
+      console.error("[Cleanup Error]", err);
+    }
+  })();
+
+  return {
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
+  };
+}
+
+// ==========================================
+// 8. GET ACTIVITY LOG SUMMARY
+// ==========================================
+export async function getActivityLogSummary() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [
+    totalToday,
+    error4xxToday,
+    error5xxToday,
+    slowRequestsToday,
+    topModules,
+    sourceDistribution
+  ] = await Promise.all([
+    // Tổng request hôm nay
+    prisma.activityLog.count({ where: { createdAt: { gte: today } } }),
+    
+    // Lỗi 4xx hôm nay
+    prisma.activityLog.count({ 
+      where: { 
+        createdAt: { gte: today },
+        statusCode: { gte: 400, lt: 500 }
+      } 
+    }),
+
+    // Lỗi 5xx hôm nay
+    prisma.activityLog.count({ 
+      where: { 
+        createdAt: { gte: today },
+        statusCode: { gte: 500 }
+      } 
+    }),
+
+    // Request chậm (> 2s) hôm nay
+    prisma.activityLog.count({ 
+      where: { 
+        createdAt: { gte: today },
+        durationMs: { gte: 2000 }
+      } 
+    }),
+
+    // Top 5 module hoạt động nhiều nhất
+    prisma.activityLog.groupBy({
+      by: ["module"],
+      _count: { module: true },
+      orderBy: { _count: { module: "desc" } },
+      take: 5
+    }),
+
+    // Phân bổ theo nguồn
+    prisma.activityLog.groupBy({
+      by: ["source"],
+      _count: { source: true }
+    })
+  ]);
+
+  return {
+    stats: {
+      totalToday,
+      error4xxToday,
+      error5xxToday,
+      slowRequestsToday,
+    },
+    topModules: topModules.map(m => ({ module: m.module, count: m._count.module })),
+    sourceDistribution: sourceDistribution.map(s => ({ source: s.source, count: s._count.source }))
   };
 }

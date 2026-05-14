@@ -92,13 +92,26 @@ QUY TẮC TRÌNH BÀY:
 
 Ngữ cảnh tài liệu đính kèm: {context}`;
 
-export async function ensureDefaultPrompt() {
-  const existing = await getSystemConfig("AI_SYSTEM_PROMPT");
-  if (!existing) {
+export async function ensureDefaultConfigs() {
+  // 1. Prompt AI mặc định
+  const existingPrompt = await getSystemConfig("AI_SYSTEM_PROMPT");
+  if (!existingPrompt) {
     await prisma.systemConfig.create({
       data: {
         key: "AI_SYSTEM_PROMPT",
         value: DEFAULT_PROMPT,
+        updatedBy: "system",
+      },
+    });
+  }
+
+  // 2. Thời gian lưu trữ log (ngày)
+  const existingRetention = await getSystemConfig("LOG_RETENTION_DAYS");
+  if (!existingRetention) {
+    await prisma.systemConfig.create({
+      data: {
+        key: "LOG_RETENTION_DAYS",
+        value: "90",
         updatedBy: "system",
       },
     });

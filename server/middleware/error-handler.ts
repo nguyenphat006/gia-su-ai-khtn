@@ -8,6 +8,7 @@ export const errorHandler = (
   next: NextFunction,
 ) => {
   if (err instanceof AppError) {
+    res.locals.errorMessage = err.message;
     return res.status(err.statusCode).json({
       status: "error",
       message: err.message,
@@ -16,6 +17,7 @@ export const errorHandler = (
   }
 
   console.error("Unexpected Error:", err);
+  res.locals.errorMessage = "Internal server error";
   res.status(500).json({
     status: "error",
     message: "Internal server error",

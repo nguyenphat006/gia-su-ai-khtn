@@ -26,6 +26,7 @@ model User {
   xpLogs             XpLog[]
   authSessions       AuthSession[]
   chatSessions       ChatSession[]
+  activityLogs       ActivityLog[]
 
   arenaResults       ArenaResult[]
   quizHistories      QuizHistory[]
@@ -354,4 +355,42 @@ model ArenaResult {
   @@index([userId, createdAt])
   @@index([mode, createdAt])
   @@index([score])
+}
+
+model ActivityLog {
+  id           String   @id @default(uuid())
+
+  // Thông tin User thực hiện
+  userId       String?  // null nếu chưa đăng nhập
+  username     String?
+  userRole     String?  // STUDENT, TEACHER, ADMIN, null (guest)
+
+  // Phân loại nguồn hành động
+  source       String   // "student" | "admin" | "guest"
+
+  // Thông tin Request
+  method       String   // GET, POST, PUT, PATCH, DELETE
+  path         String   // /api/chat/sessions/xxx/messages
+  module       String   // chat, users, arena, revision...
+  action       String   // Tên hành động dễ đọc: "Gửi tin nhắn AI"
+
+  // Thông tin Response
+  statusCode   Int      // 200, 201, 401, 422, 500...
+  durationMs   Int      // Thời gian xử lý (milliseconds)
+
+  // Metadata bổ sung
+  ipAddress    String?
+  userAgent    String?
+  errorMessage String?  // Nếu request thất bại (statusCode >= 400)
+
+  createdAt    DateTime @default(now())
+
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([module])
+  @@index([source])
+  @@index([createdAt])
+  @@index([statusCode])
+  @@index([userRole])
 }

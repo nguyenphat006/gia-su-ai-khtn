@@ -22,6 +22,7 @@ const AnalyticsPage = lazy(() => import("@/pages/admin/AnalyticsPage"));
 const ArenaReportsPage = lazy(() => import("@/pages/admin/ArenaReportsPage"));
 const UserManagementPage = lazy(() => import("@/pages/admin/UserManagementPage"));
 const ClassManagementPage = lazy(() => import("@/pages/admin/ClassManagementPage"));
+const ActivityLogPage = lazy(() => import("@/pages/admin/ActivityLogPage"));
 
 // ── Type for Outlet Context ─────────────────────────────────────
 export interface AppOutletContext {
@@ -150,6 +151,7 @@ export default function App() {
                     <Route path="knowledge" element={<KnowledgeBasePage />} />                    <Route path="revision" element={<RevisionPage />} />
                     <Route path="users" element={<UserManagementPage />} />
                     <Route path="classes" element={<ClassManagementPage />} />
+                    <Route path="activity-logs" element={<ActivityLogPage />} />
                     {/* Catch-all for undefined admin routes to keep user inside AdminLayout */}
                     <Route path="*" element={<></>} />
                   </Route>
