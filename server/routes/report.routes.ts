@@ -265,6 +265,34 @@ router.get("/activity-logs", reportController.getActivityLogs);
 
 /**
  * @swagger
+ * /api/reports/activity-logs:
+ *   delete:
+ *     summary: Xóa sạch toàn bộ nhật ký hoạt động
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Xóa thành công
+ */
+router.delete("/activity-logs", reportController.clearActivityLogs);
+
+/**
+ * @swagger
+ * /api/reports/activity-export:
+ *   get:
+ *     summary: Xuất danh sách nhật ký hoạt động ra file Excel
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Trả về file Excel (.xlsx)
+ */
+router.get("/activity-export", reportController.exportActivityLogsExcel);
+
+/**
+ * @swagger
  * /api/reports/activity-logs/summary:
  *   get:
  *     summary: Lấy thống kê tổng hợp nhật ký hoạt động

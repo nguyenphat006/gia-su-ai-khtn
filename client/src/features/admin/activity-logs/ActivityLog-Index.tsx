@@ -9,7 +9,8 @@ import {
   Layers,
   Users,
   Filter,
-  ChevronRight
+  ChevronRight,
+  Download
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +26,7 @@ export default function ActivityLogIndex() {
   const [data, setData] = React.useState<ActivityLog[]>([])
   const [summary, setSummary] = React.useState<ActivityLogSummary | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [isExporting, setIsExporting] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const [sourceFilter, setSourceFilter] = React.useState<string>("all")
   const [moduleFilter, setModuleFilter] = React.useState<string>("all")
@@ -68,6 +70,47 @@ export default function ActivityLogIndex() {
     return () => clearTimeout(timer)
   }, [fetchData])
 
+  const handleExportExcel = async () => {
+    setIsExporting(true)
+    const toastId = toast.loading("Đang chuẩn bị file Excel...")
+    
+    try {
+      const params = new URLSearchParams({
+        search: search || "",
+        source: sourceFilter === "all" ? "" : sourceFilter,
+        module: moduleFilter === "all" ? "" : moduleFilter,
+        statusGroup: statusFilter === "all" ? "" : statusFilter,
+      }).toString()
+
+      // Lấy token từ localStorage hoặc cookies (apiClient thường tự xử lý, nhưng fetch cần manual)
+      const token = localStorage.getItem("auth-token") // Giả định vị trí token
+      
+      const response = await fetch(`/api/reports/activity-export?${params}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+      
+      if (!response.ok) throw new Error("Lỗi khi tải file")
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `bao_cao_hoat_dong_${new Date().toISOString().slice(0, 10)}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+
+      toast.success("Đã xuất báo cáo Excel thành công!", { id: toastId })
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("Lỗi khi xuất báo cáo.", { id: toastId })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -82,15 +125,27 @@ export default function ActivityLogIndex() {
           </div>
         </div>
 
-        <Button 
-          variant="outline" 
-          onClick={fetchData} 
-          disabled={loading}
-          className="rounded-xl border-slate-200 h-10 gap-2 text-xs font-bold"
-        >
-          <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
-          Tải lại
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportExcel}
+            disabled={isExporting || loading}
+            className="rounded-xl border-slate-200 h-10 px-4 gap-2 text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <Download size={14} className={isExporting ? "animate-bounce" : ""} />
+            Xuất Excel
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={fetchData} 
+            disabled={loading}
+            className="rounded-xl border-slate-200 h-10 gap-2 text-xs font-bold"
+          >
+            <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
+            Tải lại
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}

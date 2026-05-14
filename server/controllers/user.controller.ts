@@ -115,7 +115,7 @@ export const importUsersFromJson = asyncHandler(async (req: Request, res: Respon
     throw new ValidationError("Khong co du lieu hop le (can username va displayName).");
   }
 
-  const result = await batchImportUsers(normalized, isSeeding, seedOptions);
+  const result = await batchImportUsers(normalized, isSeeding, seedOptions, req.auth);
   res.json({ status: "ok", data: result });
 });
 
@@ -210,7 +210,7 @@ export const importUsersFromExcel = asyncHandler(async (req: Request, res: Respo
     );
   }
 
-  const result = await batchImportUsers(usersToImport, isSeeding, seedOptions);
+  const result = await batchImportUsers(usersToImport, isSeeding, seedOptions, req.auth);
   res.json({ status: "ok", data: { ...result, total: usersToImport.length } });
 });
 
@@ -312,7 +312,7 @@ export const generateMockData = asyncHandler(async (req: Request, res: Response)
   const users = await generateMockUsers(num, classId as string, grade ? Number(grade) : undefined);
 
   if (saveToDb === true) {
-    const result = await batchImportUsers(users, isSeeding, seedOptions);
+    const result = await batchImportUsers(users, isSeeding, seedOptions, req.auth);
     return res.json({ status: "ok", data: { users, saved: result } });
   }
 

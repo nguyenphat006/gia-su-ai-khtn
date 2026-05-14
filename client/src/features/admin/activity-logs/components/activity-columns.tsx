@@ -9,7 +9,7 @@ import { UserInfo } from "./UserInfo" // We will create this
 export const activityColumns: ColumnDef<ActivityLog>[] = [
   {
     accessorKey: "method",
-    header: "Method",
+    header: "Phương thức",
     cell: ({ row }) => {
       const method = row.getValue("method") as string
       return (

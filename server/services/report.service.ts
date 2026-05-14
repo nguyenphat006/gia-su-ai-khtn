@@ -752,3 +752,10 @@ export async function getActivityLogSummary() {
     sourceDistribution: sourceDistribution.map(s => ({ source: s.source, count: s._count.source }))
   };
 }
+
+// ==========================================
+// 9. CLEAR ALL ACTIVITY LOGS
+// ==========================================
+export async function clearActivityLogs() {
+  return await prisma.activityLog.deleteMany({});
+}

@@ -7,6 +7,38 @@ import {
 } from "../utils/errors.js";
 import { hashPassword } from "../utils/password.js";
 
+// Helper to record activity log manually (for background/batch tasks)
+async function recordSystemActivity(data: {
+  userId?: string | null;
+  username?: string | null;
+  role?: string | null;
+  module: string;
+  action: string;
+  source: string;
+  method?: string;
+  path?: string;
+  statusCode?: number;
+}) {
+  try {
+    await prisma.activityLog.create({
+      data: {
+        userId: data.userId || null,
+        username: data.username || null,
+        userRole: data.role || null,
+        source: data.source,
+        module: data.module,
+        action: data.action,
+        method: data.method || "SYSTEM",
+        path: data.path || "background-task",
+        statusCode: data.statusCode || 200,
+        durationMs: 0,
+      }
+    });
+  } catch (err) {
+    console.error("Lỗi khi ghi ActivityLog hệ thống:", err);
+  }
+}
+
 // ========================
 // INCLUDES & TYPES
 // ========================
@@ -396,7 +428,8 @@ export async function seedUserActivity(userId: string, options?: {
   maxStreak?: number,
   timeDistribution?: string,
   customQuestion?: string,
-  askCustomQuestion?: boolean
+  askCustomQuestion?: boolean,
+  performedBy?: { userId: string, username: string, role: string }
 }) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -404,6 +437,16 @@ export async function seedUserActivity(userId: string, options?: {
   });
 
   if (!user || user.role !== "STUDENT") return;
+
+  // Ghi log hoạt động seed (Admin thực hiện)
+  if (options?.performedBy) {
+    await recordSystemActivity({
+      ...options.performedBy,
+      source: "admin",
+      module: "users",
+      action: `Khởi tạo dữ liệu hoạt động cho học sinh: ${user.username}`,
+    });
+  }
 
   const now = new Date();
   
@@ -443,14 +486,27 @@ export async function seedUserActivity(userId: string, options?: {
     return Math.floor(Math.random() * 6) + 17; // Mặc định 17h-22h
   };
 
-  // Helper tạo Date object từ giờ local để đảm bảo không bị lệch múi giờ khi lưu
+  // Helper tạo Date object từ giờ local để đảm bảo không bị lệch múi giờ khi lưu và KHÔNG VƯỢT QUÁ HIỆN TẠI
   const createDateWithLocalHour = (year: number, month: number, day: number, localHour: number) => {
-    // Tạo date ở local (server)
-    const d = new Date(year, month - 1, day, localHour, Math.floor(Math.random() * 60));
-    // Nếu server không phải GMT+7, ta cần force nó về GMT+7 hoặc để Prisma/Postgres xử lý.
-    // Tuy nhiên, cách an toàn nhất là tạo ISO string với đúng giờ mong muốn và offset +07:00
+    const now = new Date();
+    // Chuyển current time sang GMT+7 để so sánh chính xác
+    const nowVN = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    
+    // Nếu ngày được chọn là ngày hiện tại, giới hạn giờ không vượt quá giờ hiện tại
+    let finalHour = localHour;
+    let finalMinute = Math.floor(Math.random() * 60);
+
+    const isToday = (nowVN.getUTCFullYear() === year && (nowVN.getUTCMonth() + 1) === month && nowVN.getUTCDate() === day);
+    
+    if (isToday) {
+      const currentVNHour = nowVN.getUTCHours();
+      if (finalHour >= currentVNHour) {
+        finalHour = Math.max(0, currentVNHour - 1); // Lùi lại 1 tiếng cho an toàn
+      }
+    }
+
     const pad = (n: number) => n.toString().padStart(2, '0');
-    const isoStr = `${year}-${pad(month)}-${pad(day)}T${pad(localHour)}:${pad(Math.floor(Math.random() * 60))}:00+07:00`;
+    const isoStr = `${year}-${pad(month)}-${pad(day)}T${pad(finalHour)}:${pad(finalMinute)}:00+07:00`;
     return new Date(isoStr);
   };
 
@@ -476,12 +532,19 @@ export async function seedUserActivity(userId: string, options?: {
 
   // 2. Tạo XpLog giả (Phân bổ theo 3 tháng: 3, 4, 5 năm 2026)
   const logsData: any[] = [];
-  
+  const activityLogsData: any[] = [];
   // Helper tạo logs cho 1 tháng
   const generateMonthlyLogs = (month: number, totalAmount: number) => {
     const count = 3 + Math.floor(Math.random() * 4);
+
+    // Xác định ngày tối đa cho tháng này
+    let maxDay = 28;
     const isCurrentMonth = (now.getFullYear() === 2026 && now.getMonth() === month - 1);
-    const maxDay = isCurrentMonth ? now.getDate() : 28;
+
+    if (isCurrentMonth) {
+      // Nếu là tháng hiện tại, ngày tối đa là hôm nay
+      maxDay = now.getDate();
+    }
 
     for (let i = 0; i < count; i++) {
       const logDate = createDateWithLocalHour(2026, month, Math.floor(Math.random() * maxDay) + 1, getWeightedHour());
@@ -489,6 +552,21 @@ export async function seedUserActivity(userId: string, options?: {
         userId,
         amount: Math.max(1, Math.floor(totalAmount / count)),
         action: XpAction.COMPLETE_QUIZ,
+        createdAt: logDate
+      });
+
+      // Tạo ActivityLog giả cho học sinh (Hành động nộp bài Quiz)
+      activityLogsData.push({
+        userId,
+        username: user.username,
+        userRole: user.role,
+        source: "student",
+        method: "POST",
+        path: "/api/revision/quiz/submit",
+        module: "revision",
+        action: "Nộp bài Quiz",
+        statusCode: 200,
+        durationMs: Math.floor(Math.random() * 5000) + 2000,
         createdAt: logDate
       });
     }
@@ -519,6 +597,21 @@ export async function seedUserActivity(userId: string, options?: {
       score: Math.floor(Math.random() * 150) + 100,
       winner: Math.random() > 0.3,
       xpEarned: Math.floor(Math.random() * 50) + 20,
+      createdAt: matchDate
+    });
+
+    // Tạo ActivityLog giả cho học sinh (Hành động Arena)
+    activityLogsData.push({
+      userId,
+      username: user.username,
+      userRole: user.role,
+      source: "student",
+      method: "POST",
+      path: "/api/arena/submit",
+      module: "arena",
+      action: "Nộp kết quả trận đấu",
+      statusCode: 200,
+      durationMs: Math.floor(Math.random() * 3000) + 1000,
       createdAt: matchDate
     });
   }
@@ -557,6 +650,21 @@ export async function seedUserActivity(userId: string, options?: {
       }
     });
 
+    // Tạo ActivityLog cho việc tạo session
+    activityLogsData.push({
+      userId,
+      username: user.username,
+      userRole: user.role,
+      source: "student",
+      method: "POST",
+      path: "/api/chat/sessions",
+      module: "chat",
+      action: "Tạo phiên hội thoại mới",
+      statusCode: 201,
+      durationMs: Math.floor(Math.random() * 500) + 100,
+      createdAt: sessionDate
+    });
+
     const numMessages = Math.random() > 0.7 ? 2 : 1;
     const usedIndices = new Set();
     
@@ -570,7 +678,7 @@ export async function seedUserActivity(userId: string, options?: {
       usedIndices.add(idx);
       
       const qa = chatContents[idx];
-      const msgTime = new Date(sessionDate.getTime() + j * 60000);
+      const msgTime = new Date(sessionDate.getTime() + (j + 1) * 60000);
       
       await prisma.chatMessage.createMany({
         data: [
@@ -578,14 +686,39 @@ export async function seedUserActivity(userId: string, options?: {
           { sessionId: session.id, role: "MODEL", content: qa.a, createdAt: new Date(msgTime.getTime() + 15000) }
         ]
       });
+
+      // Tạo ActivityLog cho việc gửi tin nhắn
+      activityLogsData.push({
+        userId,
+        username: user.username,
+        userRole: user.role,
+        source: "student",
+        method: "POST",
+        path: `/api/chat/sessions/${session.id}/messages`,
+        module: "chat",
+        action: "Gửi tin nhắn AI",
+        statusCode: 200,
+        durationMs: Math.floor(Math.random() * 2000) + 1000,
+        createdAt: msgTime
+      });
     }
+  }
+
+  // Cuối cùng, lưu toàn bộ Activity Logs giả của học sinh
+  if (activityLogsData.length > 0) {
+    await prisma.activityLog.createMany({ data: activityLogsData });
   }
 }
 
 /**
  * Import nhiều users cùng lúc (Batch Import)
  */
-export async function batchImportUsers(usersData: any[], seedActivity = false, seedOptions?: any) {
+export async function batchImportUsers(
+  usersData: any[], 
+  seedActivity = false, 
+  seedOptions?: any,
+  performedBy?: { userId: string, username: string, role: string }
+) {
   const results = {
     success: 0,
     errors: [] as { index: number; username: string; reason: string }[],
@@ -622,6 +755,16 @@ export async function batchImportUsers(usersData: any[], seedActivity = false, s
     }
   }
 
+  // Ghi log hoạt động import (Admin thực hiện)
+  if (performedBy && results.success > 0) {
+    await recordSystemActivity({
+      ...performedBy,
+      source: "admin",
+      module: "users",
+      action: `Import hàng loạt ${results.success} người dùng`,
+    });
+  }
+
   // Thực hiện seed activity sau khi đã import xong để có thể tính toán phân bổ câu hỏi tùy chỉnh
   if (seedActivity && createdUserIds.length > 0) {
     const customCount = seedOptions?.customQuestionCount || 0;
@@ -632,11 +775,11 @@ export async function batchImportUsers(usersData: any[], seedActivity = false, s
     for (const userId of createdUserIds) {
       await seedUserActivity(userId, {
         ...seedOptions,
-        askCustomQuestion: customQuestionUserIds.has(userId)
+        askCustomQuestion: customQuestionUserIds.has(userId),
+        performedBy
       });
     }
   }
 
   return results;
 }
-

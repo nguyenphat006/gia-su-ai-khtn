@@ -88,6 +88,62 @@ export const getActivityLogSummary = asyncHandler(async (req: Request, res: Resp
   res.json({ status: "ok", data: result });
 });
 
+export const clearActivityLogs = asyncHandler(async (req: Request, res: Response) => {
+  await reportService.clearActivityLogs();
+  res.json({ status: "ok", message: "Đã xóa sạch toàn bộ nhật ký hoạt động." });
+});
+
+export const exportActivityLogsExcel = asyncHandler(async (req: Request, res: Response) => {
+  const filters = {
+    source: req.query.source as string,
+    userId: req.query.userId as string,
+    module: req.query.module as string,
+    statusGroup: req.query.statusGroup as string,
+    dateFrom: req.query.dateFrom as string,
+    dateTo: req.query.dateTo as string,
+    search: req.query.search as string,
+    limit: 10000, // Lấy tối đa 10k dòng cho báo cáo
+  };
+
+  const result = await reportService.getActivityLogs(filters);
+  const logs = result.data;
+
+  const excelData = logs.map(log => ({
+    "Thời gian": new Date(log.createdAt).toLocaleString("vi-VN"),
+    "Người dùng": log.username || "Khách",
+    "Vai trò": log.userRole || "N/A",
+    "Nguồn": log.source === "student" ? "Học sinh" : (log.source === "admin" ? "Admin" : "Khách"),
+    "Phương thức": log.method,
+    "Module": log.module,
+    "Mô tả hành động": log.action,
+    "Đường dẫn": log.path,
+    "Mã trạng thái": log.statusCode,
+    "Thời gian xử lý (ms)": log.durationMs,
+    "Địa chỉ IP": log.ipAddress,
+    "Thiết bị (User Agent)": log.userAgent,
+    "Lỗi": log.errorMessage || "",
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  
+  // Điều chỉnh độ rộng cột sơ bộ
+  const wscols = [
+    { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, 
+    { wch: 15 }, { wch: 35 }, { wch: 30 }, { wch: 12 }, { wch: 15 },
+    { wch: 15 }, { wch: 40 }, { wch: 30 }
+  ];
+  ws["!cols"] = wscols;
+
+  XLSX.utils.book_append_sheet(wb, ws, "Activity Logs");
+
+  const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+
+  res.setHeader("Content-Disposition", `attachment; filename=bao_cao_hoat_dong_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.send(buffer);
+});
+
 export const exportArenaLogsExcel = asyncHandler(async (req: Request, res: Response) => {
   // Lấy toàn bộ dữ liệu arena (không phân trang) để xuất excel
   const result = await reportService.getArenaLogs(1, 10000); 
