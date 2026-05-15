@@ -18,6 +18,8 @@ async function recordSystemActivity(data: {
   method?: string;
   path?: string;
   statusCode?: number;
+  queryParams?: any;
+  requestBody?: any;
 }) {
   try {
     await prisma.activityLog.create({
@@ -32,6 +34,8 @@ async function recordSystemActivity(data: {
         path: data.path || "background-task",
         statusCode: data.statusCode || 200,
         durationMs: 0,
+        queryParams: data.queryParams || null,
+        requestBody: data.requestBody || null,
       }
     });
   } catch (err) {

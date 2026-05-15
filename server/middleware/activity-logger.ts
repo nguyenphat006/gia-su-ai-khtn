@@ -20,6 +20,10 @@ export const activityLogger = (req: Request, res: Response, next: NextFunction) 
       const { module, action } = resolveModuleAndAction(req.method, path);
       const source = resolveSource(req.auth?.role);
 
+      // Trích xuất và che giấu thông tin nhạy cảm
+      const queryParams = maskSensitiveData(req.query);
+      const requestBody = maskSensitiveData(req.body);
+
       // Lưu log vào Database (không await để không block luồng xử lý)
       prisma.activityLog.create({
         data: {
@@ -36,7 +40,14 @@ export const activityLogger = (req: Request, res: Response, next: NextFunction) 
           ipAddress: req.ip || (req.headers["x-forwarded-for"] as string) || null,
           userAgent: req.headers["user-agent"] ?? null,
           errorMessage: res.statusCode >= 400 ? (res.locals.errorMessage ?? null) : null,
+          queryParams,
+          requestBody,
         },
+      }).then(() => {
+        // Log ra terminal để dễ theo dõi
+        const statusColor = res.statusCode < 300 ? "\x1b[32m" : res.statusCode < 500 ? "\x1b[33m" : "\x1b[31m";
+        const reset = "\x1b[0m";
+        console.log(`[Activity] ${req.method} ${path} - ${statusColor}${res.statusCode}${reset} (${duration}ms) - ${action}`);
       }).catch((err) => {
         console.error("Lỗi khi ghi ActivityLog:", err);
       });
@@ -146,4 +157,26 @@ function resolveModuleAndAction(method: string, path: string): { module: string;
   const fallbackAction = `${method} ${path}`;
 
   return { module: fallbackModule, action: fallbackAction };
+}
+
+/**
+ * Che giấu thông tin nhạy cảm trong dữ liệu (Recursive)
+ */
+function maskSensitiveData(data: any): any {
+  if (!data || typeof data !== "object") return data;
+
+  const SENSITIVE_FIELDS = ["password", "oldPassword", "newPassword", "refreshToken", "token"];
+  
+  // Clone object để tránh side-effect
+  const masked = Array.isArray(data) ? [...data] : { ...data };
+
+  for (const key in masked) {
+    if (SENSITIVE_FIELDS.includes(key)) {
+      masked[key] = "********";
+    } else if (typeof masked[key] === "object") {
+      masked[key] = maskSensitiveData(masked[key]);
+    }
+  }
+
+  return masked;
 }

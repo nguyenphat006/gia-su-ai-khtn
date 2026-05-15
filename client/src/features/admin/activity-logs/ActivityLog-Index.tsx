@@ -21,6 +21,7 @@ import { ActivityLog, ActivityLogSummary } from "../analytics/types"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { type PaginationState } from "@tanstack/react-table"
+import { ActivityLogDetailDrawer } from "./components/ActivityLogDetailDrawer"
 
 export default function ActivityLogIndex() {
   const [data, setData] = React.useState<ActivityLog[]>([])
@@ -31,6 +32,10 @@ export default function ActivityLogIndex() {
   const [sourceFilter, setSourceFilter] = React.useState<string>("all")
   const [moduleFilter, setModuleFilter] = React.useState<string>("all")
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
+
+  // Chi tiết log
+  const [selectedLogId, setSelectedLogId] = React.useState<string | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
 
   const [{ pageIndex, pageSize }, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -69,6 +74,11 @@ export default function ActivityLogIndex() {
     const timer = setTimeout(() => fetchData(), 300)
     return () => clearTimeout(timer)
   }, [fetchData])
+
+  const handleRowClick = (log: ActivityLog) => {
+    setSelectedLogId(log.id)
+    setIsDrawerOpen(true)
+  }
 
   const handleExportExcel = async () => {
     setIsExporting(true)
@@ -152,26 +162,30 @@ export default function ActivityLogIndex() {
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard 
-            title="Tổng request (Hôm nay)" 
-            value={summary.stats.totalToday} 
+            title="Tổng yêu cầu" 
+            value={summary.stats.totalAllTime || 0} 
+            subtitle={`+${summary.stats.totalToday || 0} hôm nay`}
             icon={<Activity size={20} />} 
             color="indigo" 
           />
           <StatCard 
-            title="Lỗi 4xx" 
-            value={summary.stats.error4xxToday} 
+            title="Lỗi 4xx (Client)" 
+            value={summary.stats.error4xxAllTime || 0} 
+            subtitle={`${summary.stats.error4xxToday || 0} hôm nay`}
             icon={<AlertCircle size={20} />} 
             color="amber" 
           />
           <StatCard 
-            title="Lỗi 5xx" 
-            value={summary.stats.error5xxToday} 
+            title="Lỗi 5xx (Server)" 
+            value={summary.stats.error5xxAllTime || 0} 
+            subtitle={`${summary.stats.error5xxToday || 0} hôm nay`}
             icon={<AlertCircle size={20} />} 
             color="red" 
           />
           <StatCard 
-            title="Request chậm (>2s)" 
-            value={summary.stats.slowRequestsToday} 
+            title="Yêu cầu chậm (>2s)" 
+            value={summary.stats.slowRequestsAllTime || 0} 
+            subtitle={`${summary.stats.slowRequestsToday || 0} hôm nay`}
             icon={<Clock size={20} />} 
             color="orange" 
           />
@@ -243,20 +257,28 @@ export default function ActivityLogIndex() {
           columns={activityColumns}
           data={data}
           loading={loading}
+          pageCount={pageCount}
           pagination={{
             pageIndex,
             pageSize,
-            pageCount,
-            totalCount
           }}
+          totalCount={totalCount}
           onPaginationChange={setPagination}
+          onRowClick={handleRowClick}
         />
       </div>
+
+      {/* Detail Drawer */}
+      <ActivityLogDetailDrawer 
+        logId={selectedLogId}
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+      />
     </div>
   )
 }
 
-function StatCard({ title, value, icon, color }: { title: string, value: number, icon: React.ReactNode, color: string }) {
+function StatCard({ title, value, icon, color, subtitle }: { title: string, value: number, icon: React.ReactNode, color: string, subtitle?: string }) {
   const colors: Record<string, string> = {
     indigo: "bg-indigo-50 text-indigo-600 shadow-indigo-100",
     amber: "bg-amber-50 text-amber-600 shadow-amber-100",
@@ -269,9 +291,12 @@ function StatCard({ title, value, icon, color }: { title: string, value: number,
       <div className={cn("p-3 rounded-2xl shadow-lg", colors[color])}>
         {icon}
       </div>
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</p>
-        <p className="text-2xl font-black text-slate-800">{value.toLocaleString()}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{title}</p>
+        <p className="text-2xl font-black text-slate-800 leading-none my-1">{value.toLocaleString()}</p>
+        {subtitle && (
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight italic opacity-80">{subtitle}</p>
+        )}
       </div>
     </div>
   )

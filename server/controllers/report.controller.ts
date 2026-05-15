@@ -83,6 +83,18 @@ export const getActivityLogs = asyncHandler(async (req: Request, res: Response) 
   res.json({ status: "ok", data: result });
 });
 
+export const getActivityLogDetail = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await reportService.getActivityLogById(id);
+  
+  if (!result) {
+    res.status(404).json({ status: "error", message: "Không tìm thấy nhật ký hoạt động này." });
+    return;
+  }
+
+  res.json({ status: "ok", data: result });
+});
+
 export const getActivityLogSummary = asyncHandler(async (req: Request, res: Response) => {
   const result = await reportService.getActivityLogSummary();
   res.json({ status: "ok", data: result });

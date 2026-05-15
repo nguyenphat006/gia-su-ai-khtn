@@ -47,7 +47,6 @@ export default function App() {
     studentData,
     isAdmin,
     isLoading,
-    leaderboard,
     addXP,
     schoolLogo,
     login,
@@ -95,7 +94,6 @@ export default function App() {
                       user={user}
                       studentData={studentData}
                       isAdmin={isAdmin}
-                      leaderboard={leaderboard}
                       schoolLogo={schoolLogo}
                       addXP={addXP}
                       isUploading={isUploading}

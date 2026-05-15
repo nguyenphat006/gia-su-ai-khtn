@@ -15,6 +15,7 @@ export interface RankDistribution {
   minXp: number;
   maxXp: number;
   color?: string;
+  students?: any[];
 }
 
 export interface TopStudent {
@@ -34,6 +35,7 @@ export interface UserEngagement {
     maxStreak: number;
     topSteakUsers: any[];
   };
+  topStreaks?: any[];
 }
 
 export interface ChatLog {
@@ -94,11 +96,15 @@ export interface ActivityLog {
   ipAddress: string | null;
   userAgent: string | null;
   errorMessage: string | null;
+  queryParams?: any;
+  requestBody?: any;
   createdAt: string;
   user?: {
     displayName: string;
-    studentProfile?: { avatarUrl: string | null };
-    teacherProfile?: { avatarUrl: string | null };
+    username: string;
+    role: string;
+    studentProfile?: { avatarUrl: string | null; studentCode: string; grade: number };
+    teacherProfile?: { avatarUrl: string | null; employeeCode: string | null; subject: string | null };
   };
 }
 
@@ -108,6 +114,10 @@ export interface ActivityLogSummary {
     error4xxToday: number;
     error5xxToday: number;
     slowRequestsToday: number;
+    totalAllTime: number;
+    error4xxAllTime: number;
+    error5xxAllTime: number;
+    slowRequestsAllTime: number;
   };
   topModules: { module: string; count: number }[];
   sourceDistribution: { source: string; count: number }[];

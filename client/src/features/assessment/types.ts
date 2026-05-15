@@ -10,6 +10,7 @@ export interface Quiz {
   difficulty?: string;
   type?: "MULTIPLE_CHOICE" | "ESSAY";
   isAiGenerated?: boolean;
+  answerIndex?: number | null;
 }
 
 export interface Flashcard {

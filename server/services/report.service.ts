@@ -685,6 +685,26 @@ export async function getActivityLogs(filters: {
 }
 
 // ==========================================
+// 7b. GET ACTIVITY LOG DETAIL
+// ==========================================
+export async function getActivityLogById(id: string) {
+  return await prisma.activityLog.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          displayName: true,
+          username: true,
+          role: true,
+          studentProfile: { select: { avatarUrl: true, studentCode: true, grade: true } },
+          teacherProfile: { select: { avatarUrl: true, employeeCode: true, subject: true } }
+        }
+      }
+    }
+  });
+}
+
+// ==========================================
 // 8. GET ACTIVITY LOG SUMMARY
 // ==========================================
 export async function getActivityLogSummary() {
@@ -696,35 +716,24 @@ export async function getActivityLogSummary() {
     error4xxToday,
     error5xxToday,
     slowRequestsToday,
+    totalAllTime,
+    error4xxAllTime,
+    error5xxAllTime,
+    slowRequestsAllTime,
     topModules,
     sourceDistribution
   ] = await Promise.all([
-    // Tổng request hôm nay
+    // Thống kê hôm nay
     prisma.activityLog.count({ where: { createdAt: { gte: today } } }),
-    
-    // Lỗi 4xx hôm nay
-    prisma.activityLog.count({ 
-      where: { 
-        createdAt: { gte: today },
-        statusCode: { gte: 400, lt: 500 }
-      } 
-    }),
+    prisma.activityLog.count({ where: { createdAt: { gte: today }, statusCode: { gte: 400, lt: 500 } } }),
+    prisma.activityLog.count({ where: { createdAt: { gte: today }, statusCode: { gte: 500 } } }),
+    prisma.activityLog.count({ where: { createdAt: { gte: today }, durationMs: { gte: 2000 } } }),
 
-    // Lỗi 5xx hôm nay
-    prisma.activityLog.count({ 
-      where: { 
-        createdAt: { gte: today },
-        statusCode: { gte: 500 }
-      } 
-    }),
-
-    // Request chậm (> 2s) hôm nay
-    prisma.activityLog.count({ 
-      where: { 
-        createdAt: { gte: today },
-        durationMs: { gte: 2000 }
-      } 
-    }),
+    // Thống kê tổng quát (All-time)
+    prisma.activityLog.count(),
+    prisma.activityLog.count({ where: { statusCode: { gte: 400, lt: 500 } } }),
+    prisma.activityLog.count({ where: { statusCode: { gte: 500 } } }),
+    prisma.activityLog.count({ where: { durationMs: { gte: 2000 } } }),
 
     // Top 5 module hoạt động nhiều nhất
     prisma.activityLog.groupBy({
@@ -747,6 +756,10 @@ export async function getActivityLogSummary() {
       error4xxToday,
       error5xxToday,
       slowRequestsToday,
+      totalAllTime,
+      error4xxAllTime,
+      error5xxAllTime,
+      slowRequestsAllTime,
     },
     topModules: topModules.map(m => ({ module: m.module, count: m._count.module })),
     sourceDistribution: sourceDistribution.map(s => ({ source: s.source, count: s._count.source }))

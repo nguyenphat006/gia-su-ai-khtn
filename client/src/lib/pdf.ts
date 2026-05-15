@@ -9,7 +9,7 @@ export async function exportToPDF(elementId: string, filename: string) {
     scale: 2,
     useCORS: true,
     logging: false
-  });
+  } as any);
   
   const imgData = canvas.toDataURL("image/png");
   const pdf = new jsPDF("p", "mm", "a4");

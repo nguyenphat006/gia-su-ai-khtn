@@ -265,6 +265,42 @@ router.get("/activity-logs", reportController.getActivityLogs);
 
 /**
  * @swagger
+ * /api/reports/activity-logs/summary:
+ *   get:
+ *     summary: Lấy thống kê tổng hợp nhật ký hoạt động
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get("/activity-logs/summary", reportController.getActivityLogSummary);
+
+/**
+ * @swagger
+ * /api/reports/activity-logs/{id}:
+ *   get:
+ *     summary: Lấy chi tiết một nhật ký hoạt động
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Trả về chi tiết log bao gồm Request Body và Query Params
+ *       404:
+ *         description: Không tìm thấy log
+ */
+router.get("/activity-logs/:id", reportController.getActivityLogDetail);
+
+/**
+ * @swagger
  * /api/reports/activity-logs:
  *   delete:
  *     summary: Xóa sạch toàn bộ nhật ký hoạt động
@@ -290,19 +326,5 @@ router.delete("/activity-logs", reportController.clearActivityLogs);
  *         description: Trả về file Excel (.xlsx)
  */
 router.get("/activity-export", reportController.exportActivityLogsExcel);
-
-/**
- * @swagger
- * /api/reports/activity-logs/summary:
- *   get:
- *     summary: Lấy thống kê tổng hợp nhật ký hoạt động
- *     tags: [Reports]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Thành công
- */
-router.get("/activity-logs/summary", reportController.getActivityLogSummary);
 
 export default router;

@@ -1,4 +1,4 @@
-import { KnowledgeListResponse } from "./types";
+import { KnowledgeListResponse } from "../types";
 import { apiClient } from "@/lib/apiClient";
 
 export const knowledgeService = {

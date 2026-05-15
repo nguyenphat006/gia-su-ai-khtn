@@ -383,6 +383,10 @@ model ActivityLog {
   userAgent    String?
   errorMessage String?  // Nếu request thất bại (statusCode >= 400)
 
+  // Dữ liệu chi tiết cho việc xem hành vi
+  queryParams  Json?    
+  requestBody  Json?    
+
   createdAt    DateTime @default(now())
 
   user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)

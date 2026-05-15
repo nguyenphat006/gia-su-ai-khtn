@@ -64,4 +64,9 @@ export const adminAnalyticsService = {
   getActivityLogSummary: async () => {
     return apiClient<{ status: string; data: ActivityLogSummary }>("/api/reports/activity-logs/summary");
   },
+
+  // Chi tiết một Activity Log
+  getActivityLogDetail: async (id: string) => {
+    return apiClient<{ status: string; data: ActivityLog }>(`/api/reports/activity-logs/${id}`);
+  },
 };

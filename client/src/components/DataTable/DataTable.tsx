@@ -23,6 +23,7 @@ import {
 import { DataTablePagination } from "./DataTablePagination"
 import Spinner from "@/components/ui/Spinner"
 import { AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -39,6 +40,7 @@ interface DataTableProps<TData, TValue> {
   state?: any
   rowSelection?: any
   onRowSelectionChange?: any
+  onRowClick?: (data: TData) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -56,6 +58,7 @@ export function DataTable<TData, TValue>({
   state: externalState,
   rowSelection: externalRowSelection,
   onRowSelectionChange: externalOnRowSelectionChange,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [internalRowSelection, setInternalRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -140,7 +143,11 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="border-slate-100 hover:bg-slate-50/50 transition-colors"
+                  className={cn(
+                    "border-slate-100 hover:bg-slate-50/50 transition-colors",
+                    onRowClick && "cursor-pointer active:bg-slate-100"
+                  )}
+                  onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-4 text-sm font-medium text-slate-600 text-center">
