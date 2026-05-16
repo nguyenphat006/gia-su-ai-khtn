@@ -71,20 +71,37 @@ export async function getQuizForStudent(params: {
 
     if (aiResult && aiResult.quizzes) {
       // Map AI format to Bank format for frontend consistency
-      const aiQuestions = aiResult.quizzes.map((q: any) => ({
-        id: `ai-${Math.random().toString(36).substr(2, 9)}`,
+      const aiQuestionsData = aiResult.quizzes.map((q: any) => ({
         content: q.question,
-        options: q.options,
+        options: q.options || [],
         correctAnswer: q.correctAnswer || (q.options ? q.options[q.answerIndex] : ""),
-        explanation: q.explanation,
-        hint: q.hint,
+        explanation: q.explanation || "",
+        difficulty: q.difficulty || "Trung bình",
         type: q.isEssay ? "ESSAY" : "MULTIPLE_CHOICE",
-        difficulty: q.difficulty,
         topic: topic,
         grade: grade,
+        isActive: true,
+        status: "APPROVED"
+      }));
+
+      // Tự động lưu vào ngân hàng câu hỏi
+      try {
+        await prisma.questionBank.createMany({
+          data: aiQuestionsData
+        });
+      } catch (err) {
+        console.error("Lỗi khi lưu câu hỏi AI vào ngân hàng:", err);
+      }
+
+      // Trả về kết quả (cần ID cho frontend nên ta map lại một lần nữa hoặc lấy từ DB vừa lưu)
+      // Để nhanh, ta map thủ công và gán ID giả như cũ hoặc truy vấn lại
+      const finalAiQuestions = aiQuestionsData.map((q: any) => ({
+        ...q,
+        id: `ai-${Math.random().toString(36).substr(2, 9)}`,
         isAiGenerated: true
       }));
-      return [...bankQuestions, ...aiQuestions];
+
+      return [...bankQuestions, ...finalAiQuestions];
     }
   }
 
@@ -113,14 +130,33 @@ export async function getFlashcardsForStudent(params: {
     const aiResult = await geminiService.generateFlashcards(topic, context, `Lớp ${grade}`);
     
     if (aiResult && aiResult.flashcards) {
-      return {
-        id: "ai-generated",
-        title: `Flashcard: ${topic}`,
-        topic,
-        grade,
-        cards: aiResult.flashcards,
-        isAiGenerated: true
-      };
+      // Tự động lưu vào ngân hàng Flashcard
+      try {
+        const newDeck = await prisma.flashcardDeck.create({
+          data: {
+            title: `Flashcard: ${topic}`,
+            topic,
+            grade,
+            cards: aiResult.flashcards,
+            isActive: true
+          }
+        });
+        return {
+          ...newDeck,
+          isAiGenerated: true
+        };
+      } catch (err) {
+        console.error("Lỗi khi lưu bộ Flashcard AI vào ngân hàng:", err);
+        // Fallback trả về object AI nếu lưu lỗi
+        return {
+          id: "ai-generated",
+          title: `Flashcard: ${topic}`,
+          topic,
+          grade,
+          cards: aiResult.flashcards,
+          isAiGenerated: true
+        };
+      }
     }
     throw new NotFoundError("Không thể tạo flashcard cho chủ đề này.");
   }
@@ -150,14 +186,33 @@ export async function getMindmapForStudent(params: {
     const aiResult = await geminiService.generateMindmap(topic, context, `Lớp ${grade}`);
     
     if (aiResult && aiResult.mindmap) {
-      return {
-        id: "ai-generated",
-        title: `Sơ đồ tư duy: ${topic}`,
-        topic,
-        grade,
-        nodes: aiResult.mindmap,
-        isAiGenerated: true
-      };
+      // Tự động lưu vào ngân hàng Mindmap
+      try {
+        const newMindmap = await prisma.mindmapData.create({
+          data: {
+            title: `Sơ đồ tư duy: ${topic}`,
+            topic,
+            grade,
+            markdown: JSON.stringify(aiResult.mindmap),
+            isActive: true
+          }
+        });
+        return {
+          ...newMindmap,
+          nodes: aiResult.mindmap,
+          isAiGenerated: true
+        };
+      } catch (err) {
+        console.error("Lỗi khi lưu sơ đồ tư duy AI vào ngân hàng:", err);
+        return {
+          id: "ai-generated",
+          title: `Sơ đồ tư duy: ${topic}`,
+          topic,
+          grade,
+          nodes: aiResult.mindmap,
+          isAiGenerated: true
+        };
+      }
     }
     throw new NotFoundError("Không thể tạo sơ đồ tư duy cho chủ đề này.");
   }
