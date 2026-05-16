@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, Layers, Sparkles, Zap, ChevronRight } from "lucide-react";
+import { ArrowLeft, Layers, Sparkles, Zap, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Flashcard, AssessmentMode } from "../types";
 import FormattedContent from "@/components/ui/FormattedContent";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 function FlashcardItem({ card }: { card: Flashcard }) {
   const [flipped, setFlipped] = useState(false);
@@ -65,17 +66,33 @@ interface FlashcardViewerProps {
   setGrade: (g: string) => void;
   setMode: (m: AssessmentMode) => void;
   createFlashcards: () => void;
+  startQuiz: () => void;
+  setQuizType: (type: string) => void;
 }
 
 export function FlashcardViewer({
-  flashcards, setFlashcards, topic, setTopic, grade, setGrade, setMode, createFlashcards
+  flashcards, setFlashcards, topic, setTopic, grade, setGrade, setMode, createFlashcards, startQuiz, setQuizType
 }: FlashcardViewerProps) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [showQuizPrompt, setShowQuizPrompt] = useState(false);
 
   const paginate = (newDirection: number) => {
     setDirection(newDirection);
     setCurrentIdx(prev => prev + newDirection);
+  };
+
+  // Tự động hiện gợi ý khi đến thẻ cuối cùng
+  useEffect(() => {
+    if (flashcards.length > 0 && currentIdx === flashcards.length - 1) {
+      const timer = setTimeout(() => setShowQuizPrompt(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIdx, flashcards.length]);
+
+  const handleStartQuizFromFlashcards = () => {
+    setQuizType("Trắc nghiệm"); // Đảm bảo là mode trắc nghiệm
+    startQuiz();
   };
 
   return (
@@ -90,14 +107,24 @@ export function FlashcardViewer({
           </button>
           <h3 className="font-display font-black text-orange-900 text-xl tracking-tight uppercase">Học qua Flashcards</h3>
         </div>
-        {flashcards.length > 0 && (
-           <button 
-             onClick={() => { setFlashcards([]); setCurrentIdx(0); }}
-             className="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:underline"
-           >
-             Đổi chủ đề
-           </button>
-        )}
+        <div className="flex items-center gap-3">
+          {flashcards.length > 0 && (
+            <>
+              <button 
+                onClick={() => setShowQuizPrompt(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-600 transition-all"
+              >
+                <CheckCircle2 size={14} /> Kiểm tra kiến thức
+              </button>
+              <button 
+                onClick={() => { setFlashcards([]); setCurrentIdx(0); }}
+                className="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:underline"
+              >
+                Đổi chủ đề
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {flashcards.length === 0 ? (
@@ -199,6 +226,19 @@ export function FlashcardViewer({
            </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showQuizPrompt}
+        onClose={() => setShowQuizPrompt(false)}
+        onConfirm={async () => {
+          handleStartQuizFromFlashcards();
+        }}
+        title="Kiểm tra kiến thức?"
+        description={`Em đã hoàn thành ôn tập chủ đề "${topic}". Em có muốn làm một bài tập trắc nghiệm nhanh để kiểm tra lại kiến thức không?`}
+        confirmText="Làm bài ngay"
+        cancelText="Để sau ạ"
+        variant="info"
+      />
     </div>
   );
 }

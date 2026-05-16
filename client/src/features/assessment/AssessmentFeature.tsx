@@ -117,6 +117,8 @@ export default function AssessmentFeature({ studentName, addXP, userId }: Assess
         topic={topic} setTopic={setTopic}
         grade={grade} setGrade={setGrade}
         setMode={setMode} createFlashcards={createFlashcards}
+        startQuiz={handleStartQuiz}
+        setQuizType={setQuizType}
       />
     );
   }
