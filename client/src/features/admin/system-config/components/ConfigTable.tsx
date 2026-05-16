@@ -21,30 +21,19 @@ export function ConfigTable({ onEdit, onDelete, refreshTrigger }: ConfigTablePro
   const [rowSelection, setRowSelection] = React.useState({})
   const [search, setSearch] = React.useState("")
 
-  const [{ pageIndex, pageSize }, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  })
-  const [totalCount, setTotalCount] = React.useState(0)
-  const [pageCount, setPageCount] = React.useState(0)
-
   const fetchData = React.useCallback(async () => {
     setLoading(true)
     try {
       const response = await systemService.getConfigs({
-        page: pageIndex + 1,
-        limit: pageSize,
         search: search || undefined,
       })
       setData(response.data.configs)
-      setTotalCount(response.data.pagination.total)
-      setPageCount(response.data.pagination.totalPages)
     } catch (err: any) {
       toast.error(err.message || "Không thể tải cấu hình hệ thống")
     } finally {
       setLoading(false)
     }
-  }, [pageIndex, pageSize, search, refreshTrigger])
+  }, [search, refreshTrigger])
 
   React.useEffect(() => {
     const timer = setTimeout(() => fetchData(), 300)
@@ -69,10 +58,7 @@ export function ConfigTable({ onEdit, onDelete, refreshTrigger }: ConfigTablePro
               placeholder="Tìm kiếm cấu hình..."
               className="pl-10 h-11 bg-white border-slate-200 rounded-2xl"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPagination(prev => ({ ...prev, pageIndex: 0 }))
-              }}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
@@ -105,10 +91,7 @@ export function ConfigTable({ onEdit, onDelete, refreshTrigger }: ConfigTablePro
           loading={loading}
           rowSelection={rowSelection}
           onRowSelectionChange={setRowSelection}
-          pagination={{ pageIndex, pageSize }}
-          onPaginationChange={setPagination}
-          pageCount={pageCount}
-          totalCount={totalCount}
+          hidePagination
         />
       </div>
     </div>

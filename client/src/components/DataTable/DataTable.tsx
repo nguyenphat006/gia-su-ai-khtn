@@ -41,6 +41,7 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: any
   onRowSelectionChange?: any
   onRowClick?: (data: TData) => void
+  hidePagination?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -59,6 +60,7 @@ export function DataTable<TData, TValue>({
   rowSelection: externalRowSelection,
   onRowSelectionChange: externalOnRowSelectionChange,
   onRowClick,
+  hidePagination = false,
 }: DataTableProps<TData, TValue>) {
   const [internalRowSelection, setInternalRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -171,9 +173,12 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="datatable-pagination">
-        <DataTablePagination table={table} totalCount={totalCount} />
+      {!hidePagination && (
+        <div className="datatable-pagination">
+          <DataTablePagination table={table} totalCount={totalCount} />
+        </div>
+      )}
       </div>
-    </div>
-  )
-}
+      )
+      }
+
