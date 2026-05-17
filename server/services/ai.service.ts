@@ -4,7 +4,7 @@ import { getSystemConfig } from "./system.service.js";
 // Đảm bảo có API KEY từ biến môi trường
 const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
 
-// Cấu hình model tập trung
+// Cấu hình model tập trung (Fallback)
 export const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
 
 export interface GeminiMessage {
@@ -12,26 +12,32 @@ export interface GeminiMessage {
   parts: any[];
 }
 
+/**
+ * Gọi AI chính để trả lời câu hỏi học sinh
+ */
 export async function askGemini(
   message: string,
   history: GeminiMessage[],
   context: string,
   image?: { data: string; mimeType: string }
 ): Promise<string> {
-  // Lấy Prompt từ DB, nếu không có thì fallback tạm thời (Dù system.service đã chặn điều này bằng ensureDefaultPrompt)
-  let systemPrompt = await getSystemConfig("AI_SYSTEM_PROMPT");
-  if (!systemPrompt) {
-    systemPrompt = `Bạn là Gia sư AI. Nguồn dữ liệu: KHTN Chân trời sáng tạo.\n\nNgữ cảnh: {context}`;
-  }
+  // 1. Lấy cấu hình từ DB
+  const [systemPrompt, aiModel, aiTemp] = await Promise.all([
+    getSystemConfig("AI_SYSTEM_PROMPT"),
+    getSystemConfig("AI_MODEL"),
+    getSystemConfig("AI_TEMPERATURE"),
+  ]);
+
+  let promptTemplate = systemPrompt || `Bạn là Gia sư AI chuyên nghiệp. Nguồn dữ liệu: KHTN Chân trời sáng tạo.\n\nNgữ cảnh: {context}`;
 
   // Nhúng ngữ cảnh vào Prompt
-  const systemInstruction = systemPrompt.replace(
+  const systemInstruction = promptTemplate.replace(
     "{context}",
     context || "Chưa có tài liệu được nạp phù hợp."
   );
 
-  // model: Lấy từ cấu hình tập trung
-  const model = DEFAULT_GEMINI_MODEL;
+  const model = aiModel || DEFAULT_GEMINI_MODEL;
+  const temperature = aiTemp ? parseFloat(aiTemp) : 0.7;
 
   const parts: any[] = [{ text: message }];
   if (image) {
@@ -52,7 +58,7 @@ export async function askGemini(
       ],
       config: {
         systemInstruction,
-        temperature: 0.7,
+        temperature,
       },
     });
 
@@ -67,5 +73,45 @@ export async function askGemini(
       return "Hệ thống AI đang quá tải hoặc đã hết lượt kết nối miễn phí hôm nay. Xin lỗi em, em vui lòng quay lại sau nhé!";
     }
     return "Có lỗi xảy ra khi kết nối. Xin vui lòng thử lại sau.";
+  }
+}
+
+/**
+ * Kiểm duyệt nội dung tin nhắn (Guard Model)
+ */
+export async function checkContentGuard(message: string): Promise<{ violated: boolean; reason?: string }> {
+  try {
+    const [enabled, guardPrompt, guardModel] = await Promise.all([
+      getSystemConfig("AI_GUARD_ENABLED"),
+      getSystemConfig("AI_GUARD_PROMPT"),
+      getSystemConfig("AI_GUARD_MODEL"),
+    ]);
+
+    if (enabled !== "true") return { violated: false };
+
+    const model = guardModel || DEFAULT_GEMINI_MODEL;
+    const prompt = (guardPrompt || "").replace("{message}", message);
+
+    const result = await ai.models.generateContent({
+      model,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        temperature: 0.1, // Cần độ chính xác cao, ít sáng tạo
+        responseMimeType: "application/json",
+      },
+    });
+
+    const text = result.text;
+    if (!text) return { violated: false };
+
+    const parsed = JSON.parse(text);
+    return {
+      violated: !!parsed.violated,
+      reason: parsed.reason || "Nội dung không phù hợp",
+    };
+  } catch (error) {
+    console.error("Lỗi khi kiểm duyệt nội dung bằng AI Guard:", error);
+    // Nếu guard lỗi, tạm thời cho qua để không chặn người dùng oan, hoặc có thể chọn chặn tất cả tùy chính sách
+    return { violated: false };
   }
 }

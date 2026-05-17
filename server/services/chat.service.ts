@@ -1,8 +1,9 @@
 import { prisma } from "../config/prisma.js";
 import { ChatRole, XpAction } from "@prisma/client";
-import { askGemini, GeminiMessage } from "./ai.service.js";
+import { askGemini, GeminiMessage, checkContentGuard } from "./ai.service.js";
 import { retrieveRelevantContext } from "./knowledge.service.js";
 import { addXp, updateChallengeProgress } from "./gamification.service.js";
+import { getSystemConfig, recordSystemActivity } from "./system.service.js";
 
 /**
  * Lấy danh sách các phiên chat của một user
@@ -60,7 +61,7 @@ export async function processUserMessage(
 ) {
   // 1. Kiểm tra session & Lấy thông tin khối lớp của học sinh
   const [session, studentProfile] = await Promise.all([
-    prisma.chatSession.findUnique({ where: { id: sessionId } }),
+    prisma.chatSession.findUnique({ where: { id: sessionId }, include: { user: true } }),
     prisma.studentProfile.findUnique({ where: { userId } })
   ]);
 
@@ -68,6 +69,7 @@ export async function processUserMessage(
     throw new Error("Phiên trò chuyện không hợp lệ.");
   }
 
+  const user = session.user;
   const studentGrade = studentProfile?.grade;
 
   // 2. Lưu tin nhắn của User vào DB
@@ -84,6 +86,64 @@ export async function processUserMessage(
   const userMessage = await prisma.chatMessage.create({
     data: userMessageData,
   });
+
+  // 2.5. KIỂM DUYỆT NỘI DUNG (GUARD)
+  const guardResult = await checkContentGuard(content);
+  if (guardResult.violated) {
+    // Tính toán penalty lũy tiến
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const violationCount = await prisma.activityLog.count({
+      where: {
+        userId,
+        createdAt: { gte: startOfMonth },
+        action: { contains: "Vi phạm: Nội dung không phù hợp" }
+      }
+    });
+
+    const basePenaltyStr = await getSystemConfig("AI_GUARD_XP_PENALTY_BASE");
+    const basePenalty = basePenaltyStr ? parseInt(basePenaltyStr) : 20;
+    // Penalty nhân đôi: base * 2^violationCount (Lần đầu count=0 -> base)
+    const penalty = basePenalty * Math.pow(2, Math.min(violationCount, 4)); // Capped ở 2^4 = 16 lần
+
+    // Trừ XP
+    await addXp(userId, -penalty, XpAction.CHAT_AI);
+
+    // Ghi nhận vào Activity Log hệ thống
+    await recordSystemActivity({
+      userId,
+      username: user.username,
+      role: user.role,
+      module: "chat",
+      action: `Vi phạm: Nội dung không phù hợp (Lần ${violationCount + 1} trong tháng)`,
+      source: "student",
+      method: "POST",
+      path: `/api/chat/sessions/${sessionId}/messages`,
+      statusCode: 403,
+      requestBody: { content, reason: guardResult.reason, penalty }
+    });
+
+    // Trả về thông báo cảnh báo cho học sinh
+    const blockMessage = await getSystemConfig("AI_GUARD_BLOCK_MESSAGE") || 
+      "Tin nhắn của em chứa nội dung không phù hợp và đã bị chặn. Em bị trừ XP và hành vi này đã được ghi nhận.";
+
+    const aiWarningMessage = await prisma.chatMessage.create({
+      data: {
+        sessionId,
+        role: ChatRole.MODEL,
+        content: `⚠️ **CẢNH BÁO VI PHẠM**\n\n${blockMessage}\n\n*Lý do: ${guardResult.reason}*\n*Hình phạt: -${penalty} XP*`,
+      },
+    });
+
+    return {
+      userMessage,
+      aiMessage: aiWarningMessage,
+      addedXp: -penalty,
+      violated: true
+    };
+  }
 
   // 3. Cộng 10 EXP cho User & Cập nhật thử thách
   try {

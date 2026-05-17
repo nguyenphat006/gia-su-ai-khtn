@@ -38,28 +38,41 @@ export function getLevelInfo(xp: number) {
 // ========================
 
 /**
- * Cộng EXP cho người dùng
+ * Cộng hoặc trừ EXP cho người dùng (Đảm bảo không < 0)
  */
 export async function addXp(userId: string, amount: number, action: XpAction, referenceId?: string, tx?: any) {
   const client = tx || prisma;
   
+  // Lấy stats hiện tại để kiểm tra nếu bị trừ quá 0
+  const currentStats = await client.userStats.findUnique({
+    where: { userId }
+  });
+
+  let incrementAmount = amount;
+  if (amount < 0 && currentStats) {
+    // Nếu trừ nhiều hơn số đang có, chỉ trừ về 0
+    if (currentStats.totalXp + amount < 0) {
+      incrementAmount = -currentStats.totalXp;
+    }
+  }
+
   const stats = await client.userStats.upsert({
     where: { userId },
     update: {
-      totalXp: { increment: amount },
-      weeklyXp: { increment: amount },
+      totalXp: { increment: incrementAmount },
+      weeklyXp: { increment: Math.max(- (currentStats?.weeklyXp || 0), incrementAmount) },
     },
     create: {
       userId,
-      totalXp: amount,
-      weeklyXp: amount,
+      totalXp: Math.max(0, incrementAmount),
+      weeklyXp: Math.max(0, incrementAmount),
     },
   });
 
   await client.xpLog.create({
     data: {
       userId,
-      amount,
+      amount: incrementAmount,
       action,
       referenceId,
     },

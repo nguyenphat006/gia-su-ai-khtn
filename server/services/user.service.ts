@@ -6,42 +6,7 @@ import {
   ValidationError,
 } from "../utils/errors.js";
 import { hashPassword } from "../utils/password.js";
-
-// Helper to record activity log manually (for background/batch tasks)
-async function recordSystemActivity(data: {
-  userId?: string | null;
-  username?: string | null;
-  role?: string | null;
-  module: string;
-  action: string;
-  source: string;
-  method?: string;
-  path?: string;
-  statusCode?: number;
-  queryParams?: any;
-  requestBody?: any;
-}) {
-  try {
-    await prisma.activityLog.create({
-      data: {
-        userId: data.userId || null,
-        username: data.username || null,
-        userRole: data.role || null,
-        source: data.source,
-        module: data.module,
-        action: data.action,
-        method: data.method || "SYSTEM",
-        path: data.path || "background-task",
-        statusCode: data.statusCode || 200,
-        durationMs: 0,
-        queryParams: data.queryParams || null,
-        requestBody: data.requestBody || null,
-      }
-    });
-  } catch (err) {
-    console.error("Lỗi khi ghi ActivityLog hệ thống:", err);
-  }
-}
+import { recordSystemActivity } from "./system.service.js";
 
 // ========================
 // INCLUDES & TYPES
