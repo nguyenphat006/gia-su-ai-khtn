@@ -99,6 +99,7 @@ export default function App() {
                       isUploading={isUploading}
                       setIsUploading={setIsUploading}
                       onLogout={logout}
+                      refreshUser={refreshUser}
                     />
                   }
                 >

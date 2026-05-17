@@ -28,12 +28,25 @@ const AchievementPanel = memo(({
   const [sidebarTab, setSidebarTab] = useState<"ranking" | "stats">("stats");
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<any[]>([]);
   const [isLoadingRanking, setIsLoadingRanking] = useState(false);
+  const [refreshCounter, setRefreshCounter] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Khi mở panel, tăng counter để trigger refresh ở các component con (như GamificationFeature)
+      setRefreshCounter(prev => prev + 1);
+      
+      // Nếu đang ở tab ranking thì fetch lại luôn
+      if (sidebarTab === "ranking") {
+        fetchLeaderboard();
+      }
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (sidebarTab === "ranking" && isOpen) {
       fetchLeaderboard();
     }
-  }, [sidebarTab, isOpen]);
+  }, [sidebarTab]);
 
   async function fetchLeaderboard() {
     setIsLoadingRanking(true);
@@ -158,7 +171,10 @@ const AchievementPanel = memo(({
                       exit={{ opacity: 0, scale: 1.02 }}
                       className="h-full overflow-y-auto custom-scrollbar pt-1"
                     >
-                      <GamificationFeature studentData={studentData} />
+                      <GamificationFeature 
+                        studentData={studentData} 
+                        refreshTrigger={refreshCounter}
+                      />
                     </motion.div>
                   ) : (
                     <motion.div

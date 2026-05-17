@@ -19,26 +19,28 @@ interface Challenge {
 
 interface GamificationFeatureProps {
   studentData: AppStudentView | null;
+  refreshTrigger?: number;
 }
 
-export default function GamificationFeature({ studentData }: GamificationFeatureProps) {
+export default function GamificationFeature({ studentData, refreshTrigger }: GamificationFeatureProps) {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const challengesData = await apiClient<Challenge[]>('/api/gamification/challenges');
-        setChallenges(challengesData);
-      } catch (error) {
-        console.error('Lỗi khi tải dữ liệu gamification:', error);
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const challengesData = await apiClient<Challenge[]>('/api/gamification/challenges');
+      setChallenges(challengesData);
+    } catch (error) {
+      console.error('Lỗi khi tải dữ liệu gamification:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData, refreshTrigger]);
 
   const streak = studentData?.streak || 0;
 

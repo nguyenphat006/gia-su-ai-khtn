@@ -18,6 +18,7 @@ interface AppLayoutProps {
   isUploading: boolean;
   setIsUploading: (v: boolean) => void;
   onLogout: () => Promise<void>;
+  refreshUser: () => Promise<any>;
 }
 
 export default function AppLayout({
@@ -29,6 +30,7 @@ export default function AppLayout({
   isUploading,
   setIsUploading,
   onLogout,
+  refreshUser,
 }: AppLayoutProps) {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [achievementOpen, setAchievementOpen] = useState(() => {
@@ -42,6 +44,10 @@ export default function AppLayout({
   const toggleAchievement = () => {
     setAchievementOpen(prev => {
       const newState = !prev;
+      if (newState) {
+        // Tự động làm mới dữ liệu user khi mở panel
+        void refreshUser();
+      }
       localStorage.setItem("achievementPanelOpen", String(newState));
       return newState;
     });
