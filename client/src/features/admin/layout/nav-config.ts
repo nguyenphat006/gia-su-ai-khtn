@@ -35,6 +35,9 @@ export const ADMIN_NAV_CONFIG: NavGroup[] = [
         title: "Báo cáo & Thống kê",
         to: "/admin/analytics",
         icon: LayoutDashboard,
+        subItems: [
+          { title: "Chi tiết học sinh", to: "/admin/analytics/students" }
+        ]
       },
       {
         title: "Báo cáo Đấu trường",

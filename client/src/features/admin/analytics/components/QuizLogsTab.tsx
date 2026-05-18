@@ -1,8 +1,9 @@
 import * as React from "react"
-import { Search, RefreshCcw, BookOpen, Brain, Trophy, Zap, MessageSquare } from "lucide-react"
+import { Search, RefreshCcw, BookOpen, Brain, Trophy, Zap, MessageSquare, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DataTablePagination } from "@/components/DataTable/DataTablePagination"
+import { useNavigate } from "react-router-dom"
 
 interface QuizLogsTabProps {
   studentStats: any[]
@@ -27,6 +28,8 @@ export function QuizLogsTab({
   setStudentSearch,
   fetchStudentStats 
 }: QuizLogsTabProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -56,14 +59,19 @@ export function QuizLogsTab({
                 <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Đấu trường</th>
                 <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Điểm EXP</th>
                 <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Chuỗi ngày</th>
+                <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
               </tr>
            </thead>
            <tbody className="divide-y divide-slate-50">
               {studentStats?.map((student) => (
-                <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr 
+                  key={student.id} 
+                  className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                  onClick={() => navigate(`/admin/analytics/students/${student.id}`)}
+                >
                   <td className="p-4">
                      <div className="flex flex-col">
-                       <span className="text-xs font-black text-slate-700 uppercase">{student.displayName}</span>
+                       <span className="text-xs font-black text-slate-700 uppercase group-hover:text-sky-600 transition-colors">{student.displayName}</span>
                        <div className="flex items-center gap-2 mt-1">
                          <span className="text-[9px] font-bold text-slate-400 px-1.5 py-0.5 bg-slate-100 rounded uppercase">{student.studentCode}</span>
                          <span className="text-[9px] font-bold text-sky-600 px-1.5 py-0.5 bg-sky-50 rounded uppercase">{student.className}</span>
@@ -124,11 +132,17 @@ export function QuizLogsTab({
                         <span className="text-[9px] font-bold text-slate-400 uppercase">Ngày</span>
                      </div>
                   </td>
+
+                  <td className="p-4 text-right">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                      <ChevronRight size={16} className="text-slate-400" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
               {studentStats.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={7} className="p-10 text-center text-slate-400 font-bold italic text-xs">Không tìm thấy dữ liệu thống kê học sinh nào.</td>
+                  <td colSpan={8} className="p-10 text-center text-slate-400 font-bold italic text-xs">Không tìm thấy dữ liệu thống kê học sinh nào.</td>
                 </tr>
               )}
            </tbody>

@@ -75,4 +75,9 @@ export const adminAnalyticsService = {
   getActivityLogDetail: async (id: string) => {
     return apiClient<{ status: string; data: ActivityLog }>(`/api/reports/activity-logs/${id}`);
   },
+
+  // Lấy chi tiết thông tin học sinh (Profile + Stats cơ bản)
+  getStudentDetail: async (id: string) => {
+    return apiClient<any>(`/api/users/${id}`);
+  },
 };
