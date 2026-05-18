@@ -577,6 +577,126 @@ export async function getQuizLogs(page = 1, limit = 50, keyword?: string) {
 }
 
 // ==========================================
+// 6b. GET STUDENT ACTIVITY STATS
+// ==========================================
+export async function getStudentActivityStats(page = 1, limit = 50, search?: string) {
+  const skip = (page - 1) * limit;
+
+  // 1. Tìm danh sách học sinh
+  const where: any = { role: "STUDENT" };
+  if (search) {
+    where.OR = [
+      { displayName: { contains: search, mode: "insensitive" } },
+      { username: { contains: search, mode: "insensitive" } },
+      { studentProfile: { studentCode: { contains: search, mode: "insensitive" } } }
+    ];
+  }
+
+  const [students, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+      include: {
+        studentProfile: true,
+        stats: true,
+        class: { select: { name: true } }
+      },
+      orderBy: { displayName: "asc" }
+    }),
+    prisma.user.count({ where })
+  ]);
+
+  const studentIds = students.map(s => s.id);
+
+  // 2. Query song song các chỉ số từ các bảng khác (tối ưu hiệu năng bằng groupBy)
+  const [chatCounts, mindmapCounts, flashcardCounts, arenaCounts] = await Promise.all([
+    // Đếm số câu hỏi AI (ChatMessage role USER)
+    prisma.chatMessage.groupBy({
+      by: ['sessionId'],
+      where: { 
+        role: 'USER',
+        session: { userId: { in: studentIds } }
+      },
+      _count: { id: true }
+    }).then(async groups => {
+      // Vì groupBy theo sessionId nên cần map lại theo userId
+      const sessions = await prisma.chatSession.findMany({
+        where: { id: { in: groups.map(g => g.sessionId) } },
+        select: { id: true, userId: true }
+      });
+      
+      const userChatCount: Record<string, number> = {};
+      groups.forEach(g => {
+        const session = sessions.find(s => s.id === g.sessionId);
+        if (session) {
+          userChatCount[session.userId] = (userChatCount[session.userId] || 0) + g._count.id;
+        }
+      });
+      return userChatCount;
+    }),
+
+    // Đếm số lần xem Mindmap
+    prisma.activityLog.groupBy({
+      by: ['userId'],
+      where: { 
+        userId: { in: studentIds },
+        action: 'Xem sơ đồ tư duy'
+      },
+      _count: { id: true }
+    }),
+
+    // Đếm số lần xem Flashcard
+    prisma.activityLog.groupBy({
+      by: ['userId'],
+      where: { 
+        userId: { in: studentIds },
+        action: 'Xem bộ Flashcard'
+      },
+      _count: { id: true }
+    }),
+
+    // Đếm số lần tham gia Arena
+    prisma.arenaResult.groupBy({
+      by: ['userId'],
+      where: { userId: { in: studentIds } },
+      _count: { id: true }
+    })
+  ]);
+
+  // Helper function to find count from groupBy result
+  const getCount = (arr: any[], userId: string) => arr.find(item => item.userId === userId)?._count.id || 0;
+
+  // 3. Gộp dữ liệu
+  const formattedData = students.map(s => ({
+    id: s.id,
+    displayName: s.displayName,
+    username: s.username,
+    studentCode: s.studentProfile?.studentCode || 'N/A',
+    grade: s.studentProfile?.grade || 0,
+    className: s.class?.name || 'N/A',
+    stats: {
+      aiChatCount: (chatCounts as any)[s.id] || 0,
+      mindmapCount: getCount(mindmapCounts, s.id),
+      flashcardCount: getCount(flashcardCounts, s.id),
+      arenaCount: getCount(arenaCounts, s.id),
+      totalXp: s.stats?.totalXp || 0,
+      currentStreak: s.stats?.currentStreak || 0,
+    }
+  }));
+
+  return {
+    data: formattedData,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
+  };
+}
+
+// ==========================================
 // 7. GET ACTIVITY LOGS (Nhật ký hành động)
 // ==========================================
 export async function getActivityLogs(filters: {

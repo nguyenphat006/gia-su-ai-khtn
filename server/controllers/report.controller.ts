@@ -63,6 +63,15 @@ export const getQuizLogs = asyncHandler(async (req: Request, res: Response) => {
   res.json({ status: "ok", data: result });
 });
 
+export const getStudentActivityStats = asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const search = req.query.search as string | undefined;
+
+  const result = await reportService.getStudentActivityStats(page, limit, search);
+  res.json({ status: "ok", data: result });
+});
+
 export const getActivityLogs = asyncHandler(async (req: Request, res: Response) => {
   const filters = {
     page: parseInt(req.query.page as string) || 1,

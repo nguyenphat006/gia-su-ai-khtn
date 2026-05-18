@@ -213,6 +213,33 @@ router.get("/quiz-logs", reportController.getQuizLogs);
 
 /**
  * @swagger
+ * /api/reports/student-stats:
+ *   get:
+ *     summary: Lấy thống kê hoạt động tổng hợp của từng học sinh
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Trả về danh sách thống kê học sinh
+ */
+router.get("/student-stats", reportController.getStudentActivityStats);
+
+/**
+ * @swagger
  * /api/reports/activity-logs:
  *   get:
  *     summary: Lấy danh sách nhật ký hoạt động (Activity Logs)

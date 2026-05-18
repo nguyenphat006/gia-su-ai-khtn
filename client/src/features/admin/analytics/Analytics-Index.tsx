@@ -37,7 +37,7 @@ export default function AnalyticsIndex() {
   const [engagement, setEngagement] = React.useState<UserEngagement | null>(null);
   const [topStudents, setTopStudents] = React.useState<TopStudent[]>([]);
   const [chatLogs, setChatLogs] = React.useState<ChatLog[]>([]);
-  const [quizLogs, setQuizLogs] = React.useState<any[]>([]);
+  const [studentStats, setStudentStats] = React.useState<any[]>([]);
   const [activityTime, setActivityTime] = React.useState<ActivityTimeStat[]>([]);
 
   // Ranking Filter State
@@ -50,10 +50,11 @@ export default function AnalyticsIndex() {
   const [totalPages, setTotalPages] = React.useState(1);
   const [totalLogs, setTotalLogs] = React.useState(0);
 
-  // Pagination State for Quiz Logs
-  const [quizPagination, setQuizPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
-  const [quizTotalPages, setQuizTotalPages] = React.useState(1);
-  const [quizTotalLogs, setQuizTotalLogs] = React.useState(0);
+  // Pagination State for Student Stats
+  const [studentPagination, setStudentPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
+  const [studentTotalPages, setStudentTotalPages] = React.useState(1);
+  const [studentTotalLogs, setStudentTotalLogs] = React.useState(0);
+  const [studentSearch, setStudentSearch] = React.useState("");
 
   // Selected Log & Session State
   const [selectedLog, setSelectedLog] = React.useState<ChatLog | null>(null);
@@ -108,31 +109,35 @@ export default function AnalyticsIndex() {
     }
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  const fetchQuizLogs = React.useCallback(async () => {
+  const fetchStudentStats = React.useCallback(async () => {
     try {
-      const res = await adminAnalyticsService.getQuizLogs({ 
-        page: quizPagination.pageIndex + 1, 
-        limit: quizPagination.pageSize 
+      setLoading(true);
+      const res = await adminAnalyticsService.getStudentStats({ 
+        page: studentPagination.pageIndex + 1, 
+        limit: studentPagination.pageSize,
+        search: studentSearch
       });
       const payload = res.data as any;
-      setQuizLogs(payload.data || []);
-      setQuizTotalPages(payload.pagination?.totalPages || 1);
-      setQuizTotalLogs(payload.pagination?.total || 0);
+      setStudentStats(payload.data || []);
+      setStudentTotalPages(payload.pagination?.totalPages || 1);
+      setStudentTotalLogs(payload.pagination?.total || 0);
     } catch (error) {
-      console.error("Lỗi khi tải nhật ký ôn tập:", error);
+      console.error("Lỗi khi tải thống kê học sinh:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [quizPagination.pageIndex, quizPagination.pageSize]);
+  }, [studentPagination.pageIndex, studentPagination.pageSize, studentSearch]);
 
   const fetchAllData = React.useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
     await Promise.all([
       fetchGeneralData(), 
       fetchChatLogs(),
-      fetchQuizLogs(),
+      fetchStudentStats(),
       fetchLeaderboard(selectedMonth, selectedYear)
     ]);
     if (showLoading) setLoading(false);
-  }, [fetchGeneralData, fetchChatLogs, fetchQuizLogs, fetchLeaderboard, selectedMonth, selectedYear]);
+  }, [fetchGeneralData, fetchChatLogs, fetchStudentStats, fetchLeaderboard, selectedMonth, selectedYear]);
 
   React.useEffect(() => { fetchData(); }, []); // eslint-disable-line
 
@@ -147,8 +152,8 @@ export default function AnalyticsIndex() {
   }, [pagination.pageIndex, pagination.pageSize, fetchChatLogs]);
 
   React.useEffect(() => {
-    fetchQuizLogs();
-  }, [quizPagination.pageIndex, quizPagination.pageSize, fetchQuizLogs]);
+    fetchStudentStats();
+  }, [studentPagination.pageIndex, studentPagination.pageSize, fetchStudentStats]);
 
   const fetchSessionMessages = async (sessionId: string) => {
     setIsLoadingSession(true);
@@ -218,17 +223,21 @@ export default function AnalyticsIndex() {
       wsRanks["!cols"] = [{ wch: 25 }, { wch: 12 }, { wch: 100 }];
       XLSX.utils.book_append_sheet(wb, wsRanks, "Phan bo Danh hieu");
 
-      // 5. Sheet Nhật ký Ôn tập (Quiz Logs)
-      const quizData = quizLogs.map(log => ({
-        "THỜI GIAN": new Date(log.createdAt).toLocaleString(),
-        "HỌC SINH": log.user?.displayName || "Ẩn danh",
-        "LOẠI BÀI": log.quizType === "CHINH_PHUC" ? "Thử thách" : "Flashcard",
-        "ĐÚNG/TỔNG": `${log.correctCount}/${log.totalQuestions}`,
-        "XP NHẬN": log.xpEarned
+      // 5. Sheet Thống kê Học sinh (Student Stats)
+      const exportStudentStats = studentStats.map(s => ({
+        "HỌ VÀ TÊN": s.displayName,
+        "MÃ HS": s.studentCode,
+        "LỚP": s.className,
+        "CHAT AI": s.stats.aiChatCount,
+        "MINDMAP": s.stats.mindmapCount,
+        "FLASHCARD": s.stats.flashcardCount,
+        "ĐẤU TRƯỜNG": s.stats.arenaCount,
+        "TỔNG EXP": s.stats.totalXp,
+        "CHUỖI": s.stats.currentStreak
       }));
-      const wsQuiz = XLSX.utils.json_to_sheet(quizData);
-      wsQuiz["!cols"] = [{ wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 12 }];
-      XLSX.utils.book_append_sheet(wb, wsQuiz, "Nhat ky On tap");
+      const wsStudent = XLSX.utils.json_to_sheet(exportStudentStats);
+      wsStudent["!cols"] = [{ wch: 25 }, { wch: 15 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 8 }];
+      XLSX.utils.book_append_sheet(wb, wsStudent, "Thong ke Hoc sinh");
 
       // Save file
       XLSX.writeFile(wb, `bao_cao_tong_hop_${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -336,13 +345,15 @@ export default function AnalyticsIndex() {
 
         {activeTab === "quiz" && (
           <QuizLogsTab 
-            quizLogs={quizLogs}
+            studentStats={studentStats}
             loading={loading}
-            quizPagination={quizPagination}
-            setQuizPagination={setQuizPagination}
-            quizTotalPages={quizTotalPages}
-            quizTotalLogs={quizTotalLogs}
-            fetchQuizLogs={fetchQuizLogs}
+            studentPagination={studentPagination}
+            setStudentPagination={setStudentPagination}
+            studentTotalPages={studentTotalPages}
+            studentTotalLogs={studentTotalLogs}
+            studentSearch={studentSearch}
+            setStudentSearch={setStudentSearch}
+            fetchStudentStats={fetchStudentStats}
           />
         )}
       </AnimatePresence>

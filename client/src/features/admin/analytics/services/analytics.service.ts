@@ -45,6 +45,12 @@ export const adminAnalyticsService = {
     return apiClient<any>(`/api/reports/quiz-logs?${query}`);
   },
 
+  // Thống kê học sinh (Student Activity Stats)
+  getStudentStats: async (params?: { page?: number; limit?: number; search?: string }) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiClient<any>(`/api/reports/student-stats?${query}`);
+  },
+
   // Chuyên cần & Phân bổ hạng
   getUserEngagement: async () => {
     return apiClient<{ status: string; data: UserEngagement }>("/api/reports/user-engagement");
