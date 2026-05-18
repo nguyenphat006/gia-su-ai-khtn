@@ -69,6 +69,40 @@ export function SeedOptionsForm({ options, setOptions }: SeedOptionsFormProps) {
               </div>
             </div>
 
+            {/* Cấu hình Min-Max cho hoạt động */}
+            <div className="space-y-3 pt-2 border-t border-slate-200/50">
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-tighter">Cấu hình khoảng hoạt động (Min - Max)</p>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase">Chat AI</label>
+                  <div className="flex items-center gap-1">
+                    <Input type="number" value={options.chatMin} onChange={e => setOptions({...options, chatMin: parseInt(e.target.value)})} className="h-7 px-1 rounded-md text-[10px] font-bold text-center" />
+                    <span className="text-[8px]">-</span>
+                    <Input type="number" value={options.chatMax} onChange={e => setOptions({...options, chatMax: parseInt(e.target.value)})} className="h-7 px-1 rounded-md text-[10px] font-bold text-center" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase">Ôn tập</label>
+                  <div className="flex items-center gap-1">
+                    <Input type="number" value={options.revisionMin} onChange={e => setOptions({...options, revisionMin: parseInt(e.target.value)})} className="h-7 px-1 rounded-md text-[10px] font-bold text-center" />
+                    <span className="text-[8px]">-</span>
+                    <Input type="number" value={options.revisionMax} onChange={e => setOptions({...options, revisionMax: parseInt(e.target.value)})} className="h-7 px-1 rounded-md text-[10px] font-bold text-center" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase">Đấu trường</label>
+                  <div className="flex items-center gap-1">
+                    <Input type="number" value={options.arenaMin} onChange={e => setOptions({...options, arenaMin: parseInt(e.target.value)})} className="h-7 px-1 rounded-md text-[10px] font-bold text-center" />
+                    <span className="text-[8px]">-</span>
+                    <Input type="number" value={options.arenaMax} onChange={e => setOptions({...options, arenaMax: parseInt(e.target.value)})} className="h-7 px-1 rounded-md text-[10px] font-bold text-center" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-3 pt-2 border-t border-slate-200/50">
               <div className="space-y-1">
                 <label className="text-[9px] font-bold text-slate-400 uppercase">Phân bổ thời gian học (Heatmap)</label>

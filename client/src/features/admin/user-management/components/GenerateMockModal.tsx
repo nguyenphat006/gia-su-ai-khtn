@@ -21,6 +21,12 @@ export function GenerateMockModal({ isOpen, onClose, onSuccess }: GenerateMockMo
     xpApril: 500,
     xpMay: 550,
     maxStreak: 4,
+    chatMin: 40,
+    chatMax: 100,
+    revisionMin: 20,
+    revisionMax: 40,
+    arenaMin: 15,
+    arenaMax: 30,
     timeDistribution: "evening",
     customQuestion: "Treo một quả cân 100g vào một lực kế thì kim của lực kế chỉ vạch thứ 2. Nếu treo thêm quả cân 50g vào lực kế thì kim của lực kế chỉ vạch thứ bao nhiêu?",
     customQuestionCount: 7

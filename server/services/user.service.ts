@@ -398,6 +398,15 @@ export async function seedUserActivity(userId: string, options?: {
   timeDistribution?: string,
   customQuestion?: string,
   askCustomQuestion?: boolean,
+  
+  // Cấu hình khoảng số lượng dữ liệu
+  chatMin?: number,
+  chatMax?: number,
+  revisionMin?: number,
+  revisionMax?: number,
+  arenaMin?: number,
+  arenaMax?: number,
+
   performedBy?: { userId: string, username: string, role: string }
 }) {
   const user = await prisma.user.findUnique({
@@ -432,8 +441,15 @@ export async function seedUserActivity(userId: string, options?: {
   const totalXp = Math.floor(xpMarch + xpApril + xpMay);
   const randomStreak = Math.floor(Math.random() * maxStreak) + 1; 
   
-  const randomWins = Math.floor(Math.random() * 20) + 5;
-  const randomTotal = randomWins + Math.floor(Math.random() * 10);
+  // Tính toán số lượng hoạt động dựa trên cấu hình min-max
+  const arenaCount = Math.floor(Math.random() * ((options?.arenaMax || 30) - (options?.arenaMin || 15) + 1)) + (options?.arenaMin || 15);
+  
+  // Áp dụng khoảng min-max cho TỪNG loại hoạt động ôn tập
+  const quizCount = Math.floor(Math.random() * ((options?.revisionMax || 40) - (options?.revisionMin || 20) + 1)) + (options?.revisionMin || 20);
+  const mindmapCount = Math.floor(Math.random() * ((options?.revisionMax || 40) - (options?.revisionMin || 20) + 1)) + (options?.revisionMin || 20);
+  const flashcardCount = Math.floor(Math.random() * ((options?.revisionMax || 40) - (options?.revisionMin || 20) + 1)) + (options?.revisionMin || 20);
+  
+  const totalChatQuestions = Math.floor(Math.random() * ((options?.chatMax || 100) - (options?.chatMin || 40) + 1)) + (options?.chatMin || 40);
 
   // Helper sinh giờ theo phân bổ yêu cầu (GIỜ LOCAL VIỆT NAM)
   const getWeightedHour = () => {
@@ -502,10 +518,9 @@ export async function seedUserActivity(userId: string, options?: {
   // 2. Tạo XpLog giả (Phân bổ theo 3 tháng: 3, 4, 5 năm 2026)
   const logsData: any[] = [];
   const activityLogsData: any[] = [];
+  
   // Helper tạo logs cho 1 tháng
-  const generateMonthlyLogs = (month: number, totalAmount: number) => {
-    const count = 3 + Math.floor(Math.random() * 4);
-
+  const generateMonthlyLogs = (month: number, totalAmount: number, monthlyCount: number) => {
     // Xác định ngày tối đa cho tháng này
     let maxDay = 28;
     const isCurrentMonth = (now.getFullYear() === 2026 && now.getMonth() === month - 1);
@@ -515,11 +530,11 @@ export async function seedUserActivity(userId: string, options?: {
       maxDay = now.getDate();
     }
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < monthlyCount; i++) {
       const logDate = createDateWithLocalHour(2026, month, Math.floor(Math.random() * maxDay) + 1, getWeightedHour());
       logsData.push({
         userId,
-        amount: Math.max(1, Math.floor(totalAmount / count)),
+        amount: Math.max(1, Math.floor(totalAmount / Math.max(1, monthlyCount))),
         action: XpAction.COMPLETE_QUIZ,
         createdAt: logDate
       });
@@ -541,14 +556,17 @@ export async function seedUserActivity(userId: string, options?: {
     }
   };
 
-  generateMonthlyLogs(3, xpMarch);
-  generateMonthlyLogs(4, xpApril);
-  generateMonthlyLogs(5, xpMay);
+  const quizCountMarch = Math.floor(quizCount * 0.3);
+  const quizCountApril = Math.floor(quizCount * 0.3);
+  const quizCountMay = quizCount - quizCountMarch - quizCountApril;
+
+  generateMonthlyLogs(3, xpMarch, quizCountMarch);
+  generateMonthlyLogs(4, xpApril, quizCountApril);
+  generateMonthlyLogs(5, xpMay, quizCountMay);
 
   await prisma.xpLog.createMany({ data: logsData });
 
   // 3. Tạo Arena Results giả
-  const arenaCount = 5 + Math.floor(Math.random() * 8);
   const arenaData = [];
   const topics = ["Động vật", "Thực vật", "Cơ năng", "Nhiệt học", "Hóa học hữu cơ", "Tế bào", "Quang hợp", "Hệ mặt trời"];
   for (let i = 0; i < arenaCount; i++) {
@@ -586,10 +604,7 @@ export async function seedUserActivity(userId: string, options?: {
   }
   await prisma.arenaResult.createMany({ data: arenaData });
 
-  // 3.5. Tạo Mindmap & Flashcard Activity Logs giả (Random 1-5 bài mỗi loại theo yêu cầu)
-  const mindmapCount = Math.floor(Math.random() * 5) + 1;
-  const flashcardCount = Math.floor(Math.random() * 5) + 1;
-  
+  // 3.5. Tạo Mindmap & Flashcard Activity Logs giả (Sử dụng mindmapCount và flashcardCount đã phân bổ ở trên)
   for (let i = 0; i < mindmapCount; i++) {
     const d = new Date();
     d.setDate(now.getDate() - Math.floor(Math.random() * 20)); // Trong vòng 20 ngày qua
@@ -629,7 +644,9 @@ export async function seedUserActivity(userId: string, options?: {
   }
 
   // 4. Tạo Chat Sessions & Messages giả
-  const chatSessionsCount = 3 + Math.floor(Math.random() * 4);
+  const chatSessionsCount = Math.ceil(totalChatQuestions / 1.5);
+  let questionsRemaining = totalChatQuestions;
+
   const chatContents = [
     { q: "Cô ơi, lực đẩy Ác-si-mét phụ thuộc vào những yếu tố nào ạ?", a: "Chào em! Lực đẩy Ác-si-mét phụ thuộc vào hai yếu tố chính: trọng lượng riêng của chất lỏng ($d$) và thể tích của phần chất lỏng bị vật chiếm chỗ ($V$). Công thức là $F_A = d.V$ em nhé." },
     { q: "Em chưa hiểu rõ về cấu tạo của tế bào nhân thực, cô giải thích lại giúp em với.", a: "Tế bào nhân thực rất thú vị! Nó gồm 3 phần chính: màng sinh chất, tế bào chất và quan trọng nhất là nhân có màng bao bọc chứa vật chất di truyền." },
@@ -647,8 +664,8 @@ export async function seedUserActivity(userId: string, options?: {
     });
   }
 
-  for (let i = 0; i < chatSessionsCount; i++) {
-    const randomDaysAgo = Math.floor(Math.random() * 10);
+  for (let i = 0; i < chatSessionsCount && questionsRemaining > 0; i++) {
+    const randomDaysAgo = Math.floor(Math.random() * 20); // Mở rộng khoảng thời gian
     const d = new Date();
     d.setDate(now.getDate() - randomDaysAgo);
     const sessionDate = createDateWithLocalHour(2026, d.getMonth() + 1, d.getDate(), getWeightedHour());
@@ -676,7 +693,8 @@ export async function seedUserActivity(userId: string, options?: {
       createdAt: sessionDate
     });
 
-    const numMessages = Math.random() > 0.7 ? 2 : 1;
+    // Mỗi session có từ 1 đến 2 câu hỏi, nhưng không vượt quá số lượng còn lại
+    const numMessages = Math.min(questionsRemaining, Math.random() > 0.7 ? 2 : 1);
     const usedIndices = new Set();
     
     for(let j = 0; j < numMessages; j++) {
@@ -712,6 +730,8 @@ export async function seedUserActivity(userId: string, options?: {
         durationMs: Math.floor(Math.random() * 2000) + 1000,
         createdAt: msgTime
       });
+      
+      questionsRemaining--;
     }
   }
 
