@@ -586,6 +586,48 @@ export async function seedUserActivity(userId: string, options?: {
   }
   await prisma.arenaResult.createMany({ data: arenaData });
 
+  // 3.5. Tạo Mindmap & Flashcard Activity Logs giả (Random 1-5 bài mỗi loại theo yêu cầu)
+  const mindmapCount = Math.floor(Math.random() * 5) + 1;
+  const flashcardCount = Math.floor(Math.random() * 5) + 1;
+  
+  for (let i = 0; i < mindmapCount; i++) {
+    const d = new Date();
+    d.setDate(now.getDate() - Math.floor(Math.random() * 20)); // Trong vòng 20 ngày qua
+    const logDate = createDateWithLocalHour(2026, d.getMonth() + 1, d.getDate(), getWeightedHour());
+    activityLogsData.push({
+      userId,
+      username: user.username,
+      userRole: user.role,
+      source: "student",
+      method: "GET",
+      path: "/api/revision/mindmaps/detail",
+      module: "revision",
+      action: "Xem sơ đồ tư duy",
+      statusCode: 200,
+      durationMs: Math.floor(Math.random() * 500) + 200,
+      createdAt: logDate
+    });
+  }
+
+  for (let i = 0; i < flashcardCount; i++) {
+    const d = new Date();
+    d.setDate(now.getDate() - Math.floor(Math.random() * 20));
+    const logDate = createDateWithLocalHour(2026, d.getMonth() + 1, d.getDate(), getWeightedHour());
+    activityLogsData.push({
+      userId,
+      username: user.username,
+      userRole: user.role,
+      source: "student",
+      method: "GET",
+      path: "/api/revision/flashcards/detail",
+      module: "revision",
+      action: "Xem bộ Flashcard",
+      statusCode: 200,
+      durationMs: Math.floor(Math.random() * 500) + 200,
+      createdAt: logDate
+    });
+  }
+
   // 4. Tạo Chat Sessions & Messages giả
   const chatSessionsCount = 3 + Math.floor(Math.random() * 4);
   const chatContents = [

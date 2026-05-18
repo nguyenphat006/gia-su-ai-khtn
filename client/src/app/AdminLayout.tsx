@@ -55,6 +55,10 @@ export default function AdminLayout({ user, isAdmin, onLogout }: AdminLayoutProp
         }
       }
     }
+    
+    // Bổ sung: Cho phép các route chi tiết/đặc thù không có trong sidebar
+    if (path.startsWith("/admin/analytics/students/")) return true;
+
     return false;
   }, [location.pathname]);
 
