@@ -5,6 +5,7 @@ services:
   - type: web
     name: giasu-ai-khtn-api
     runtime: node
+    plan: free
     region: singapore  # Gần Việt Nam nhất
 
     # Build & Start
